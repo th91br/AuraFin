@@ -1,0 +1,8 @@
+{
+  "name": "AURAFIN",
+  "description": "Unified financial software and routine planner for individuals and corporate entities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
