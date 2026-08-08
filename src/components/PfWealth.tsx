@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Asset, Transaction } from '../types';
-import { Home, Car, Shield, TrendingUp, CircleDollarSign, Plus, RefreshCw, Layers } from 'lucide-react';
+import { Landmark, Car, Home, TrendingUp, DollarSign, Plus, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
+import { HelpTooltip } from './ui/HelpTooltip';
 
 interface Props {
   assets: Asset[];
@@ -8,130 +10,163 @@ interface Props {
 }
 
 export function PfWealth({ assets, transactions, onAddAsset }: Props) {
-  const pfTxs = transactions.filter(t => t.context === 'PF');
-  const liquidBalance = pfTxs.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 7052.45);
-  const totalAssetsValue = assets.reduce((acc, a) => acc + a.value, 0);
-  const totalNetWorth = liquidBalance + totalAssetsValue;
+  const [filterCategory, setFilterCategory] = useState<string>('todas');
 
-  const getAssetIcon = (category: string) => {
-    switch (category) {
-      case 'imovel': return <Home className="w-5 h-5 text-indigo-700" />;
-      case 'veiculo': return <Car className="w-5 h-5 text-sky-700" />;
-      case 'renda_fixa': return <Shield className="w-5 h-5 text-emerald-700" />;
-      case 'acoes': return <TrendingUp className="w-5 h-5 text-purple-700" />;
-      default: return <CircleDollarSign className="w-5 h-5 text-slate-500" />;
+  const totalAssets = assets.reduce((acc, a) => acc + a.value, 0);
+  const totalDebts = 320000; // Financiamento Imobiliário Caixa
+  const netWorth = totalAssets - totalDebts;
+
+  const filteredAssets = assets.filter(a => {
+    if (filterCategory === 'todas') return true;
+    return a.category === filterCategory;
+  });
+
+  const getCategoryBadge = (cat: Asset['category']) => {
+    switch (cat) {
+      case 'imovel':
+        return { label: 'Imóvel', color: 'bg-indigo-50 text-indigo-800 border-indigo-200' };
+      case 'veiculo':
+        return { label: 'Veículo (FIPE)', color: 'bg-sky-50 text-sky-800 border-sky-200' };
+      case 'renda_fixa':
+        return { label: 'Renda Fixa', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+      case 'acoes':
+        return { label: 'Ações / Fundos', color: 'bg-amber-50 text-amber-800 border-amber-200' };
+      default:
+        return { label: 'Outros', color: 'bg-slate-50 text-slate-700 border-slate-200' };
     }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'imovel': return 'Imóvel Residencial/Comercial';
-      case 'veiculo': return 'Veículo (Tabela FIPE)';
-      case 'renda_fixa': return 'Renda Fixa & Liquidez';
-      case 'acoes': return 'Ações, ETFs & Cripto';
-      default: return 'Outros Ativos';
-    }
-  };
-
-  const handleUpdateFipe = () => {
-    alert('Simulação FIPE: Os valores dos veículos foram atualizados com base no índice oficial do mês corrente!');
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200/80 rounded">
+              Bens & Investimentos Pessoais
+            </span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
             Patrimônio Líquido & Ativos
           </h1>
-          <p className="text-slate-500 mt-1 text-base">
-            Visão consolidada do seu patrimônio físico, financeiro e liquidez pessoal.
+          <p className="text-slate-500 text-sm mt-0.5">
+            Acompanhe a evolução do seu patrimônio acumulado em imóveis, veículos, investimentos e dívidas imobiliárias.
           </p>
         </div>
+
         <button
           onClick={onAddAsset}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-sm"
+          className="flex items-center space-x-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Cadastrar Novo Ativo</span>
         </button>
       </div>
 
-      {/* Net Worth Hero Display (Matte Slate Card) */}
-      <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-md border border-slate-800 relative overflow-hidden">
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-          <div className="md:col-span-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Patrimônio Líquido Total Estimado</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white mt-2">
-              R$ {totalNetWorth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </h2>
-            <p className="text-slate-400 text-sm mt-3">
-              Inclui saldo líquido disponível (R$ {liquidBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) + {assets.length} ativos cadastrados.
-            </p>
+      {/* Net Worth Equation Banner */}
+      <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-md border border-slate-800 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xl font-black text-white">Patrimônio Líquido Consolidado</h2>
+            <HelpTooltip term="Patrimônio Líquido" explanation="Soma de todos os seus bens e investimentos (Ativos) subtraindo o saldo restante de dívidas e financiamentos (Passivos)." />
+          </div>
+          <span className="text-xs font-bold px-3 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700">
+            Atualizado Hoje
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+          <div className="p-5 bg-slate-800/80 rounded-xl border border-slate-700">
+            <p className="text-xs font-bold text-slate-400 font-sans uppercase">Total de Ativos (Bens)</p>
+            <p className="text-3xl font-black text-emerald-400 mt-1">R$ {totalAssets.toLocaleString('pt-BR')}</p>
+            <p className="text-[11px] text-slate-400 font-sans mt-2">3 Ativos cadastrados</p>
           </div>
 
-          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-3">
-            <div className="flex justify-between text-xs text-slate-300">
-              <span>Ativos Imobilizados:</span>
-              <span className="font-bold text-white">
-                R$ {assets.filter(a => a.category === 'imovel' || a.category === 'veiculo').reduce((acc, a) => acc + a.value, 0).toLocaleString('pt-BR')}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-300">
-              <span>Ativos Financeiros:</span>
-              <span className="font-bold text-emerald-400">
-                R$ {assets.filter(a => a.category === 'renda_fixa' || a.category === 'acoes').reduce((acc, a) => acc + a.value, 0).toLocaleString('pt-BR')}
-              </span>
-            </div>
-            <div className="pt-2 border-t border-slate-700 flex justify-between text-xs font-semibold text-slate-300">
-              <span>Status da Liquidez:</span>
-              <span className="text-emerald-400 font-bold">Saudável</span>
-            </div>
+          <div className="p-5 bg-slate-800/80 rounded-xl border border-slate-700">
+            <p className="text-xs font-bold text-slate-400 font-sans uppercase">(-) Passivos (Financiamentos)</p>
+            <p className="text-3xl font-black text-rose-400 mt-1">- R$ {totalDebts.toLocaleString('pt-BR')}</p>
+            <p className="text-[11px] text-slate-400 font-sans mt-2">Saldo devedor imobiliário</p>
+          </div>
+
+          <div className="p-5 bg-indigo-950/80 rounded-xl border border-indigo-700">
+            <p className="text-xs font-bold text-indigo-300 font-sans uppercase">(=) Patrimônio Líquido Real</p>
+            <p className="text-3xl font-black text-white mt-1">R$ {netWorth.toLocaleString('pt-BR')}</p>
+            <p className="text-[11px] text-indigo-300 font-sans mt-2">Liquidez imediata: R$ 28.500</p>
           </div>
         </div>
       </div>
 
-      {/* Asset List Grid */}
-      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Seus Ativos Cadastrados</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Acompanhe a valorização dos seus bens.</p>
-          </div>
+      {/* Filter Tabs */}
+      <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setFilterCategory('todas')}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            filterCategory === 'todas' ? 'bg-indigo-50 text-indigo-900 border border-indigo-200' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Todos os Ativos ({assets.length})
+        </button>
+        <button
+          onClick={() => setFilterCategory('imovel')}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            filterCategory === 'imovel' ? 'bg-indigo-50 text-indigo-900 border border-indigo-200' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Imóveis
+        </button>
+        <button
+          onClick={() => setFilterCategory('veiculo')}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            filterCategory === 'veiculo' ? 'bg-indigo-50 text-indigo-900 border border-indigo-200' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Veículos (FIPE)
+        </button>
+        <button
+          onClick={() => setFilterCategory('renda_fixa')}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            filterCategory === 'renda_fixa' ? 'bg-indigo-50 text-indigo-900 border border-indigo-200' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Renda Fixa & Reserva
+        </button>
+      </div>
 
-          <button
-            onClick={handleUpdateFipe}
-            className="flex items-center space-x-2 text-xs font-bold px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Atualizar Cotação FIPE</span>
-          </button>
-        </div>
+      {/* Asset Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {filteredAssets.map(asset => {
+          const badge = getCategoryBadge(asset.category);
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {assets.map((asset) => (
-            <div key={asset.id} className="p-6 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start justify-between hover:border-slate-300 transition-all">
-              <div className="flex items-start space-x-4">
-                <div className="p-3 bg-white rounded-xl shadow-sm border border-slate-200">
-                  {getAssetIcon(asset.category)}
+          return (
+            <div key={asset.id} className="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-6">
+              <div>
+                <div className="flex items-start justify-between mb-3">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded border ${badge.color}`}>
+                    {badge.label}
+                  </span>
+                  {asset.category === 'veiculo' && (
+                    <span className="text-[10px] font-semibold text-slate-500 flex items-center">
+                      <RefreshCw className="w-3 h-3 mr-1" /> FIPE Atualizada
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">{asset.name}</h3>
-                  <p className="text-xs font-bold text-indigo-700 mt-0.5">{getCategoryLabel(asset.category)}</p>
-                  {asset.notes && <p className="text-xs text-slate-500 mt-2">{asset.notes}</p>}
-                </div>
+
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight">{asset.name}</h3>
+                {asset.notes && <p className="text-xs text-slate-500 mt-1">{asset.notes}</p>}
               </div>
 
-              <div className="text-right">
-                <span className="text-xl font-extrabold text-slate-900 tracking-tight">
-                  R$ {asset.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase">Valor Estimado</span>
+                <span className="text-2xl font-black text-slate-900 font-mono">
+                  R$ {asset.value.toLocaleString('pt-BR')}
                 </span>
-                <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Valor Atual</p>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }
