@@ -1,12 +1,20 @@
 import { CalendarEvent } from '../types';
 import { X, QrCode, Banknote, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function BillingModal({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
   const [step, setStep] = useState<1 | 2>(1);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" 

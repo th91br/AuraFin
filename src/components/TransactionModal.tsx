@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Transaction, ContextMode } from '../types';
 import { X } from 'lucide-react';
 
@@ -19,15 +19,38 @@ export function TransactionModal({ mode, transaction, onClose, onSave }: Props) 
 
   const isPJ = mode === 'PJ';
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const parsedAmount = parseFloat(amount.replace(',', '.'));
+  const isValidAmount = !isNaN(parsedAmount) && parsedAmount > 0;
+
+  const handleSubmit = () => {
+    if (title.trim() && isValidAmount) {
+      onSave({ 
+        title: title.trim(), 
+        amount: parsedAmount, 
+        type,
+        isPersonalExpenseInPJ: isPersonal,
+        isPaidByPF: isPaidByPF
+      });
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
       <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden p-6 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
             {transaction ? 'Editar Movimentação' : 'Nova Movimentação'}
           </h3>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" aria-label="Fechar">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -49,6 +72,7 @@ export function TransactionModal({ mode, transaction, onClose, onSave }: Props) 
             <input 
               type="number" 
               step="0.01" 
+              min="0.01"
               value={amount} 
               onChange={e => setAmount(e.target.value)} 
               className={`w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 bg-slate-50 focus:bg-white transition-colors text-slate-900 ${isPJ ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
@@ -108,19 +132,9 @@ export function TransactionModal({ mode, transaction, onClose, onSave }: Props) 
           )}
           
           <button 
-            onClick={() => {
-              if (title && amount) {
-                onSave({ 
-                  title, 
-                  amount: parseFloat(amount), 
-                  type,
-                  isPersonalExpenseInPJ: isPersonal,
-                  isPaidByPF: isPaidByPF
-                });
-              }
-            }} 
+            onClick={handleSubmit} 
             className={`w-full mt-2 py-4 text-white font-semibold rounded-2xl transition-transform transform hover:scale-[1.01] active:scale-95 text-lg shadow-sm disabled:opacity-50 ${isPJ ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-            disabled={!title || !amount}
+            disabled={!title.trim() || !isValidAmount}
           >
             Salvar
           </button>

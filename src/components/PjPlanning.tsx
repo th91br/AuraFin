@@ -27,6 +27,31 @@ export function PjPlanning({ transactions, onReimburse }: Props) {
 
   const personalExpenses = transactions.filter(t => t.context === 'PJ' && t.isPersonalExpenseInPJ);
 
+  const handleExportTaxPackage = () => {
+    const pjTxs = transactions.filter(t => t.context === 'PJ');
+    const taxPackage = {
+      empresa: "AuraFin Tecnologia e Serviços Ltda",
+      cnpj: "12.345.678/0001-90",
+      mesReferencia: "Julho/2026",
+      dataGeracao: new Date().toISOString(),
+      resumo: {
+        totalReceitas: currentRevenue,
+        totalDespesasOperacionais: pjTxs.filter(t => t.type === 'expense' && !t.isPersonalExpenseInPJ).reduce((acc, t) => acc + t.amount, 0),
+        ajustesLucroPessoal: personalExpenses.reduce((acc, t) => acc + t.amount, 0),
+        statusConciliacao: "CONCILIADO_E_AUDITADO"
+      },
+      transacoes: pjTxs
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(taxPackage, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "aurafin_pacote_contabil_julho_2026.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   return (
     <div className="mt-12 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between">
@@ -188,9 +213,12 @@ export function PjPlanning({ transactions, onReimburse }: Props) {
               )}
             </div>
             
-            <button className="w-full flex items-center justify-center space-x-2 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl transition-colors shadow-sm">
+            <button 
+              onClick={handleExportTaxPackage}
+              className="w-full flex items-center justify-center space-x-2 py-3.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-semibold rounded-xl transition-all shadow-sm"
+            >
               <Send className="w-4 h-4" />
-              <span>Enviar Pacote ao Contador</span>
+              <span>Exportar Pacote Fiscal (.JSON)</span>
             </button>
           </div>
         </div>
