@@ -1,8 +1,19 @@
+# Dependencies & Builds
 node_modules/
 build/
 dist/
 coverage/
-.DS_Store
+
+# Logs & Environment
 *.log
 .env*
 !.env.example
+
+# OS & IDE Metadata
+.DS_Store
+Thumbs.db
+.codex/
+.gemini/
+.opencode/
+.vscode/
+.idea/
