@@ -305,9 +305,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-300 ${
-      mode === 'PJ' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
-    }`}>
+    <div className="min-h-screen font-sans flex transition-colors duration-200 bg-slate-50 text-slate-900">
       
       {/* Sidebar Lateral Retrátil (Logo sempre visível) */}
       <Sidebar

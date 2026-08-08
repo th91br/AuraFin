@@ -18,40 +18,45 @@ export function PjReports({ transactions, isPrivacyMode }: Props) {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+        <div className="flex items-center space-x-2">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-slate-900 text-white rounded">
+            Relatórios Corporativos
+          </span>
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1.5">
           Relatórios & DRE Histórico PJ
         </h1>
-        <p className="text-slate-400 mt-1 text-base">
+        <p className="text-slate-500 text-sm mt-0.5">
           Desempenho operacional da empresa, faturamento bruto, custos fixos e margem de lucro.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono tabular-nums">
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">Faturamento Bruto</span>
-            <ArrowUpRight className="w-5 h-5 text-emerald-400" />
+            <ArrowUpRight className="w-5 h-5 text-emerald-600" />
           </div>
-          <PrivacyText value={totalIncome} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-white mt-2" />
-          <p className="text-xs text-slate-400 mt-2 font-sans font-semibold">Sem descontar DAS (~6%)</p>
+          <PrivacyText value={totalIncome} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-slate-900 mt-2" />
+          <p className="text-xs text-slate-500 mt-2 font-sans font-semibold">Sem descontar DAS (~6%)</p>
         </div>
 
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">Despesas Operacionais</span>
-            <ArrowDownRight className="w-5 h-5 text-rose-400" />
+            <ArrowDownRight className="w-5 h-5 text-rose-600" />
           </div>
-          <PrivacyText value={totalExpense} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-white mt-2" />
-          <p className="text-xs text-slate-400 mt-2 font-sans">Infraestrutura, licenças e custos</p>
+          <PrivacyText value={totalExpense} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-slate-900 mt-2" />
+          <p className="text-xs text-slate-500 mt-2 font-sans">Infraestrutura, licenças e custos</p>
         </div>
 
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">Resultado Operacional</span>
-            <TrendingUp className="w-5 h-5 text-sky-400" />
+            <TrendingUp className="w-5 h-5 text-indigo-700" />
           </div>
-          <PrivacyText value={netResult} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-emerald-400 mt-2" />
-          <p className="text-xs text-slate-400 mt-2 font-sans">Lucro líquido após custos e pró-labore</p>
+          <PrivacyText value={netResult} isPrivacyMode={isPrivacyMode} className="text-3xl font-black text-emerald-700 mt-2" />
+          <p className="text-xs text-slate-500 mt-2 font-sans">Lucro líquido após custos e pró-labore</p>
         </div>
       </div>
     </div>
