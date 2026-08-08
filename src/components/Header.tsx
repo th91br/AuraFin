@@ -35,105 +35,99 @@ export function Header({
   const isPJ = mode === 'PJ';
 
   return (
-    <header className="bg-white/95 text-slate-900 border-b border-slate-200/80 sticky top-0 z-20 backdrop-blur-md transition-colors duration-200">
-      <div className="px-6 py-3 flex items-center justify-between gap-4">
+    <header className="h-14 bg-white text-slate-950 border-b border-slate-200/70 sticky top-0 z-20 backdrop-blur-md transition-colors duration-200">
+      <div className="h-full px-6 flex items-center justify-between gap-4">
         
-        {/* Left: Sidebar Toggle & Context Description */}
+        {/* Left: Sidebar Toggle & Brand Title */}
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsSidebarCollapsed((prev: boolean) => !prev)}
-            className="p-2 rounded-xl border border-slate-200 bg-slate-100/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all"
-            title="Alternar Menu Lateral Esquerdo"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors"
+            title="Alternar Menu Lateral"
           >
-            <PanelLeft className="w-5 h-5" />
+            <PanelLeft className="w-4 h-4" />
           </button>
           
-          <div className="hidden sm:block cursor-pointer" onClick={() => setViewMode('landing')}>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-base tracking-tight text-slate-900">AURAFIN</span>
-              <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded border ${
-                isPJ ? 'bg-slate-900 text-white border-slate-800' : 'bg-indigo-50 text-indigo-900 border-indigo-200'
-              }`}>
-                {isPJ ? 'Modo PJ' : 'Modo PF'}
-              </span>
-            </div>
-            <p className="text-[11px] font-medium text-slate-500">
-              {isPJ ? 'Caixa Corporativo & DRE Gerencial' : 'Vida Financeira Pessoal'}
-            </p>
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setViewMode('landing')}>
+            <span className="font-black text-sm tracking-tight text-slate-950">AURAFIN</span>
+            <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">|</span>
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              {isPJ ? 'Pessoa Jurídica' : 'Pessoa Física'}
+            </span>
           </div>
         </div>
 
         {/* Central Mode Switcher (PF vs PJ) */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/80">
+        <div className="flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200/60 text-xs">
           {/* Botão PF (Branco quando ativo) */}
           <button
             onClick={() => setMode('PF')}
-            className={`relative flex items-center px-5 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center px-4 py-1.5 rounded-lg font-semibold transition-all ${
               !isPJ 
-                ? 'bg-white shadow-sm text-slate-900 border border-slate-200/80' 
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white shadow-xs text-slate-950 border border-slate-200/80' 
+                : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            <User className="w-3.5 h-3.5 mr-1.5 text-indigo-700" />
-            <span>Pessoa Física (PF)</span>
+            <User className="w-3.5 h-3.5 mr-1.5 text-slate-700" />
+            <span>Pessoa Física</span>
           </button>
 
           {/* Botão PJ (Preto Executivo Destacado quando ativo) */}
           <button
             onClick={() => setMode('PJ')}
-            className={`relative flex items-center px-5 py-2 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center px-4 py-1.5 rounded-lg font-semibold transition-all ${
               isPJ 
-                ? 'bg-slate-900 text-white shadow-md border border-slate-800' 
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-slate-950 text-white shadow-xs' 
+                : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5 mr-1.5 text-sky-400" />
-            <span>Pessoa Jurídica (PJ)</span>
+            <Building2 className="w-3.5 h-3.5 mr-1.5 text-slate-300" />
+            <span>Pessoa Jurídica</span>
 
             {pendingReimbursementAmount > 0 && (
-              <span className="ml-2 w-2 h-2 rounded-full bg-rose-500" />
+              <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
             )}
           </button>
         </div>
 
         {/* Right Status Actions */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2">
           {/* Global Search Button */}
           <button
             onClick={onOpenSearch}
-            className="hidden md:flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-slate-100/80 text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+            className="hidden md:flex items-center space-x-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200/80 bg-slate-50 text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
             title="Buscar registro (Cmd + K)"
           >
-            <Search className="w-3.5 h-3.5 text-slate-500" />
+            <Search className="w-3.5 h-3.5 text-slate-400" />
             <span>Buscar</span>
-            <kbd className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-white text-slate-600 border border-slate-200">⌘K</kbd>
+            <kbd className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-white text-slate-500 border border-slate-200/80">⌘K</kbd>
           </button>
 
           {/* Privacy Mode Toggle */}
           <button
             onClick={() => setIsPrivacyMode((prev: boolean) => !prev)}
-            className={`p-2 rounded-xl border transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               isPrivacyMode
-                ? 'bg-amber-50 border-amber-200 text-amber-900'
-                : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                : 'text-slate-500 hover:text-slate-950 hover:bg-slate-100'
             }`}
-            title={isPrivacyMode ? 'Desativar Modo Privacidade (Mostrar valores)' : 'Ativar Modo Privacidade (Ocultar valores)'}
+            title={isPrivacyMode ? 'Mostrar valores' : 'Ocultar valores'}
           >
             {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
 
-          {/* Landing Page Shortcut */}
+          {/* Landing Page Link */}
           <button
             onClick={() => setViewMode('landing')}
-            className="hidden lg:flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-slate-100/80 text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+            className="hidden lg:flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200/80 bg-slate-50 text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
             title="Ver Landing Page Institucional"
           >
-            <Globe className="w-3.5 h-3.5 text-slate-500" />
+            <Globe className="w-3.5 h-3.5 text-slate-400" />
             <span>Landing Page</span>
           </button>
 
           {pendingReimbursementAmount > 0 && (
-            <div className="hidden xl:flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-xl border bg-amber-50 border-amber-200 text-amber-900">
+            <div className="hidden xl:flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900">
               <ArrowRightLeft className="w-3.5 h-3.5" />
               <span>Reembolso: R$ {pendingReimbursementAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
@@ -142,8 +136,8 @@ export function Header({
           {onResetDemo && (
             <button
               onClick={onResetDemo}
-              title="Restaurar dados originais de demonstração"
-              className="p-2 rounded-xl border border-slate-200 bg-slate-100/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+              title="Restaurar dados originais"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -152,14 +146,14 @@ export function Header({
           {/* Right Rail Toggle Button */}
           <button
             onClick={() => setIsRightRailOpen((prev: boolean) => !prev)}
-            className={`p-2 rounded-xl border transition-all ${
+            className={`p-1.5 rounded-lg transition-all ${
               isRightRailOpen
-                ? 'bg-slate-900 text-white border-slate-800'
-                : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                ? 'bg-slate-950 text-white'
+                : 'text-slate-500 hover:text-slate-950 hover:bg-slate-100'
             }`}
-            title="Alternar Painel Lateral Direito (Insights / Ações)"
+            title="Alternar Painel Lateral"
           >
-            <PanelRight className="w-5 h-5" />
+            <PanelRight className="w-4 h-4" />
           </button>
         </div>
       </div>

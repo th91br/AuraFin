@@ -9,7 +9,6 @@ import {
   AlertCircle, 
   FileCheck2, 
   Plus, 
-  ShieldCheck,
   Receipt,
   DollarSign,
   LineChart
@@ -46,124 +45,117 @@ export function Sidebar({
 
   return (
     <aside
-      className={`relative flex flex-col h-screen sticky top-0 transition-all duration-300 z-30 select-none border-r bg-white text-slate-900 border-slate-200/80 shadow-sm ${
-        isCollapsed ? 'w-20' : 'w-72'
+      className={`relative flex flex-col h-screen sticky top-0 transition-all duration-200 z-30 select-none border-r bg-white text-slate-900 border-slate-200/60 ${
+        isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
-      {/* Sidebar Top Header - Logo Always Visible */}
-      <div className={`p-4 flex items-center border-b border-slate-100 transition-all ${
+      {/* Sidebar Top Logo Tile */}
+      <div className={`p-3.5 flex items-center border-b border-slate-100 transition-all ${
         isCollapsed ? 'justify-center' : 'justify-start space-x-3'
       }`}>
         <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg shrink-0 shadow-sm transition-transform hover:scale-105 bg-slate-900 text-white"
-          title="AuraFin - Plataforma Híbrida PF+PJ"
+          className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-base shrink-0 bg-slate-950 text-white shadow-xs"
+          title="AuraFin"
         >
           A
         </div>
 
         {!isCollapsed && (
-          <div className="truncate animate-in fade-in duration-200">
-            <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-lg tracking-tight text-slate-900">AURAFIN</span>
-              <span className={`text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded border ${
-                isPJ ? 'bg-slate-900 text-white border-slate-800' : 'bg-indigo-50 text-indigo-900 border-indigo-200'
-              }`}>
-                {isPJ ? 'PJ' : 'PF'}
-              </span>
-            </div>
-            <p className="text-[11px] font-medium text-slate-500 truncate">
-              {isPJ ? 'Gestão Corporativa' : 'Finanças Pessoais'}
+          <div className="truncate">
+            <span className="font-black text-base tracking-tight text-slate-950">AuraFin</span>
+            <p className="text-[11px] font-medium text-slate-400 -mt-0.5 truncate">
+              {isPJ ? 'Pessoa Jurídica' : 'Pessoa Física'}
             </p>
           </div>
         )}
       </div>
 
       {/* Navigation Items */}
-      <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto scrollbar-none">
+      <div className="flex-1 py-4 px-2.5 space-y-1 overflow-y-auto scrollbar-none">
         {!isPJ ? (
           // --- MODO PF (PESSOA FÍSICA) ---
           <>
             {!isCollapsed && (
-              <p className="px-3 text-[10px] uppercase tracking-widest font-extrabold text-slate-400 mb-1.5 mt-2">
-                Navegação Pessoal
+              <p className="px-3 text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1.5 mt-2">
+                Pessoal
               </p>
             )}
 
             <button
               onClick={() => setPfTab('overview')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'overview'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Visão Geral"
             >
-              <LayoutDashboard className="w-4 h-4 shrink-0 text-indigo-700" />
+              <LayoutDashboard className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">Visão Geral</span>}
             </button>
 
             <button
               onClick={() => setPfTab('transactions')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'transactions'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Movimentações & Cartões"
             >
-              <Receipt className="w-4 h-4 shrink-0 text-indigo-700" />
+              <Receipt className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">Movimentações</span>}
             </button>
 
             <button
               onClick={() => setPfTab('planning')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'planning'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Planejamento & Metas"
             >
-              <PieChart className="w-4 h-4 shrink-0 text-indigo-700" />
+              <PieChart className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">Planejamento</span>}
             </button>
 
             <button
               onClick={() => setPfTab('wealth')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'wealth'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Patrimônio & Ativos"
             >
-              <Landmark className="w-4 h-4 shrink-0 text-indigo-700" />
+              <Landmark className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">Patrimônio</span>}
             </button>
 
             <button
               onClick={() => setPfTab('tax_planning')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'tax_planning'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Radar IRPF"
             >
-              <FileText className="w-4 h-4 shrink-0 text-indigo-700" />
+              <FileText className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">IRPF</span>}
             </button>
 
             <button
               onClick={() => setPfTab('reports')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pfTab === 'reports'
-                  ? 'bg-indigo-50 text-indigo-900 font-bold border-indigo-200/80 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-100 text-slate-950 font-semibold'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Relatórios PF"
             >
-              <LineChart className="w-4 h-4 shrink-0 text-indigo-700" />
+              <LineChart className="w-4 h-4 shrink-0 text-slate-700" />
               {!isCollapsed && <span className="truncate">Relatórios</span>}
             </button>
           </>
@@ -171,30 +163,30 @@ export function Sidebar({
           // --- MODO PJ (PESSOA JURÍDICA) ---
           <>
             {!isCollapsed && (
-              <p className="px-3 text-[10px] uppercase tracking-widest font-extrabold text-slate-400 mb-1.5 mt-2">
-                Operação Empresa (PJ)
+              <p className="px-3 text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1.5 mt-2">
+                Empresa
               </p>
             )}
 
             <button
               onClick={() => setPjTab('overview')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'overview'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Visão Geral"
             >
-              <Activity className="w-4 h-4 shrink-0 text-slate-900 dark:text-slate-100" />
+              <Activity className="w-4 h-4 shrink-0" />
               {!isCollapsed && <span className="truncate">Visão Geral</span>}
             </button>
 
             <button
               onClick={() => setPjTab('cashflow')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'cashflow'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Caixa & DRE Gerencial"
             >
@@ -204,10 +196,10 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('receivables_payables')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'receivables_payables'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Receber & Pagar"
             >
@@ -217,10 +209,10 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('management')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'management'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Gestão de Projetos & Clientes"
             >
@@ -230,10 +222,10 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('collections')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'collections'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Cobranças & Faturamento"
             >
@@ -242,7 +234,7 @@ export function Sidebar({
                 {!isCollapsed && <span className="truncate">Cobranças</span>}
               </div>
               {!isCollapsed && defaultersCount > 0 && (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-200">
                   {defaultersCount}
                 </span>
               )}
@@ -250,10 +242,10 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('accounting')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'accounting'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Central do Contador"
             >
@@ -262,16 +254,16 @@ export function Sidebar({
                 {!isCollapsed && <span className="truncate">Contador</span>}
               </div>
               {!isCollapsed && pendingReimbursementAmount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
               )}
             </button>
 
             <button
               onClick={() => setPjTab('reports')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
                 pjTab === 'reports'
-                  ? 'bg-slate-900 text-white border-slate-800 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'bg-slate-950 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
               }`}
               title="Relatórios PJ"
             >
@@ -282,13 +274,13 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Sidebar Footer & Action */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50 space-y-3">
+      {/* Sidebar Action Button */}
+      <div className="p-3 border-t border-slate-100 bg-white">
         {!isPJ ? (
           <button
             onClick={onOpenTransactionModal}
-            className={`w-full flex items-center justify-center space-x-2 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs ${
-              isCollapsed ? 'px-0' : 'px-4'
+            className={`w-full flex items-center justify-center space-x-2 py-2 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-lg transition-all text-xs shadow-xs ${
+              isCollapsed ? 'px-0' : 'px-3'
             }`}
             title="Novo Lançamento PF"
           >
@@ -298,23 +290,14 @@ export function Sidebar({
         ) : (
           <button
             onClick={onOpenBillingModal}
-            className={`w-full flex items-center justify-center space-x-2 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs ${
+            className={`w-full flex items-center justify-center space-x-2 py-2 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-lg transition-all text-xs shadow-xs ${
               isCollapsed ? 'px-0' : 'px-4'
             }`}
             title="Emitir Fatura PJ"
           >
             <Plus className="w-4 h-4 shrink-0" />
-            {!isCollapsed && <span>Emitir Fatura / Pix</span>}
+            {!isCollapsed && <span>Emitir Fatura</span>}
           </button>
-        )}
-
-        {!isCollapsed && (
-          <div className="flex items-center justify-between text-[11px] pt-1 px-1 font-medium text-slate-500">
-            <span className="flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Sessão Local Criptografada</span>
-            </span>
-          </div>
         )}
       </div>
     </aside>

@@ -1,9 +1,8 @@
 import { Transaction, CalendarEvent } from '../types';
 import { FinancialSummary } from './FinancialSummary';
 import { IntegratedCalendar } from './IntegratedCalendar';
-import { Building2, TrendingUp, AlertCircle, ArrowUpRight, DollarSign, Clock, FileText, Plus, ShieldCheck } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
-import { HelpTooltip } from './ui/HelpTooltip';
 
 interface Props {
   transactions: Transaction[];
@@ -42,114 +41,98 @@ export function PjOverview({
   const runwayDays = Math.round(currentCash / dailyBurn);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-10 animate-in fade-in duration-200">
       
-      {/* Header & Primary Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Editorial Limpo */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-4 border-b border-slate-200/60">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-slate-900 text-white rounded">
-              Modo PJ — Operação Empresa
-            </span>
-            <span className="text-xs text-slate-500 font-medium">Caixa Corporativo & DRE</span>
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1.5">
-            Visão Geral Executiva
+          <h1 className="text-2xl font-black tracking-tight text-slate-950">
+            Resumo Operacional
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            Acompanhe o faturamento, controle de caixa, recebíveis e saúde financeira da sua empresa.
+          <p className="text-slate-500 text-xs mt-0.5 font-medium">
+            Caixa corporativo, faturamento e compromissos da empresa.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex items-center space-x-3 self-start sm:self-auto">
           <button
             onClick={onOpenBillingModal}
-            className="flex items-center space-x-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs"
+            className="flex items-center space-x-2 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-lg transition-all text-xs shadow-xs"
           >
-            <FileText className="w-4 h-4" />
-            <span>Emitir Fatura / Pix PJ</span>
+            <FileText className="w-3.5 h-3.5" />
+            <span>Emitir Fatura Pix</span>
           </button>
         </div>
       </div>
 
-      {/* Hero Card do Caixa Operacional */}
-      <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-md border border-slate-800">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          <div className="md:col-span-8 space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Caixa Operacional Disponível nas Contas PJ</span>
-              <HelpTooltip term="Caixa Operacional" explanation="Saldo total disponível em bancos da empresa descontando faturas a pagar já compromissadas no período." />
-            </div>
-
-            <h3 className="text-4xl md:text-5xl font-black text-white tracking-tight font-mono">
-              R$ {currentCash.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </h3>
-
-            <p className="text-xs text-slate-400 leading-relaxed pt-1">
-              Sua empresa possui <strong className="text-white font-mono">{runwayDays} dias de Runway</strong> garantidos com o caixa atual na velocidade de queima operacional diária (R$ {dailyBurn}/dia).
+      {/* Hero Financial Summary Strip - Limpo e Humanizado */}
+      <div className="bg-white p-8 rounded-2xl border border-slate-200/70 shadow-xs space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          {/* Caixa Operacional */}
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Caixa Operacional
+            </span>
+            <PrivacyText 
+              value={currentCash} 
+              isPrivacyMode={false} 
+              className="text-3xl font-semibold text-slate-950 tracking-tight block font-mono tabular-nums" 
+            />
+            <p className="text-xs text-slate-500 font-medium pt-1">
+              Contas bancárias PJ consolidadas.
             </p>
           </div>
 
-          <div className="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3 font-mono">
-            <div className="flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold font-sans">Faturamento Bruto:</span>
-              <span className="font-bold text-emerald-400">R$ {grossRevenue.toLocaleString('pt-BR')}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold font-sans">A Receber Pendente:</span>
-              <span className="font-bold text-amber-400">R$ {receivables.toLocaleString('pt-BR')}</span>
-            </div>
-            <div className="pt-2 border-t border-slate-700 flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold font-sans">Pró-labore do Sócio:</span>
-              <span className="font-bold text-white">R$ {prolaborePaid.toLocaleString('pt-BR')}</span>
-            </div>
+          {/* Faturamento Bruto */}
+          <div className="space-y-1 md:border-l md:border-slate-100 md:pl-8">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Faturamento Bruto
+            </span>
+            <PrivacyText 
+              value={grossRevenue} 
+              isPrivacyMode={false} 
+              className="text-3xl font-semibold text-slate-900 tracking-tight block font-mono tabular-nums" 
+            />
+            <p className="text-xs text-slate-500 font-medium pt-1">
+              Mês atual em curso.
+            </p>
           </div>
+
+          {/* A Receber */}
+          <div className="space-y-1 md:border-l md:border-slate-100 md:pl-8">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              A Receber Pendente
+            </span>
+            <PrivacyText 
+              value={receivables} 
+              isPrivacyMode={false} 
+              className="text-3xl font-semibold text-slate-900 tracking-tight block font-mono tabular-nums" 
+            />
+            <p className="text-xs text-amber-800 font-medium pt-1">
+              Títulos a vencer e em atraso.
+            </p>
+          </div>
+
+          {/* Runway de Caixa */}
+          <div className="space-y-1 md:border-l md:border-slate-100 md:pl-8">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Runway Estimado
+            </span>
+            <span className="text-3xl font-semibold text-slate-950 tracking-tight block font-mono tabular-nums">
+              {runwayDays} Dias
+            </span>
+            <p className="text-xs text-slate-500 font-medium pt-1">
+              Na velocidade de queima atual.
+            </p>
+          </div>
+
         </div>
       </div>
 
-      {/* Bloco "Atenção Operacional Hoje" */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-        <div className="flex items-center space-x-2">
-          <AlertCircle className="w-5 h-5 text-amber-700" />
-          <h2 className="text-base font-bold text-slate-900">Atenção Operacional Hoje</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start space-x-3">
-            <div className="p-2 bg-amber-100 text-amber-800 rounded-lg shrink-0 mt-0.5">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 text-xs">2 Títulos em Atraso</h4>
-              <p className="text-[11px] text-slate-600 mt-0.5">R$ 7.300 pendentes de recebimento (Alfa Serviços e Studio Beta).</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start space-x-3">
-            <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg shrink-0 mt-0.5">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 text-xs">DRE Gerencial Emitido</h4>
-              <p className="text-[11px] text-slate-600 mt-0.5">Resultado operacional positivo com margem líquida de 32%.</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start space-x-3">
-            <div className="p-2 bg-indigo-100 text-indigo-800 rounded-lg shrink-0 mt-0.5">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 text-xs">Aporte a Reembolsar</h4>
-              <p className="text-[11px] text-slate-600 mt-0.5">1 despesa de servidor paga no cartão PF aguardando acerto.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid: DRE & Calendar */}
+      {/* Main Grid: Extrato Recente & Agenda de Compromissos */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-6 space-y-4">
           <FinancialSummary
             mode="PJ"
             transactions={transactions}
@@ -161,7 +144,7 @@ export function PjOverview({
           />
         </div>
 
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-6 space-y-4">
           <IntegratedCalendar
             mode="PJ"
             events={events}

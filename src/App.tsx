@@ -59,7 +59,7 @@ export default function App() {
   const [pfTab, setPfTab] = useState<PFTab>('overview');
   const [pjTab, setPjTab] = useState<PJTab>('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isRightRailOpen, setIsRightRailOpen] = useState(true);
+  const [isRightRailOpen, setIsRightRailOpen] = useState(false);
 
   // Storage Encapsulated States
   const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => StorageRepository.getPrivacyMode());
@@ -305,7 +305,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen font-sans flex transition-colors duration-200 bg-slate-50 text-slate-900">
+    <div className="min-h-screen font-sans flex bg-slate-50 text-slate-900 selection:bg-slate-900 selection:text-white">
       
       {/* Sidebar Lateral Retrátil (Logo sempre visível) */}
       <Sidebar
@@ -343,7 +343,7 @@ export default function App() {
         />
 
         {/* Dynamic Page Viewer Container */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-8">
+        <main className="flex-1 p-6 md:p-10 max-w-6xl w-full mx-auto space-y-10">
           
           {/* MODO PESSOA FÍSICA (PF) */}
           {mode === 'PF' && (
