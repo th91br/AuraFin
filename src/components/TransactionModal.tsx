@@ -1,144 +1,252 @@
-import { useState, useEffect } from 'react';
-import { Transaction, ContextMode } from '../types';
-import { X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Transaction, ContextMode, TransactionType } from '../types';
+import { MoneyInput } from './ui/MoneyInput';
+import { X, User, Building2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 
 interface Props {
-  mode: ContextMode;
-  transaction?: Transaction | null;
+  isOpen: boolean;
   onClose: () => void;
-  onSave: (t: Omit<Transaction, 'id' | 'context' | 'date'>) => void;
+  onSave: (tx: Partial<Transaction>) => void;
+  editingTransaction?: Transaction | null;
 }
 
-export function TransactionModal({ mode, transaction, onClose, onSave }: Props) {
-  const [title, setTitle] = useState(transaction?.title || '');
-  const [amount, setAmount] = useState(transaction?.amount?.toString() || '');
-  const [type, setType] = useState<'income' | 'expense'>(transaction?.type || 'expense');
+export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }: Props) {
+  const [context, setContext] = useState<ContextMode>(editingTransaction?.context || 'PF');
+  const [type, setType] = useState<TransactionType>(editingTransaction?.type || 'expense');
+  const [title, setTitle] = useState(editingTransaction?.title || '');
+  const [amount, setAmount] = useState<number>(editingTransaction?.amount || 0);
+  const [date, setDate] = useState(editingTransaction?.date || new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState(editingTransaction?.category || 'outros');
   
-  const [isPersonal, setIsPersonal] = useState(transaction?.isPersonalExpenseInPJ || false);
-  const [isPaidByPF, setIsPaidByPF] = useState(transaction?.isPaidByPF || false);
+  // Advanced options state
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isPaidByPF, setIsPaidByPF] = useState(editingTransaction?.isPaidByPF || false);
+  const [isPersonalExpenseInPJ, setIsPersonalExpenseInPJ] = useState(editingTransaction?.isPersonalExpenseInPJ || false);
+  const [isTaxDeductiblePF, setIsTaxDeductiblePF] = useState(editingTransaction?.isTaxDeductiblePF || false);
+  const [recurrence, setRecurrence] = useState<'unica' | 'mensal' | 'semanal' | 'anual'>(editingTransaction?.recurrence || 'unica');
 
-  const isPJ = mode === 'PJ';
+  if (!isOpen) return null;
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  const parsedAmount = parseFloat(amount.replace(',', '.'));
-  const isValidAmount = !isNaN(parsedAmount) && parsedAmount > 0;
-
-  const handleSubmit = () => {
-    if (title.trim() && isValidAmount) {
-      onSave({ 
-        title: title.trim(), 
-        amount: parsedAmount, 
-        type,
-        isPersonalExpenseInPJ: isPersonal,
-        isPaidByPF: isPaidByPF
-      });
+  // Sugestão automática de categoria baseada na palavra-chave
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    const lower = newTitle.toLowerCase();
+    if (context === 'PF') {
+      if (lower.includes('mercado') || lower.includes('pão') || lower.includes('ifood')) setCategory('alimentacao');
+      else if (lower.includes('unimed') || lower.includes('médico') || lower.includes('farmácia')) setCategory('saude');
+      else if (lower.includes('curso') || lower.includes('faculdade') || lower.includes('livro')) setCategory('educacao');
+      else if (lower.includes('aluguel') || lower.includes('luz') || lower.includes('internet')) setCategory('moradia');
+    } else {
+      if (lower.includes('aws') || lower.includes('vercel') || lower.includes('figma')) setCategory('software_infra');
+      else if (lower.includes('das') || lower.includes('imposto') || lower.includes('simples')) setCategory('impostos');
+      else if (lower.includes('facebook') || lower.includes('google ads')) setCategory('marketing');
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || amount <= 0) {
+      alert('Por favor, informe a descrição e um valor maior que zero.');
+      return;
+    }
+
+    onSave({
+      id: editingTransaction?.id,
+      context,
+      type,
+      title,
+      amount,
+      amountCents: Math.round(amount * 100),
+      date,
+      category,
+      isPaidByPF,
+      isPersonalExpenseInPJ,
+      isTaxDeductiblePF,
+      recurrence,
+    });
+
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
-      <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden p-6 animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
-            {transaction ? 'Editar Movimentação' : 'Nova Movimentação'}
-          </h3>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" aria-label="Fechar">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 text-white rounded-3xl p-8 max-w-lg w-full border border-slate-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
+        
+        {/* Header Modal */}
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h3 className="text-xl font-bold text-white">
+              {editingTransaction ? 'Editar Lançamento' : 'Novo Lançamento Financeiro'}
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">Registre de forma simples e rápida.</p>
+          </div>
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
-        
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Descrição</label>
-            <input 
-              autoFocus 
-              type="text" 
-              value={title} 
-              onChange={e => setTitle(e.target.value)} 
-              className={`w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 bg-slate-50 focus:bg-white transition-colors text-slate-900 ${isPJ ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
-              placeholder="Ex: Supermercado" 
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Valor (R$)</label>
-            <input 
-              type="number" 
-              step="0.01" 
-              min="0.01"
-              value={amount} 
-              onChange={e => setAmount(e.target.value)} 
-              className={`w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 bg-slate-50 focus:bg-white transition-colors text-slate-900 ${isPJ ? 'focus:ring-indigo-500' : 'focus:ring-blue-500'}`}
-              placeholder="0,00" 
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <button 
-              onClick={() => setType('income')} 
-              className={`py-3.5 rounded-xl font-semibold border-2 transition-colors ${
-                type === 'income' 
-                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50' 
-                  : 'border-slate-100 text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              Entrada
-            </button>
-            <button 
-              onClick={() => setType('expense')} 
-              className={`py-3.5 rounded-xl font-semibold border-2 transition-colors ${
-                type === 'expense' 
-                  ? 'border-red-500 text-red-700 bg-red-50' 
-                  : 'border-slate-100 text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              Saída
-            </button>
-          </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5 text-xs">
           
-          {isPJ && type === 'expense' && (
-            <div className="space-y-4 pt-4 mt-2 border-t border-slate-100">
-              <label className="flex items-start space-x-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={isPersonal} 
-                  onChange={(e) => { setIsPersonal(e.target.checked); if (e.target.checked) setIsPaidByPF(false); }} 
-                  className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
-                />
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">Despesa de uso pessoal</p>
-                  <p className="text-xs text-slate-500">Classificar como Pró-labore e enviar p/ PF</p>
-                </div>
-              </label>
-              <label className="flex items-start space-x-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={isPaidByPF} 
-                  onChange={(e) => { setIsPaidByPF(e.target.checked); if (e.target.checked) setIsPersonal(false); }} 
-                  className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
-                />
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">Pago com dinheiro pessoal</p>
-                  <p className="text-xs text-slate-500">Gerar dívida com o sócio (reembolsável)</p>
-                </div>
-              </label>
+          {/* STEP 1: CONTEXTO (PF vs PJ) */}
+          <div className="space-y-1.5">
+            <label className="block font-bold uppercase tracking-wider text-slate-400">1. Esta movimentação pertence a quem?</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setContext('PF'); setCategory('outros'); }}
+                className={`flex items-center justify-center space-x-2 py-3 rounded-xl font-bold border transition-all ${
+                  context === 'PF' ? 'bg-indigo-950/80 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <User className="w-4 h-4 text-indigo-400" />
+                <span>Pessoa Física (PF)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setContext('PJ'); setCategory('outros'); }}
+                className={`flex items-center justify-center space-x-2 py-3 rounded-xl font-bold border transition-all ${
+                  context === 'PJ' ? 'bg-slate-800 border-sky-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <Building2 className="w-4 h-4 text-sky-400" />
+                <span>Pessoa Jurídica (PJ)</span>
+              </button>
             </div>
-          )}
-          
-          <button 
-            onClick={handleSubmit} 
-            className={`w-full mt-2 py-4 text-white font-semibold rounded-2xl transition-transform transform hover:scale-[1.01] active:scale-95 text-lg shadow-sm disabled:opacity-50 ${isPJ ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-            disabled={!title.trim() || !isValidAmount}
+          </div>
+
+          {/* STEP 2: TIPO (ENTRADA vs SAÍDA) */}
+          <div className="space-y-1.5">
+            <label className="block font-bold uppercase tracking-wider text-slate-400">2. Qual o tipo do fluxo?</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setType('income')}
+                className={`py-2.5 rounded-xl font-bold border transition-all ${
+                  type === 'income' ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'
+                }`}
+              >
+                + Entrada (Receita)
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('expense')}
+                className={`py-2.5 rounded-xl font-bold border transition-all ${
+                  type === 'expense' ? 'bg-rose-950/80 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400'
+                }`}
+              >
+                - Saída (Despesa)
+              </button>
+            </div>
+          </div>
+
+          {/* DESCRIÇÃO E VALOR */}
+          <div className="space-y-3">
+            <div>
+              <label className="block font-bold text-slate-400 uppercase mb-1">Descrição / Título:</label>
+              <input
+                type="text"
+                placeholder="Ex: Supermercado, AWS Cloud, Pró-labore..."
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-slate-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Valor (R$):</label>
+                <MoneyInput value={amount} onChange={setAmount} />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-400 uppercase mb-1">Data:</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold font-mono text-white outline-none focus:border-slate-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ADVANCED OPTIONS TOGGLE */}
+          <div className="pt-2 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center justify-between w-full text-xs text-slate-400 font-bold hover:text-white py-1"
+            >
+              <span className="flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Mais Opções Avançadas (Recorrência, IRPF, Conciliação)</span>
+              </span>
+              {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showAdvanced && (
+              <div className="mt-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 animate-in fade-in duration-200">
+                {context === 'PJ' && type === 'expense' && (
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={isPaidByPF}
+                      onChange={(e) => setIsPaidByPF(e.target.checked)}
+                      className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0"
+                    />
+                    <span className="font-semibold">Esta despesa foi paga com dinheiro pessoal do sócio (Cartão/Conta PF)</span>
+                  </label>
+                )}
+
+                {context === 'PJ' && type === 'expense' && (
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={isPersonalExpenseInPJ}
+                      onChange={(e) => setIsPersonalExpenseInPJ(e.target.checked)}
+                      className="rounded border-slate-700 bg-slate-900 text-rose-600 focus:ring-0"
+                    />
+                    <span className="font-semibold">Esta é uma despesa pessoal do sócio paga na conta PJ (Ajustar como Pró-labore)</span>
+                  </label>
+                )}
+
+                {context === 'PF' && type === 'expense' && (
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={isTaxDeductiblePF}
+                      onChange={(e) => setIsTaxDeductiblePF(e.target.checked)}
+                      className="rounded border-slate-700 bg-slate-900 text-emerald-600 focus:ring-0"
+                    />
+                    <span className="font-semibold">Marcar como potencialmente dedutível para o IRPF (Saúde / Educação)</span>
+                  </label>
+                )}
+
+                <div className="pt-2">
+                  <label className="block text-slate-400 font-bold mb-1 uppercase text-[10px]">Frequência de Recorrência:</label>
+                  <select
+                    value={recurrence}
+                    onChange={(e: any) => setRecurrence(e.target.value)}
+                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl font-bold text-white outline-none"
+                  >
+                    <option value="unica">Única / Pontual</option>
+                    <option value="mensal">Mensal Recorrente</option>
+                    <option value="semanal">Semanal Recorrente</option>
+                    <option value="anual">Anual Recorrente</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-4 bg-slate-100 hover:bg-white text-slate-950 font-bold text-sm rounded-xl transition-all shadow-md active:scale-95"
           >
-            Salvar
+            {editingTransaction ? 'Salvar Alterações' : 'Confirmar Lançamento'}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

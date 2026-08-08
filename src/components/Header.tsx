@@ -1,4 +1,4 @@
-import { Building2, User, RotateCcw, ShieldCheck, ArrowRightLeft, PanelLeft, PanelRight, Globe } from 'lucide-react';
+import { Building2, User, RotateCcw, ArrowRightLeft, PanelLeft, PanelRight, Globe, Eye, EyeOff, Search } from 'lucide-react';
 import { ContextMode, ViewMode } from '../types';
 
 interface HeaderProps {
@@ -12,6 +12,9 @@ interface HeaderProps {
   setIsSidebarCollapsed: (collapsed: boolean | ((prev: boolean) => boolean)) => void;
   isRightRailOpen: boolean;
   setIsRightRailOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  isPrivacyMode: boolean;
+  setIsPrivacyMode: (privacy: boolean | ((prev: boolean) => boolean)) => void;
+  onOpenSearch: () => void;
 }
 
 export function Header({
@@ -25,6 +28,9 @@ export function Header({
   setIsSidebarCollapsed,
   isRightRailOpen,
   setIsRightRailOpen,
+  isPrivacyMode,
+  setIsPrivacyMode,
+  onOpenSearch,
 }: HeaderProps) {
   const isPJ = mode === 'PJ';
 
@@ -65,7 +71,7 @@ export function Header({
           </div>
         </div>
 
-        {/* Central Mode Switcher (PF vs PJ) - Matte Buttons */}
+        {/* Central Mode Switcher (PF vs PJ) */}
         <div className={`flex items-center p-1 rounded-xl border transition-all ${
           isPJ 
             ? 'bg-slate-950 border-slate-800' 
@@ -101,10 +107,41 @@ export function Header({
         </div>
 
         {/* Right Status Actions */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
+          {/* Global Search Button */}
+          <button
+            onClick={onOpenSearch}
+            className={`hidden md:flex items-center space-x-2 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+              isPJ 
+                ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white' 
+                : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
+            }`}
+            title="Buscar registro (Cmd + K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Buscar</span>
+            <kbd className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+              isPJ ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-500 border border-slate-200'
+            }`}>⌘K</kbd>
+          </button>
+
+          {/* Privacy Mode Toggle */}
+          <button
+            onClick={() => setIsPrivacyMode((prev: boolean) => !prev)}
+            className={`p-2 rounded-xl border transition-colors ${
+              isPrivacyMode
+                ? isPJ ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-900'
+                : isPJ ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
+            }`}
+            title={isPrivacyMode ? 'Desativar Modo Privacidade (Mostrar valores)' : 'Ativar Modo Privacidade (Ocultar valores)'}
+          >
+            {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+
+          {/* Landing Page Shortcut */}
           <button
             onClick={() => setViewMode('landing')}
-            className={`hidden md:flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+            className={`hidden lg:flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
               isPJ 
                 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white' 
                 : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
@@ -116,7 +153,7 @@ export function Header({
           </button>
 
           {pendingReimbursementAmount > 0 && (
-            <div className={`hidden lg:flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-xl border ${
+            <div className={`hidden xl:flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-xl border ${
               isPJ ? 'bg-amber-950/40 border-amber-800/80 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-900'
             }`}>
               <ArrowRightLeft className="w-3.5 h-3.5" />

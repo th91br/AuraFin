@@ -2,8 +2,19 @@ import { CalendarEvent } from '../types';
 import { X, QrCode, Banknote, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export function BillingModal({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
+interface BillingModalProps {
+  isOpen?: boolean;
+  event?: CalendarEvent;
+  onClose: () => void;
+  onSave?: (data: { client: string; amount: number; description: string; dueDate: string }) => void;
+}
+
+export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
+  const [client, setClient] = useState(event?.client || 'Fintech Brasil Ltda');
+  const [amount, setAmount] = useState(event?.value || 18500);
+  const [description, setDescription] = useState(event?.title || 'Faturamento Servico TI');
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -13,74 +24,112 @@ export function BillingModal({ event, onClose }: { event: CalendarEvent; onClose
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  if (isOpen === false) return null;
+
+  const handleGenerate = () => {
+    if (onSave) {
+      onSave({ client, amount, description, dueDate });
+    }
+    setStep(2);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      ></div>
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose}></div>
 
-      {/* Modal Content */}
-      <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200">
-        <div className="p-6 pb-4 flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-slate-900 tracking-tight">Emissão de Cobrança</h3>
+      <div className="relative bg-slate-900 border border-slate-800 text-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6 pb-4 flex justify-between items-center border-b border-slate-800">
+          <h3 className="text-xl font-bold tracking-tight text-white">Emissão de Cobrança Pix</h3>
           <button 
             onClick={onClose} 
-            className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
+            className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 pt-2">
+        <div className="p-6 pt-4">
           {step === 1 ? (
-            <div className="space-y-8">
-              <div className="text-center p-8 bg-slate-50/80 rounded-[1.5rem] border border-slate-100">
-                <p className="text-sm font-medium text-slate-500 mb-2">{event.title}</p>
-                <p className="text-4xl font-semibold text-slate-900 tracking-tight mb-3">
-                  R$ {event.value?.toFixed(2)}
-                </p>
-                <p className="text-sm font-medium text-slate-600 bg-white py-1.5 px-4 rounded-full inline-block border border-slate-200 shadow-sm">
-                  Cliente: {event.client}
-                </p>
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Cliente:</label>
+                  <input
+                    type="text"
+                    value={client}
+                    onChange={(e) => setClient(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Descrição do Serviço:</label>
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 font-mono">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 font-sans">Valor (R$):</label>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 font-sans">Vencimento:</label>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <p className="text-sm font-semibold text-slate-900">Método de cobrança padrão</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-indigo-600 bg-indigo-50/50 text-indigo-700 transition-all shadow-sm">
-                    <QrCode className="w-7 h-7 mb-3" />
-                    <span className="text-sm font-bold">Pix Automático</span>
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-slate-400 uppercase">Método de cobrança gerencial</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="flex flex-col items-center justify-center p-4 rounded-xl border border-sky-500 bg-slate-800 text-sky-400 font-bold transition-all shadow-sm">
+                    <QrCode className="w-6 h-6 mb-2" />
+                    <span className="text-xs">Pix QR Code</span>
                   </button>
-                  <button className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-600 transition-all">
-                    <Banknote className="w-7 h-7 mb-3" />
-                    <span className="text-sm font-semibold">Boleto (D+1)</span>
+                  <button className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 font-medium transition-all">
+                    <Banknote className="w-6 h-6 mb-2" />
+                    <span className="text-xs">Boleto (D+1)</span>
                   </button>
                 </div>
               </div>
 
               <button
-                onClick={() => setStep(2)}
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl shadow-sm transition-all transform hover:scale-[1.01] active:scale-95 text-lg"
+                onClick={handleGenerate}
+                className="w-full py-4 bg-slate-100 hover:bg-white text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all active:scale-95"
               >
-                Gerar e Enviar Cobrança
+                Gerar Fatura e QR Code Pix
               </button>
             </div>
           ) : (
-            <div className="py-12 flex flex-col items-center text-center space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-2 ring-8 ring-emerald-50/50">
-                <CheckCircle2 className="w-10 h-10" />
+            <div className="py-8 flex flex-col items-center text-center space-y-4 animate-in fade-in duration-300">
+              <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h4 className="text-2xl font-semibold text-slate-900 tracking-tight">Cobrança Enviada!</h4>
-              <p className="text-slate-500 max-w-[280px] leading-relaxed">
-                O link de pagamento via Pix foi gerado e enviado para o WhatsApp de <strong className="text-slate-700">{event.client}</strong>.
+              <h4 className="text-2xl font-black text-white tracking-tight">Cobrança Gerada com Sucesso!</h4>
+              <p className="text-slate-400 text-xs max-w-[280px]">
+                O link de pagamento via Pix foi registrado no caixa da empresa para <strong className="text-white">{client}</strong>.
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 px-8 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-2xl transition-colors"
+                className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-colors border border-slate-700"
               >
-                Voltar para Agenda
+                Concluir
               </button>
             </div>
           )}

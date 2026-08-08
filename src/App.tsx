@@ -1,369 +1,297 @@
 import { useState, useEffect } from 'react';
-import { ContextMode, ViewMode, PFTab, PJTab, CalendarEvent, Transaction, Asset, Project, Defaulter, BudgetItem } from './types';
 import { 
-  pfEvents as initialPfEvents, 
-  pjEvents as initialPjEvents, 
-  initialTransactions, 
-  initialAssets, 
-  initialProjects, 
-  initialDefaulters, 
-  initialBudgetItems 
-} from './data';
+  ContextMode, 
+  ViewMode, 
+  PFTab, 
+  PJTab, 
+  Transaction, 
+  Asset, 
+  Project, 
+  Defaulter, 
+  BudgetItem, 
+  CalendarEvent,
+  Account,
+  CreditCard,
+  Goal,
+  Debt,
+  Customer,
+  Supplier,
+  CostCenter
+} from './types';
+import { StorageRepository } from './services/storage/storageRepository';
 
-import { LandingPage } from './components/LandingPage';
-import { Sidebar } from './components/Sidebar';
+// Component Imports
 import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
 import { RightRail } from './components/RightRail';
+import { LandingPage } from './components/LandingPage';
 
+// PF Component Views
 import { PfOverview } from './components/PfOverview';
-import { PfBudget } from './components/PfBudget';
+import { PfTransactions } from './components/PfTransactions';
+import { PfPlanning } from './components/PfPlanning';
 import { PfWealth } from './components/PfWealth';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
+import { PfReports } from './components/PfReports';
 
+// PJ Component Views
 import { PjOverview } from './components/PjOverview';
-import { PjDreCashflow } from './components/PjDreCashflow';
-import { PjProjects } from './components/PjProjects';
-import { PjDefaulters } from './components/PjDefaulters';
+import { PjCashflow } from './components/PjCashflow';
+import { PjReceivablesPayables } from './components/PjReceivablesPayables';
+import { PjManagement } from './components/PjManagement';
+import { PjCollections } from './components/PjCollections';
 import { PjAccounting } from './components/PjAccounting';
+import { PjReports } from './components/PjReports';
 
-import { BillingModal } from './components/BillingModal';
+// Modals & Overlay Utilities
 import { TransactionModal } from './components/TransactionModal';
-import { EventModal } from './components/EventModal';
-import { AssetModal } from './components/AssetModal';
+import { BillingModal } from './components/BillingModal';
 import { ProjectModal } from './components/ProjectModal';
-
-const LOCAL_STORAGE_KEYS = {
-  VIEW_MODE: 'aurafin_view_mode_v3',
-  TRANSACTIONS: 'aurafin_transactions_v3',
-  EVENTS: 'aurafin_events_v3',
-  ASSETS: 'aurafin_assets_v3',
-  PROJECTS: 'aurafin_projects_v3',
-  DEFAULTERS: 'aurafin_defaulters_v3',
-  BUDGET_ITEMS: 'aurafin_budget_items_v3',
-  MODE: 'aurafin_mode_v3',
-  PF_TAB: 'aurafin_pf_tab_v3',
-  PJ_TAB: 'aurafin_pj_tab_v3',
-  SIDEBAR_COLLAPSED: 'aurafin_sidebar_collapsed_v3',
-  RIGHT_RAIL_OPEN: 'aurafin_right_rail_open_v3',
-};
+import { AssetModal } from './components/AssetModal';
+import { EventModal } from './components/EventModal';
+import { GlobalSearchModal } from './components/ui/GlobalSearchModal';
+import { OnboardingModal } from './components/ui/OnboardingModal';
 
 export default function App() {
-  // View & Mode state
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.VIEW_MODE);
-      return (saved as ViewMode) || 'app';
-    } catch {
-      return 'app';
-    }
-  });
+  // Navigation & Shell States
+  const [viewMode, setViewMode] = useState<ViewMode>('app');
+  const [mode, setMode] = useState<ContextMode>('PF');
+  const [pfTab, setPfTab] = useState<PFTab>('overview');
+  const [pjTab, setPjTab] = useState<PJTab>('overview');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isRightRailOpen, setIsRightRailOpen] = useState(true);
 
-  const [mode, setMode] = useState<ContextMode>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.MODE);
-      return saved === 'PJ' || saved === 'PF' ? saved : 'PF';
-    } catch {
-      return 'PF';
-    }
-  });
+  // Storage Encapsulated States
+  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => StorageRepository.getPrivacyMode());
+  const [transactions, setTransactions] = useState<Transaction[]>(() => StorageRepository.getTransactions());
+  const [assets, setAssets] = useState<Asset[]>(() => StorageRepository.getAssets());
+  const [projects, setProjects] = useState<Project[]>(() => StorageRepository.getProjects());
+  const [defaulters, setDefaulters] = useState<Defaulter[]>(() => StorageRepository.getDefaulters());
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => StorageRepository.getBudgetItems());
+  const [events, setEvents] = useState<CalendarEvent[]>(() => StorageRepository.getEvents());
+  const [accounts, setAccounts] = useState<Account[]>(() => StorageRepository.getAccounts());
+  const [creditCards, setCreditCards] = useState<CreditCard[]>(() => StorageRepository.getCreditCards());
+  const [goals, setGoals] = useState<Goal[]>(() => StorageRepository.getGoals());
+  const [debts, setDebts] = useState<Debt[]>(() => StorageRepository.getDebts());
+  const [customers, setCustomers] = useState<Customer[]>(() => StorageRepository.getCustomers());
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() => StorageRepository.getSuppliers());
+  const [costCenters, setCostCenters] = useState<CostCenter[]>(() => StorageRepository.getCostCenters());
 
-  const [pfTab, setPfTab] = useState<PFTab>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.PF_TAB);
-      return (saved as PFTab) || 'overview';
-    } catch {
-      return 'overview';
-    }
-  });
-
-  const [pjTab, setPjTab] = useState<PJTab>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.PJ_TAB);
-      return (saved as PJTab) || 'overview';
-    } catch {
-      return 'overview';
-    }
-  });
-
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.SIDEBAR_COLLAPSED);
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
-
-  const [isRightRailOpen, setIsRightRailOpen] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.RIGHT_RAIL_OPEN);
-      return saved ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
-
-  // Data state
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.TRANSACTIONS);
-      return saved ? JSON.parse(saved) : initialTransactions;
-    } catch {
-      return initialTransactions;
-    }
-  });
-
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.EVENTS);
-      return saved ? JSON.parse(saved) : [...initialPfEvents, ...initialPjEvents];
-    } catch {
-      return [...initialPfEvents, ...initialPjEvents];
-    }
-  });
-
-  const [assets, setAssets] = useState<Asset[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.ASSETS);
-      return saved ? JSON.parse(saved) : initialAssets;
-    } catch {
-      return initialAssets;
-    }
-  });
-
-  const [projects, setProjects] = useState<Project[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.PROJECTS);
-      return saved ? JSON.parse(saved) : initialProjects;
-    } catch {
-      return initialProjects;
-    }
-  });
-
-  const [defaulters, setDefaulters] = useState<Defaulter[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.DEFAULTERS);
-      return saved ? JSON.parse(saved) : initialDefaulters;
-    } catch {
-      return initialDefaulters;
-    }
-  });
-
-  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.BUDGET_ITEMS);
-      return saved ? JSON.parse(saved) : initialBudgetItems;
-    } catch {
-      return initialBudgetItems;
-    }
-  });
-
-  // Modals state
-  const [selectedBillingEvent, setSelectedBillingEvent] = useState<CalendarEvent | null>(null);
-  const [isBillingModalOpen, setBillingModalOpen] = useState(false);
-  const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
+  // Modal States
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [isEventModalOpen, setEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [isAssetModalOpen, setAssetModalOpen] = useState(false);
-  const [isProjectModalOpen, setProjectModalOpen] = useState(false);
 
-  // Persistence Effects
+  // Persist State Changes using StorageRepository
   useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEYS.VIEW_MODE, viewMode);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.EVENTS, JSON.stringify(events));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.ASSETS, JSON.stringify(assets));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.DEFAULTERS, JSON.stringify(defaulters));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.BUDGET_ITEMS, JSON.stringify(budgetItems));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.MODE, mode);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.PF_TAB, pfTab);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.PJ_TAB, pjTab);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.SIDEBAR_COLLAPSED, JSON.stringify(isSidebarCollapsed));
-      localStorage.setItem(LOCAL_STORAGE_KEYS.RIGHT_RAIL_OPEN, JSON.stringify(isRightRailOpen));
-    } catch (err) {
-      console.error('Erro ao persistir dados no LocalStorage:', err);
-    }
-  }, [viewMode, transactions, events, assets, projects, defaulters, budgetItems, mode, pfTab, pjTab, isSidebarCollapsed, isRightRailOpen]);
+    StorageRepository.saveTransactions(transactions);
+  }, [transactions]);
 
-  // Handlers
-  const handleResetDemoData = () => {
-    if (window.confirm('Deseja restaurar os dados originais de demonstração? Suas alterações serão redefinidas.')) {
-      setTransactions(initialTransactions);
-      setEvents([...initialPfEvents, ...initialPjEvents]);
-      setAssets(initialAssets);
-      setProjects(initialProjects);
-      setDefaulters(initialDefaulters);
-      setBudgetItems(initialBudgetItems);
-      setMode('PF');
-      setPfTab('overview');
-      setPjTab('overview');
-    }
-  };
+  useEffect(() => {
+    StorageRepository.saveAssets(assets);
+  }, [assets]);
 
-  const handleSaveTransaction = (data: Omit<Transaction, 'id' | 'context' | 'date'>) => {
-    const now = Date.now();
+  useEffect(() => {
+    StorageRepository.saveProjects(projects);
+  }, [projects]);
 
-    if (editingTransaction) {
-      const updatedTxs = transactions.map((t) => {
-        if (t.id === editingTransaction.id) {
-          return { ...t, ...data, timestamp: t.timestamp || now };
-        }
-        if (editingTransaction.linkedTransactionId && t.id === editingTransaction.linkedTransactionId) {
-          let updatedTitle = t.title;
-          if (data.isPersonalExpenseInPJ) {
-            updatedTitle = `Pró-labore: ${data.title}`;
-          } else if (data.isPaidByPF) {
-            updatedTitle = `Empréstimo p/ Empresa: ${data.title}`;
-          }
-          return { ...t, title: updatedTitle, amount: data.amount };
-        }
-        return t;
-      });
-      setTransactions(updatedTxs);
-    } else {
-      const txId = now.toString();
-      const linkedId = (now + 1).toString();
-      let linkedTx: Transaction | null = null;
+  useEffect(() => {
+    StorageRepository.saveDefaulters(defaulters);
+  }, [defaulters]);
 
-      if (mode === 'PJ' && data.type === 'expense') {
-        if (data.isPersonalExpenseInPJ) {
-          linkedTx = {
-            id: linkedId,
-            title: `Pró-labore: ${data.title}`,
-            amount: data.amount,
-            type: 'income',
-            date: 'Agora mesmo',
-            context: 'PF',
-            category: 'salario_prolabore',
-            linkedTransactionId: txId,
-            timestamp: now,
-          };
-        } else if (data.isPaidByPF) {
-          linkedTx = {
-            id: linkedId,
-            title: `Aporte p/ Empresa: ${data.title}`,
-            amount: data.amount,
-            type: 'expense',
-            date: 'Agora mesmo',
-            context: 'PF',
-            category: 'outros',
-            linkedTransactionId: txId,
-            timestamp: now,
-          };
-        }
-      }
+  useEffect(() => {
+    StorageRepository.saveEvents(events);
+  }, [events]);
 
-      const newTx: Transaction = {
-        id: txId,
-        ...data,
-        context: mode,
-        date: 'Agora mesmo',
-        linkedTransactionId: linkedTx ? linkedId : undefined,
-        timestamp: now,
-      };
+  useEffect(() => {
+    StorageRepository.setPrivacyMode(isPrivacyMode);
+  }, [isPrivacyMode]);
 
-      setTransactions(linkedTx ? [newTx, linkedTx, ...transactions] : [newTx, ...transactions]);
+  // Calculations for Cross-Reimbursements
+  const pendingReimbursements = transactions.filter(t => t.context === 'PJ' && t.isPaidByPF && !t.reimbursed);
+  const pendingReimbursementAmount = pendingReimbursements.reduce((acc, t) => acc + t.amount, 0);
+
+  // Motor PF <-> PJ: Reembolsar Sócio em 1 clique
+  const handleReimburseSocio = () => {
+    if (pendingReimbursementAmount <= 0) {
+      alert('Nenhum valor pendente de reembolso ao sócio.');
+      return;
     }
 
-    setTransactionModalOpen(false);
-    setEditingTransaction(null);
-  };
+    const timestamp = new Date().toISOString().split('T')[0];
+    const crossId = `reimburse_${Date.now()}`;
 
-  const handleReimburse = () => {
-    const pending = transactions.filter((t) => t.context === 'PJ' && t.isPaidByPF && !t.reimbursed);
-    if (pending.length === 0) return;
+    // Lançamento Saída PJ
+    const pjOffset: Transaction = {
+      id: `tx_reimburse_pj_${Date.now()}`,
+      context: 'PJ',
+      type: 'expense',
+      title: `Reembolso Aporte Sócio (${pendingReimbursements.length} despesas)`,
+      amount: pendingReimbursementAmount,
+      amountCents: Math.round(pendingReimbursementAmount * 100),
+      date: timestamp,
+      category: 'reembolso_socio',
+      subCategory: 'Liquidação Aporte Sócio',
+      crossContextId: crossId,
+    };
 
-    const total = pending.reduce((acc, t) => acc + t.amount, 0);
-    const time = Date.now();
-    const pjTxId = time.toString();
-    const pfTxId = (time + 1).toString();
+    // Lançamento Entrada PF
+    const pfOffset: Transaction = {
+      id: `tx_reimburse_pf_${Date.now()}`,
+      context: 'PF',
+      type: 'income',
+      title: `Recebimento Reembolso Despesas PJ`,
+      amount: pendingReimbursementAmount,
+      amountCents: Math.round(pendingReimbursementAmount * 100),
+      date: timestamp,
+      category: 'outros',
+      subCategory: 'Reembolso do Sócio',
+      crossContextId: crossId,
+      isPaidByPF: true,
+      reimbursed: true,
+    };
 
-    const updatedTxs = transactions.map((t) => {
+    // Atualiza transações marcando-as como reembolsadas
+    const updated = transactions.map(t => {
       if (t.context === 'PJ' && t.isPaidByPF && !t.reimbursed) {
         return { ...t, reimbursed: true };
       }
       return t;
     });
 
-    const newPjTx: Transaction = {
-      id: pjTxId,
-      title: 'Reembolso Oficial ao Sócio',
-      amount: total,
-      type: 'expense',
-      context: 'PJ',
-      category: 'equipe_terceiros',
-      date: 'Agora mesmo',
-      linkedTransactionId: pfTxId,
-      timestamp: time,
-    };
+    setTransactions([...updated, pjOffset, pfOffset]);
+    alert(`Reembolso de R$ ${pendingReimbursementAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} realizado com sucesso em 1 clique!`);
+  };
 
-    const newPfTx: Transaction = {
-      id: pfTxId,
-      title: 'Reembolso Recebido da Empresa (PJ)',
-      amount: total,
-      type: 'income',
-      context: 'PF',
-      category: 'salario_prolabore',
-      date: 'Agora mesmo',
-      linkedTransactionId: pjTxId,
-      timestamp: time,
-    };
+  // Restauração de dados de demonstração
+  const handleResetDemo = () => {
+    if (window.confirm('Deseja restaurar os dados originais de demonstração do AuraFin?')) {
+      StorageRepository.resetToDemo();
+      setTransactions(StorageRepository.getTransactions());
+      setAssets(StorageRepository.getAssets());
+      setProjects(StorageRepository.getProjects());
+      setDefaulters(StorageRepository.getDefaulters());
+      setBudgetItems(StorageRepository.getBudgetItems());
+      setEvents(StorageRepository.getEvents());
+      setAccounts(StorageRepository.getAccounts());
+      setCreditCards(StorageRepository.getCreditCards());
+      setGoals(StorageRepository.getGoals());
+      setDebts(StorageRepository.getDebts());
+      setCustomers(StorageRepository.getCustomers());
+      setSuppliers(StorageRepository.getSuppliers());
+      setCostCenters(StorageRepository.getCostCenters());
+      setIsPrivacyMode(false);
+      alert('Dados de demonstração restaurados!');
+    }
+  };
 
-    setTransactions([newPjTx, newPfTx, ...updatedTxs]);
+  // Handlers para Transação
+  const handleSaveTransaction = (txData: Partial<Transaction>) => {
+    if (editingTransaction) {
+      setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? { ...t, ...txData } as Transaction : t));
+      setEditingTransaction(null);
+    } else {
+      const newTx: Transaction = {
+        id: `tx_${Date.now()}`,
+        context: txData.context || mode,
+        type: txData.type || 'expense',
+        title: txData.title || 'Novo Lançamento',
+        amount: txData.amount || 0,
+        amountCents: Math.round((txData.amount || 0) * 100),
+        date: txData.date || new Date().toISOString().split('T')[0],
+        category: txData.category || 'outros',
+        subCategory: txData.subCategory,
+        isTaxDeductiblePF: txData.isTaxDeductiblePF,
+        isPersonalExpenseInPJ: txData.isPersonalExpenseInPJ,
+        isPaidByPF: txData.isPaidByPF,
+        recurrence: txData.recurrence,
+      };
+
+      // Se for despesa pessoal paga na conta PJ, cria o espelho automático na PF
+      if (newTx.context === 'PJ' && newTx.isPersonalExpenseInPJ) {
+        const mirrorPf: Transaction = {
+          id: `tx_pf_mirror_${Date.now()}`,
+          context: 'PF',
+          type: 'income',
+          title: `Retirada / Pró-labore: ${newTx.title}`,
+          amount: newTx.amount,
+          amountCents: newTx.amountCents,
+          date: newTx.date,
+          category: 'salario_prolabore',
+          crossContextId: newTx.id,
+        };
+        setTransactions(prev => [newTx, mirrorPf, ...prev]);
+      } else {
+        setTransactions(prev => [newTx, ...prev]);
+      }
+    }
   };
 
   const handleDeleteTransaction = (id: string) => {
-    const target = transactions.find((t) => t.id === id);
-    if (!target) return;
-
-    if (target.linkedTransactionId) {
-      setTransactions(transactions.filter((t) => t.id !== id && t.id !== target.linkedTransactionId));
-    } else {
-      setTransactions(transactions.filter((t) => t.id !== id));
-    }
+    setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleSaveEvent = (data: Omit<CalendarEvent, 'id' | 'type' | 'status'>) => {
-    const now = Date.now();
-    if (editingEvent) {
-      setEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...data } : e)));
-    } else {
-      setEvents([
-        {
-          id: now.toString(),
-          ...data,
-          type: mode,
-          status: 'scheduled',
-          timestamp: now,
-        } as CalendarEvent,
-        ...events,
-      ]);
-    }
-    setEventModalOpen(false);
-    setEditingEvent(null);
+  // Handlers de Faturamento e Demais Modais
+  const handleSaveBilling = (data: { client: string; amount: number; description: string; dueDate: string }) => {
+    const newTx: Transaction = {
+      id: `pj_bill_${Date.now()}`,
+      context: 'PJ',
+      type: 'income',
+      title: `Fatura: ${data.description}`,
+      amount: data.amount,
+      amountCents: Math.round(data.amount * 100),
+      date: data.dueDate,
+      category: 'receita_servico',
+      subCategory: 'Faturamento Pix',
+    };
+    setTransactions(prev => [newTx, ...prev]);
   };
 
-  const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter((e) => e.id !== id));
+  const handleSaveProject = (data: { name: string; client: string; revenue: number; cost: number; deadline: string }) => {
+    const newProj: Project = {
+      id: `proj_${Date.now()}`,
+      name: data.name,
+      client: data.client,
+      revenue: data.revenue,
+      cost: data.cost,
+      status: 'em_andamento',
+      deadline: data.deadline,
+    };
+    setProjects(prev => [newProj, ...prev]);
   };
 
-  const handleSaveAsset = (data: Omit<Asset, 'id'>) => {
-    setAssets([{ id: Date.now().toString(), ...data }, ...assets]);
-    setAssetModalOpen(false);
+  const handleSaveAsset = (data: { name: string; category: any; value: number; notes: string }) => {
+    const newAsset: Asset = {
+      id: `ast_${Date.now()}`,
+      name: data.name,
+      category: data.category,
+      value: data.value,
+      notes: data.notes,
+    };
+    setAssets(prev => [newAsset, ...prev]);
   };
 
-  const handleSaveProject = (data: Omit<Project, 'id'>) => {
-    setProjects([{ id: Date.now().toString(), ...data }, ...projects]);
-    setProjectModalOpen(false);
+  const handleSaveEvent = (data: { title: string; time: string; duration: string; client?: string; value?: number }) => {
+    const newEv: CalendarEvent = {
+      id: `ev_${Date.now()}`,
+      title: data.title,
+      time: data.time,
+      duration: data.duration,
+      client: data.client,
+      value: data.value,
+      type: mode,
+      status: 'confirmed',
+    };
+    setEvents(prev => [newEv, ...prev]);
   };
 
-  const pendingReimbursements = transactions.filter((t) => t.context === 'PJ' && t.isPaidByPF && !t.reimbursed);
-  const pendingReimbursementAmount = pendingReimbursements.reduce((acc, t) => acc + t.amount, 0);
-
-  // If in Landing Page mode, render Landing Page component
+  // Se estiver visualizando a Landing Page Institucional
   if (viewMode === 'landing') {
     return (
       <LandingPage
@@ -376,12 +304,12 @@ export default function App() {
     );
   }
 
-  // App Shell Layout
   return (
-    <div className={`flex min-h-screen font-sans transition-colors duration-500 selection:bg-cyan-200 selection:text-slate-900 ${
+    <div className={`min-h-screen font-sans flex transition-colors duration-300 ${
       mode === 'PJ' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
-      {/* Collapsible Left Sidebar */}
+      
+      {/* Sidebar Lateral Retrátil (Logo sempre visível) */}
       <Sidebar
         mode={mode}
         pfTab={pfTab}
@@ -392,212 +320,238 @@ export default function App() {
         setIsCollapsed={setIsSidebarCollapsed}
         pendingReimbursementAmount={pendingReimbursementAmount}
         defaultersCount={defaulters.length}
-        onOpenTransactionModal={() => {
-          setEditingTransaction(null);
-          setTransactionModalOpen(true);
-        }}
-        onOpenBillingModal={() => setBillingModalOpen(true)}
+        onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+        onOpenBillingModal={() => setIsBillingModalOpen(true)}
       />
 
-      {/* Main Container Area */}
+      {/* Main App Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header */}
+        
+        {/* Header Superior Principal */}
         <Header
           mode={mode}
           setMode={setMode}
           viewMode={viewMode}
           setViewMode={setViewMode}
           pendingReimbursementAmount={pendingReimbursementAmount}
-          onResetDemo={handleResetDemoData}
+          onResetDemo={handleResetDemo}
           isSidebarCollapsed={isSidebarCollapsed}
           setIsSidebarCollapsed={setIsSidebarCollapsed}
           isRightRailOpen={isRightRailOpen}
           setIsRightRailOpen={setIsRightRailOpen}
+          isPrivacyMode={isPrivacyMode}
+          setIsPrivacyMode={setIsPrivacyMode}
+          onOpenSearch={() => setIsGlobalSearchOpen(true)}
         />
 
-        {/* Content View Body & Optional Right Rail */}
-        <div className="flex-1 flex min-w-0">
-          <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 min-w-0">
-            {mode === 'PF' ? (
-              <>
-                {pfTab === 'overview' && (
-                  <PfOverview
-                    transactions={transactions}
-                    events={events}
-                    assets={assets}
-                    onAddTransaction={() => {
-                      setEditingTransaction(null);
-                      setTransactionModalOpen(true);
-                    }}
-                    onAddAsset={() => setAssetModalOpen(true)}
-                    onEditTransaction={(t) => {
-                      setEditingTransaction(t);
-                      setTransactionModalOpen(true);
-                    }}
-                    onDeleteTransaction={handleDeleteTransaction}
-                    onAddEvent={() => {
-                      setEditingEvent(null);
-                      setEventModalOpen(true);
-                    }}
-                    onEditEvent={(e) => {
-                      setEditingEvent(e);
-                      setEventModalOpen(true);
-                    }}
-                    onDeleteEvent={handleDeleteEvent}
-                    onActionClickEvent={setSelectedBillingEvent}
-                  />
-                )}
+        {/* Dynamic Page Viewer Container */}
+        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-8">
+          
+          {/* MODO PESSOA FÍSICA (PF) */}
+          {mode === 'PF' && (
+            <>
+              {pfTab === 'overview' && (
+                <PfOverview
+                  transactions={transactions}
+                  events={events}
+                  assets={assets}
+                  onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                  onAddAsset={() => setIsAssetModalOpen(true)}
+                  onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
+                  onDeleteTransaction={handleDeleteTransaction}
+                  onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
+                  onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
+                  onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                  onActionClickEvent={() => {}}
+                />
+              )}
 
-                {pfTab === 'budget' && (
-                  <PfBudget
-                    transactions={transactions}
-                    budgetItems={budgetItems}
-                    onAddTransaction={() => {
-                      setEditingTransaction(null);
-                      setTransactionModalOpen(true);
-                    }}
-                  />
-                )}
+              {pfTab === 'transactions' && (
+                <PfTransactions
+                  transactions={transactions}
+                  accounts={accounts}
+                  creditCards={creditCards}
+                  isPrivacyMode={isPrivacyMode}
+                  onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                />
+              )}
 
-                {pfTab === 'wealth' && (
-                  <PfWealth
-                    assets={assets}
-                    transactions={transactions}
-                    onAddAsset={() => setAssetModalOpen(true)}
-                  />
-                )}
+              {pfTab === 'planning' && (
+                <PfPlanning
+                  transactions={transactions}
+                  budgetItems={budgetItems}
+                  goals={goals}
+                  debts={debts}
+                  isPrivacyMode={isPrivacyMode}
+                  onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                />
+              )}
 
-                {pfTab === 'tax_planning' && (
-                  <PfTaxPlanning
-                    assets={assets}
-                    transactions={transactions}
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                {pjTab === 'overview' && (
-                  <PjOverview
-                    transactions={transactions}
-                    events={events}
-                    onAddTransaction={() => {
-                      setEditingTransaction(null);
-                      setTransactionModalOpen(true);
-                    }}
-                    onEditTransaction={(t) => {
-                      setEditingTransaction(t);
-                      setTransactionModalOpen(true);
-                    }}
-                    onDeleteTransaction={handleDeleteTransaction}
-                    onAddEvent={() => {
-                      setEditingEvent(null);
-                      setEventModalOpen(true);
-                    }}
-                    onEditEvent={(e) => {
-                      setEditingEvent(e);
-                      setEventModalOpen(true);
-                    }}
-                    onDeleteEvent={handleDeleteEvent}
-                    onActionClickEvent={setSelectedBillingEvent}
-                    onOpenBillingModal={() => setBillingModalOpen(true)}
-                  />
-                )}
+              {pfTab === 'wealth' && (
+                <PfWealth
+                  assets={assets}
+                  transactions={transactions}
+                  onAddAsset={() => setIsAssetModalOpen(true)}
+                />
+              )}
 
-                {pjTab === 'dre_cashflow' && (
-                  <PjDreCashflow transactions={transactions} />
-                )}
+              {pfTab === 'tax_planning' && (
+                <PfTaxPlanning
+                  assets={assets}
+                  transactions={transactions}
+                />
+              )}
 
-                {pjTab === 'projects' && (
-                  <PjProjects
-                    projects={projects}
-                    onAddProject={() => setProjectModalOpen(true)}
-                  />
-                )}
-
-                {pjTab === 'defaulters' && (
-                  <PjDefaulters defaulters={defaulters} />
-                )}
-
-                {pjTab === 'accounting' && (
-                  <PjAccounting
-                    transactions={transactions}
-                    onReimburse={handleReimburse}
-                  />
-                )}
-              </>
-            )}
-          </main>
-
-          {/* Contextual Right Rail (Inspirado no Cashtracker / Banksy) */}
-          {isRightRailOpen && (
-            <RightRail
-              mode={mode}
-              transactions={transactions}
-              assets={assets}
-              defaulters={defaulters}
-              pendingReimbursementAmount={pendingReimbursementAmount}
-              onOpenTransactionModal={() => {
-                setEditingTransaction(null);
-                setTransactionModalOpen(true);
-              }}
-              onOpenBillingModal={() => setBillingModalOpen(true)}
-              onReimburseSocio={handleReimburse}
-            />
+              {pfTab === 'reports' && (
+                <PfReports
+                  transactions={transactions}
+                  assets={assets}
+                  isPrivacyMode={isPrivacyMode}
+                />
+              )}
+            </>
           )}
-        </div>
+
+          {/* MODO PESSOA JURÍDICA (PJ) */}
+          {mode === 'PJ' && (
+            <>
+              {pjTab === 'overview' && (
+                <PjOverview
+                  transactions={transactions}
+                  events={events}
+                  onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                  onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
+                  onDeleteTransaction={handleDeleteTransaction}
+                  onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
+                  onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
+                  onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                  onActionClickEvent={() => setIsBillingModalOpen(true)}
+                  onOpenBillingModal={() => setIsBillingModalOpen(true)}
+                />
+              )}
+
+              {pjTab === 'cashflow' && (
+                <PjCashflow
+                  transactions={transactions}
+                  isPrivacyMode={isPrivacyMode}
+                />
+              )}
+
+              {pjTab === 'receivables_payables' && (
+                <PjReceivablesPayables
+                  customers={customers}
+                  suppliers={suppliers}
+                  costCenters={costCenters}
+                  isPrivacyMode={isPrivacyMode}
+                />
+              )}
+
+              {pjTab === 'management' && (
+                <PjManagement
+                  projects={projects}
+                  customers={customers}
+                  suppliers={suppliers}
+                  costCenters={costCenters}
+                  isPrivacyMode={isPrivacyMode}
+                  onAddProject={() => setIsProjectModalOpen(true)}
+                />
+              )}
+
+              {pjTab === 'collections' && (
+                <PjCollections
+                  defaulters={defaulters}
+                  isPrivacyMode={isPrivacyMode}
+                  onOpenBillingModal={() => setIsBillingModalOpen(true)}
+                />
+              )}
+
+              {pjTab === 'accounting' && (
+                <PjAccounting
+                  transactions={transactions}
+                  onReimburse={handleReimburseSocio}
+                />
+              )}
+
+              {pjTab === 'reports' && (
+                <PjReports
+                  transactions={transactions}
+                  isPrivacyMode={isPrivacyMode}
+                />
+              )}
+            </>
+          )}
+
+        </main>
       </div>
 
-      {/* Global Modals */}
-      {(selectedBillingEvent || isBillingModalOpen) && (
-        <BillingModal
-          event={selectedBillingEvent || {
-            id: 'billing_demo',
-            title: 'Fatura de Serviço Consultoria',
-            time: '14:00',
-            duration: '1h',
-            type: 'PJ',
-            value: 4500,
-            status: 'action_required',
-            client: 'TechFlow Ltda'
-          }}
-          onClose={() => {
-            setSelectedBillingEvent(null);
-            setBillingModalOpen(false);
-          }}
-        />
-      )}
-
-      {isTransactionModalOpen && (
-        <TransactionModal
+      {/* Right Rail Contextual Panel */}
+      {isRightRailOpen && (
+        <RightRail
           mode={mode}
-          transaction={editingTransaction}
-          onClose={() => {
-            setTransactionModalOpen(false);
-            setEditingTransaction(null);
-          }}
-          onSave={handleSaveTransaction}
+          transactions={transactions}
+          assets={assets}
+          defaulters={defaulters}
+          pendingReimbursementAmount={pendingReimbursementAmount}
+          onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+          onOpenBillingModal={() => setIsBillingModalOpen(true)}
+          onReimburseSocio={handleReimburseSocio}
         />
       )}
 
-      {isEventModalOpen && (
-        <EventModal
-          mode={mode}
-          event={editingEvent}
-          onClose={() => {
-            setEventModalOpen(false);
-            setEditingEvent(null);
-          }}
-          onSave={handleSaveEvent}
-        />
-      )}
+      {/* Modais da Aplicação */}
+      <TransactionModal
+        isOpen={isTransactionModalOpen}
+        onClose={() => setIsTransactionModalOpen(false)}
+        onSave={handleSaveTransaction}
+        editingTransaction={editingTransaction}
+      />
 
-      {isAssetModalOpen && (
-        <AssetModal onClose={() => setAssetModalOpen(false)} onSave={handleSaveAsset} />
-      )}
+      <BillingModal
+        isOpen={isBillingModalOpen}
+        onClose={() => setIsBillingModalOpen(false)}
+        onSave={handleSaveBilling}
+      />
 
-      {isProjectModalOpen && (
-        <ProjectModal onClose={() => setProjectModalOpen(false)} onSave={handleSaveProject} />
-      )}
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSave={handleSaveProject}
+      />
+
+      <AssetModal
+        isOpen={isAssetModalOpen}
+        onClose={() => setIsAssetModalOpen(false)}
+        onSave={handleSaveAsset}
+      />
+
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        onSave={handleSaveEvent}
+        editingEvent={editingEvent}
+      />
+
+      <GlobalSearchModal
+        isOpen={isGlobalSearchOpen}
+        onClose={() => setIsGlobalSearchOpen(false)}
+        transactions={transactions}
+        projects={projects}
+        customers={customers}
+        onSelectTransaction={(t) => {
+          setMode(t.context);
+          setEditingTransaction(t);
+          setIsTransactionModalOpen(true);
+        }}
+      />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onFinish={(selectedMode) => {
+          setMode(selectedMode);
+          setIsOnboardingOpen(false);
+        }}
+      />
+
     </div>
   );
 }
