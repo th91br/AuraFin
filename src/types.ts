@@ -7,7 +7,8 @@ export type PFTab =
   | 'planning' 
   | 'wealth' 
   | 'tax_planning' 
-  | 'reports';
+  | 'reports'
+  | 'conciliations';
 
 export type PJTab = 
   | 'overview' 
@@ -16,7 +17,8 @@ export type PJTab =
   | 'management' 
   | 'collections' 
   | 'accounting' 
-  | 'reports';
+  | 'reports'
+  | 'conciliations';
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
 

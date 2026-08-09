@@ -1,18 +1,11 @@
-import { 
-  Plus, 
-  ArrowRightLeft, 
-  ShieldCheck, 
-  Sparkles, 
-  FileText, 
-  AlertTriangle,
-  Receipt
-} from 'lucide-react';
-import { ContextMode, Transaction, Asset, Defaulter } from '../types';
+import React from 'react';
+import { Transaction, Asset, Defaulter } from '../types';
+import { VisualPaymentCard, ActivityRow } from './aura/AuraCards';
+import { Plus, CreditCard, ArrowRightLeft, ShieldAlert, Bell, Sparkles } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
-import { HelpTooltip } from './ui/HelpTooltip';
 
 interface RightRailProps {
-  mode: ContextMode;
+  mode: 'PF' | 'PJ';
   transactions: Transaction[];
   assets: Asset[];
   defaulters: Defaulter[];
@@ -20,12 +13,12 @@ interface RightRailProps {
   onOpenTransactionModal: () => void;
   onOpenBillingModal: () => void;
   onReimburseSocio: () => void;
+  isPrivacyMode?: boolean;
 }
 
 export function RightRail({
   mode,
   transactions,
-  assets,
   defaulters,
   pendingReimbursementAmount,
   onOpenTransactionModal,
@@ -33,111 +26,96 @@ export function RightRail({
   onReimburseSocio,
 }: RightRailProps) {
   const isPJ = mode === 'PJ';
-  const filteredTxs = transactions.filter(t => t.context === mode).slice(0, 4);
+  const modeTxs = transactions.filter(t => t.context === mode);
 
   return (
-    <aside className="w-80 h-screen sticky top-0 flex flex-col border-l border-slate-200/80 bg-white text-slate-900 z-10 transition-all duration-300 overflow-y-auto scrollbar-none p-5 space-y-6">
+    <div className="space-y-6">
       
-      {/* Top Header Panel */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-indigo-700" />
-          <h3 className="font-extrabold text-sm text-slate-900">
-            {isPJ ? 'Painel Operacional PJ' : 'Painel Financeiro PF'}
+      {/* 1. Visual Payment Card Section ("Your cards") */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className={`font-bold text-xs uppercase tracking-wider ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
+            {isPJ ? 'Cartões Corporativos' : 'Meus Cartões'}
           </h3>
+          <button 
+            onClick={isPJ ? onOpenBillingModal : onOpenTransactionModal}
+            className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
+              isPJ ? 'bg-slate-800 text-cyan-400 hover:bg-slate-700' : 'bg-slate-100 text-indigo-600 hover:bg-slate-200'
+            }`}
+            title="Novo Cartão"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
-          isPJ ? 'bg-slate-900 text-white border-slate-800' : 'bg-indigo-50 text-indigo-900 border-indigo-200'
-        }`}>
-          {isPJ ? 'Corporativo' : 'Pessoal'}
-        </span>
+
+        <VisualPaymentCard
+          cardName={isPJ ? 'AuraFin Business Black' : 'AuraFin Platinum'}
+          cardNumberMasked="9123 3443 2132 4554"
+          balance={isPJ ? 24500 : 2453}
+          dueDate="09/28"
+          isPJ={isPJ}
+        />
       </div>
 
-      {/* Cross Reimbursement Card (Motor PF <-> PJ) */}
+      {/* 2. Urgent Actions / Reembolsos Pendentes */}
       {pendingReimbursementAmount > 0 && (
-        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
+        <div className={`p-4 rounded-2xl border space-y-3 ${
+          isPJ ? 'bg-amber-950/40 border-amber-500/20 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-950'
+        }`}>
           <div className="flex items-center space-x-2">
-            <ArrowRightLeft className="w-4 h-4 text-amber-800" />
-            <h4 className="font-bold text-amber-900 text-xs">Aporte de Sócio Pendente</h4>
+            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+            <h4 className="font-bold text-xs">Aporte de Sócio a Reembolsar</h4>
           </div>
-          <p className="text-[11px] text-amber-800 leading-relaxed">
-            Você possui despesas da empresa pagas com dinheiro pessoal aguardando ressarcimento.
+          <p className="text-[11px] font-mono font-bold">
+            R$ {pendingReimbursementAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="flex items-center justify-between font-mono pt-1">
-            <span className="text-[11px] font-bold text-amber-900 font-sans">Valor Pendente:</span>
-            <span className="text-sm font-black text-amber-900">
-              R$ {pendingReimbursementAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
           <button
             onClick={onReimburseSocio}
-            className="w-full py-2.5 bg-amber-900 hover:bg-amber-950 text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95"
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all shadow-xs"
           >
-            Reembolsar Sócio em 1-Clique
+            Reembolsar em 1-Clique
           </button>
         </div>
       )}
 
-      {/* Quick Action Button */}
-      <div className="space-y-2">
-        <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Ação Rápida</span>
-        {!isPJ ? (
-          <button
-            onClick={onOpenTransactionModal}
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Novo Lançamento Pessoal</span>
-          </button>
-        ) : (
-          <button
-            onClick={onOpenBillingModal}
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-sm"
-          >
-            <Receipt className="w-4 h-4" />
-            <span>Emitir Fatura / Pix PJ</span>
-          </button>
-        )}
-      </div>
-
-      {/* Recent Contextual Activity */}
+      {/* 3. Atividades & Próximos Vencimentos List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">
-            Últimas Movimentações ({mode})
-          </span>
+        <div className="flex justify-between items-center">
+          <h3 className={`font-bold text-xs uppercase tracking-wider ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
+            Atividades Recentes
+          </h3>
+          <span className={`text-[10px] ${isPJ ? 'text-slate-500' : 'text-slate-400'}`}>Hoje</span>
         </div>
 
-        <div className="space-y-2.5">
-          {filteredTxs.map(t => (
-            <div key={t.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
-              <div className="truncate mr-2">
-                <p className="font-bold text-slate-900 truncate">{t.title}</p>
-                <p className="text-[10px] text-slate-500">{t.date}</p>
-              </div>
-              <span className={`font-mono font-bold shrink-0 ${t.type === 'income' ? 'text-emerald-700' : 'text-slate-900'}`}>
-                {t.type === 'income' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR')}
-              </span>
-            </div>
+        <div className="space-y-2">
+          {modeTxs.slice(0, 4).map(tx => (
+            <ActivityRow
+              key={tx.id}
+              title={tx.title}
+              subtitle={`${tx.date} • ${tx.category}`}
+              amount={tx.amount}
+              isIncome={tx.type === 'income'}
+              isPJ={isPJ}
+            />
           ))}
-
-          {filteredTxs.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-4">Nenhum lançamento no modo {mode}.</p>
-          )}
         </div>
       </div>
 
-      {/* Security Footer Card */}
-      <div className="mt-auto p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+      {/* 4. Quick Insights Widget */}
+      <div className={`p-4 rounded-2xl border space-y-2 ${
+        isPJ ? 'bg-[#1E293B] border-white/5 text-slate-300' : 'bg-slate-50 border-slate-200/80 text-slate-700'
+      }`}>
         <div className="flex items-center space-x-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-700" />
-          <span className="font-bold text-slate-900 text-xs">Segurança Patrimonial</span>
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <h4 className="font-bold text-xs">Insight AuraFin</h4>
         </div>
-        <p className="text-[11px] text-slate-500 leading-relaxed">
-          O AuraFin separa juridicamente suas contas PF e PJ mantendo o motor de conciliação 100% local.
+        <p className="text-[11px] leading-relaxed">
+          {isPJ 
+            ? 'Seu Runway atual cobre 180 dias de operação sem necessidade de aportes externos.'
+            : 'Você já atingiu 74% da sua meta de Reserva de Emergência para este semestre.'}
         </p>
       </div>
 
-    </aside>
+    </div>
   );
 }
