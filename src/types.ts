@@ -4,6 +4,9 @@ export type ViewMode = 'landing' | 'app';
 export type PFTab = 
   | 'overview' 
   | 'transactions' 
+  | 'accounts'
+  | 'cards'
+  | 'recurrences'
   | 'planning' 
   | 'wealth' 
   | 'tax_planning' 

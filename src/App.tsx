@@ -29,6 +29,9 @@ import { PfPjReconciliation } from './components/PfPjReconciliation';
 // PF Component Views
 import { PfOverview } from './components/PfOverview';
 import { PfTransactions } from './components/PfTransactions';
+import { PfAccounts } from './components/PfAccounts';
+import { PfCards } from './components/PfCards';
+import { PfRecurrences } from './components/PfRecurrences';
 import { PfPlanning } from './components/PfPlanning';
 import { PfWealth } from './components/PfWealth';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
@@ -48,6 +51,7 @@ import { BillingModal } from './components/BillingModal';
 import { ProjectModal } from './components/ProjectModal';
 import { AssetModal } from './components/AssetModal';
 import { EventModal } from './components/EventModal';
+import { AddCreditCardModal } from './components/AddCreditCardModal';
 import { GlobalSearchModal } from './components/ui/GlobalSearchModal';
 
 export default function App() {
@@ -78,6 +82,7 @@ export default function App() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -194,6 +199,21 @@ export default function App() {
     }
   };
 
+  const handleSaveCreditCard = (cardData: Partial<CreditCard>) => {
+    const newCard: CreditCard = {
+      id: cardData.id || `card_${Date.now()}`,
+      name: cardData.name || 'Novo Cartão',
+      institution: cardData.institution || 'Banco',
+      limitTotal: cardData.limitTotal || 10000,
+      limitUsed: 0,
+      currentInvoice: 0,
+      closingDay: cardData.closingDay || 20,
+      dueDay: cardData.dueDay || 28,
+      context: 'PF',
+    };
+    setCreditCards(prev => [...prev, newCard]);
+  };
+
   if (viewMode === 'landing') {
     return (
       <LandingPage
@@ -268,6 +288,32 @@ export default function App() {
               creditCards={creditCards}
               isPrivacyMode={isPrivacyMode}
               onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+            />
+          )}
+
+          {pfTab === 'accounts' && (
+            <PfAccounts
+              accounts={accounts}
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+              onAddAccount={() => alert('Formulário de nova conta')}
+              onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+            />
+          )}
+
+          {pfTab === 'cards' && (
+            <PfCards
+              creditCards={creditCards}
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+              onAddCard={() => setIsAddCardModalOpen(true)}
+            />
+          )}
+
+          {pfTab === 'recurrences' && (
+            <PfRecurrences
+              isPrivacyMode={isPrivacyMode}
+              onAddRecurrence={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
             />
           )}
 
@@ -441,6 +487,12 @@ export default function App() {
           };
           setAssets(prev => [newAsset, ...prev]);
         }}
+      />
+
+      <AddCreditCardModal
+        isOpen={isAddCardModalOpen}
+        onClose={() => setIsAddCardModalOpen(false)}
+        onSave={handleSaveCreditCard}
       />
 
       <EventModal
