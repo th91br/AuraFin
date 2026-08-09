@@ -33,6 +33,9 @@ import { PfAccounts } from './components/PfAccounts';
 import { PfCards } from './components/PfCards';
 import { PfRecurrences } from './components/PfRecurrences';
 import { PfPlanning } from './components/PfPlanning';
+import { PfGoalsView } from './components/PfGoalsView';
+import { PfEmergencyReserveView } from './components/PfEmergencyReserveView';
+import { PfDebtsView } from './components/PfDebtsView';
 import { PfWealth } from './components/PfWealth';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
 
@@ -321,10 +324,44 @@ export default function App() {
             <PfPlanning
               transactions={transactions}
               budgetItems={budgetItems}
-              goals={goals}
-              debts={debts}
               isPrivacyMode={isPrivacyMode}
               onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+            />
+          )}
+
+          {pfTab === 'goals' && (
+            <PfGoalsView
+              goals={goals}
+              isPrivacyMode={isPrivacyMode}
+              onAddGoal={() => alert('Formulário de nova meta')}
+            />
+          )}
+
+          {pfTab === 'reserve' && (
+            <PfEmergencyReserveView
+              isPrivacyMode={isPrivacyMode}
+              onAddDeposit={() => alert('Aporte registrado na reserva!')}
+            />
+          )}
+
+          {pfTab === 'debts' && (
+            <PfDebtsView
+              isPrivacyMode={isPrivacyMode}
+              onAddDebt={() => alert('Formulário de nova dívida')}
+              onPayInstallment={(debtId, amount) => {
+                const newTx: Transaction = {
+                  id: `tx_debt_${Date.now()}`,
+                  context: 'PF',
+                  type: 'expense',
+                  title: `Pagamento Parcela Dívida`,
+                  amount,
+                  amountCents: Math.round(amount * 100),
+                  date: new Date().toISOString().split('T')[0],
+                  category: 'outros',
+                };
+                setTransactions(prev => [newTx, ...prev]);
+                alert('Pagamento de parcela registrado como movimentação!');
+              }}
             />
           )}
 

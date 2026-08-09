@@ -28,7 +28,9 @@ import {
   ShieldCheck,
   Wallet,
   CreditCard,
-  RefreshCw
+  RefreshCw,
+  Target,
+  ShieldAlert
 } from 'lucide-react';
 
 interface AuraShellProps {
@@ -198,6 +200,42 @@ export function AuraShell({
               >
                 <PieChart className="w-4 h-4 text-indigo-600" />
                 {!isSidebarCollapsed && <span>Orçamento</span>}
+              </button>
+
+              <button
+                onClick={() => setPfTab('goals')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  pfTab === 'goals'
+                    ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/80 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <Target className="w-4 h-4 text-indigo-600" />
+                {!isSidebarCollapsed && <span>Metas</span>}
+              </button>
+
+              <button
+                onClick={() => setPfTab('reserve')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  pfTab === 'reserve'
+                    ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/80 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                {!isSidebarCollapsed && <span>Reserva de Emergência</span>}
+              </button>
+
+              <button
+                onClick={() => setPfTab('debts')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  pfTab === 'debts'
+                    ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/80 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <ShieldAlert className="w-4 h-4 text-indigo-600" />
+                {!isSidebarCollapsed && <span>Dívidas & Financiamentos</span>}
               </button>
 
               <button
