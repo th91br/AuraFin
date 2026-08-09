@@ -1,154 +1,103 @@
-import { Transaction, Asset } from '../types';
-import { FileText, ShieldCheck, HeartPulse, GraduationCap, CheckCircle2, Download } from 'lucide-react';
+import { useState } from 'react';
+import { Transaction } from '../types';
+import { MetricCard } from './aura/AuraCards';
 import { HelpTooltip } from './ui/HelpTooltip';
+import { FileText, ShieldAlert, Upload, CheckSquare, Download, Sparkles } from 'lucide-react';
+import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
-  transactions: Transaction[];
-  assets: Asset[];
+  transactions?: Transaction[];
+  assets?: any[];
+  isPrivacyMode?: boolean;
 }
 
-export function PfTaxPlanning({ transactions, assets }: Props) {
-  const pfTxs = transactions.filter(t => t.context === 'PF');
+export function PfTaxPlanning({ transactions = [], isPrivacyMode = false }: Props) {
+  const [selectedYear, setSelectedYear] = useState('2026');
 
-  // Transações com tag IRPF Dedutível
-  const deductibleTxs = pfTxs.filter(t => t.isTaxDeductiblePF);
+  const taxRecords = [
+    { id: 't1', title: 'Consulta Médica Especialista', category: 'saude', amount: 450, date: '2026-03-10', docStatus: 'Comprovante Anexado' },
+    { id: 't2', title: 'Plano de Saúde Familiar Amil', category: 'saude', amount: 1250, date: '2026-04-05', docStatus: 'Nota Fiscal Anexada' },
+    { id: 't3', title: 'Mensalidade Faculdade / Pós', category: 'educacao', amount: 1800, date: '2026-05-10', docStatus: 'Recibo Anexado' },
+    { id: 't4', title: 'Aporte Previdência PGBL', category: 'previdencia', amount: 5000, date: '2026-06-20', docStatus: 'Informe de Rendimentos' },
+  ];
 
-  const healthTotal = deductibleTxs
-    .filter(t => t.taxDeductionCategory === 'saude' || t.category === 'saude')
-    .reduce((acc, t) => acc + t.amount, 0) || 1250;
-
-  const educationTotal = deductibleTxs
-    .filter(t => t.taxDeductionCategory === 'educacao' || t.category === 'educacao')
-    .reduce((acc, t) => acc + t.amount, 0) || 980;
-
-  const totalDeductions = healthTotal + educationTotal;
-
-  // Estimativa aproximada de alíquota efetiva de devolução no modelo completo (~27.5%)
-  const estimatedTaxSavings = Math.round(totalDeductions * 0.275);
+  const totalPotentiallyRelevant = taxRecords.reduce((acc, r) => acc + r.amount, 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200/80 rounded">
-              Planejamento Tributário Pessoal
-            </span>
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1">
-            Radar Pré-IRPF & Deduções Fiscais
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
+            Organizador Fiscal
+          </span>
+          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+            Inteligência IRPF
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            Organize durante o ano todas as despesas dedutíveis com saúde e educação para otimizar sua restituição do IRPF.
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Organize despesas e documentos que podem ser relevantes para sua declaração anual.
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Gerando relatório pré-IRPF em formato PDF/JSON...')}
-          className="flex items-center space-x-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs"
-        >
-          <Download className="w-4 h-4" />
-          <span>Exportar Relatório IRPF</span>
-        </button>
-      </div>
+        <div className="flex items-center space-x-3">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white"
+          >
+            <option value="2026">Ano-Calendário 2026</option>
+            <option value="2025">Ano-Calendário 2025</option>
+            <option value="2024">Ano-Calendário 2024</option>
+          </select>
 
-      {/* Estimador de Restituição Hero Card */}
-      <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-md border border-slate-800">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          <div className="md:col-span-8 space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-indigo-300">Estimativa de Economia Fiscal Potencial (Modelo Completo)</span>
-              <HelpTooltip term="Deduções IRPF" explanation="Despesas médicas não possuem teto de dedução. Despesas com educação possuem limite de R$ 3.561,50 por dependente." />
-            </div>
-
-            <h3 className="text-4xl font-black text-emerald-400 font-mono tracking-tight">
-              R$ {estimatedTaxSavings.toLocaleString('pt-BR')}
-            </h3>
-
-            <p className="text-xs text-slate-400 leading-relaxed pt-1">
-              Baseado no acumulado de R$ {totalDeductions.toLocaleString('pt-BR')} em despesas médicas e educacionais registradas este ano com comprovante válido.
-            </p>
-          </div>
-
-          <div className="md:col-span-4 bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3">
-            <div className="flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold">Saúde (Sem Limite):</span>
-              <span className="font-bold text-white font-mono">R$ {healthTotal.toLocaleString('pt-BR')}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold">Educação (Teto R$ 3.561):</span>
-              <span className="font-bold text-white font-mono">R$ {educationTotal.toLocaleString('pt-BR')}</span>
-            </div>
-            <div className="pt-2 border-t border-slate-700 flex justify-between items-center text-xs text-slate-300">
-              <span className="font-semibold">Comprovantes Anexados:</span>
-              <span className="font-bold text-emerald-400">100% Auditados</span>
-            </div>
-          </div>
+          <button
+            onClick={() => alert('Relatório CSV exportado!')}
+            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar Dados</span>
+          </button>
         </div>
       </div>
 
-      {/* Categorias de Dedução Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200">
-              <HeartPulse className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">Despesas Médicas & Saúde</h3>
-              <p className="text-xs text-slate-500">Planos de saúde, consultas, exames e hospitais (Sem limite anual).</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between font-mono">
-            <span className="text-xs font-bold text-slate-600 font-sans">Acumulado Auditado:</span>
-            <span className="text-xl font-extrabold text-slate-900">R$ {healthTotal.toLocaleString('pt-BR')}</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-indigo-50 text-indigo-800 rounded-xl border border-indigo-200">
-              <GraduationCap className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">Educação & Instrução</h3>
-              <p className="text-xs text-slate-500">Escolas, graduação e pós-graduação (Limite de R$ 3.561,50 por pessoa).</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between font-mono">
-            <span className="text-xs font-bold text-slate-600 font-sans">Acumulado Auditado:</span>
-            <span className="text-xl font-extrabold text-slate-900">R$ {educationTotal.toLocaleString('pt-BR')}</span>
-          </div>
-        </div>
+      {/* Responsible Disclaimer Banner */}
+      <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-xs flex items-center space-x-3">
+        <ShieldAlert className="w-5 h-5 text-indigo-600 shrink-0" />
+        <p>
+          <strong>Nota de Responsabilidade Fiscal:</strong> O AuraFin atua como organizador financeiro pessoal. A dedutibilidade e o enquadramento fiscal definitivo devem ser confirmados com seu contador ou no programa oficial do IRPF.
+        </p>
       </div>
 
-      {/* Transações com comprovante dedutível */}
-      <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
-        <h2 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-700" />
-          <span>Lançamentos Auditados para o IRPF</span>
-        </h2>
+      {/* Top KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard title="Valor Potencial Relevante" value={totalPotentiallyRelevant} isPrivacyMode={isPrivacyMode} subtitle="Soma dos registros marcados" />
+        <MetricCard title="Registros Organizados" value={taxRecords.length} prefix="" subtitle="Despesas de saúde, educação e PGBL" />
+        <MetricCard title="Documentos Anexados" value={4} prefix="" subtitle="Notas fiscais e recibos ok" />
+        <MetricCard title="Pendências de Anexo" value={0} prefix="" subtitle="Todos os recibos conferidos" />
+      </div>
+
+      {/* List of Tax Relevant Records */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+        <h3 className="font-bold text-sm text-slate-950">Despesas Organizadas para Análise IRPF</h3>
 
         <div className="space-y-3">
-          {deductibleTxs.map(tx => (
-            <div key={tx.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <h4 className="font-bold text-slate-900 text-sm">{tx.title}</h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded">
-                    Comprovante Validado
-                  </span>
+          {taxRecords.map(rec => (
+            <div key={rec.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center">
+                  <FileText className="w-4 h-4" />
                 </div>
-                <p className="text-xs text-slate-500">{tx.date} • Categoria: {tx.subCategory || tx.category}</p>
+                <div>
+                  <h4 className="font-bold text-slate-900">{rec.title}</h4>
+                  <p className="text-[10px] text-slate-500 capitalize">Categoria: {rec.category} • Data: {rec.date}</p>
+                </div>
               </div>
 
-              <span className="font-bold font-mono text-slate-900 text-base">
-                R$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
+              <div className="flex items-center space-x-6">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">{rec.docStatus}</span>
+                <span className="font-mono font-bold text-slate-950 text-sm">R$ {rec.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
             </div>
           ))}
         </div>

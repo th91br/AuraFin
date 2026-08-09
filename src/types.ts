@@ -12,6 +12,7 @@ export type PFTab =
   | 'reserve'
   | 'debts'
   | 'wealth' 
+  | 'investments'
   | 'tax_planning' 
   | 'reports'
   | 'conciliations';

@@ -30,7 +30,8 @@ import {
   CreditCard,
   RefreshCw,
   Target,
-  ShieldAlert
+  ShieldAlert,
+  TrendingUp
 } from 'lucide-react';
 
 interface AuraShellProps {
@@ -251,6 +252,18 @@ export function AuraShell({
               </button>
 
               <button
+                onClick={() => setPfTab('investments')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  pfTab === 'investments'
+                    ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/80 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4 text-indigo-600" />
+                {!isSidebarCollapsed && <span>Investimentos</span>}
+              </button>
+
+              <button
                 onClick={() => setPfTab('tax_planning')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   pfTab === 'tax_planning'
@@ -259,7 +272,19 @@ export function AuraShell({
                 }`}
               >
                 <FileText className="w-4 h-4 text-indigo-600" />
-                {!isSidebarCollapsed && <span>Radar IRPF</span>}
+                {!isSidebarCollapsed && <span>Inteligência IRPF</span>}
+              </button>
+
+              <button
+                onClick={() => setPfTab('reports')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  pfTab === 'reports'
+                    ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/80 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <LineChart className="w-4 h-4 text-indigo-600" />
+                {!isSidebarCollapsed && <span>Relatórios PF</span>}
               </button>
             </>
           ) : (

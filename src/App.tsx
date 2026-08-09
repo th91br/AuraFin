@@ -37,7 +37,9 @@ import { PfGoalsView } from './components/PfGoalsView';
 import { PfEmergencyReserveView } from './components/PfEmergencyReserveView';
 import { PfDebtsView } from './components/PfDebtsView';
 import { PfWealth } from './components/PfWealth';
+import { PfInvestmentsView } from './components/PfInvestmentsView';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
+import { PfReportsView } from './components/PfReportsView';
 
 // PJ Component Views
 import { PjOverview } from './components/PjOverview';
@@ -369,7 +371,15 @@ export default function App() {
             <PfWealth
               assets={assets}
               transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
               onAddAsset={() => setIsAssetModalOpen(true)}
+            />
+          )}
+
+          {pfTab === 'investments' && (
+            <PfInvestmentsView
+              isPrivacyMode={isPrivacyMode}
+              onAddInvestment={() => alert('Formulário de novo investimento')}
             />
           )}
 
@@ -377,6 +387,15 @@ export default function App() {
             <PfTaxPlanning
               assets={assets}
               transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pfTab === 'reports' && (
+            <PfReportsView
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+              onNavigateTab={(tab) => setPfTab(tab as PFTab)}
             />
           )}
 
