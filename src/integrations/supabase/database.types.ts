@@ -228,6 +228,97 @@ export interface Database {
           updated_at?: string
         }
       }
+      receivables: {
+        Row: {
+          id: string
+          organization_id: string
+          client_id: string | null
+          title: string
+          original_amount_cents: number
+          received_amount_cents: number
+          balance_cents: number
+          issue_date: string
+          due_date: string
+          status: 'pendente' | 'parcial' | 'recebido' | 'atrasado' | 'cancelado'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          client_id?: string | null
+          title: string
+          original_amount_cents: number
+          received_amount_cents?: number
+          balance_cents: number
+          issue_date: string
+          due_date: string
+          status?: 'pendente' | 'parcial' | 'recebido' | 'atrasado' | 'cancelado'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          client_id?: string | null
+          title?: string
+          original_amount_cents?: number
+          received_amount_cents?: number
+          balance_cents?: number
+          issue_date?: string
+          due_date?: string
+          status?: 'pendente' | 'parcial' | 'recebido' | 'atrasado' | 'cancelado'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      payables: {
+        Row: {
+          id: string
+          organization_id: string
+          supplier_id: string | null
+          title: string
+          original_amount_cents: number
+          paid_amount_cents: number
+          balance_cents: number
+          issue_date: string
+          due_date: string
+          status: 'pendente' | 'parcial' | 'pago' | 'atrasado' | 'cancelado'
+          is_paid_by_pf: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          supplier_id?: string | null
+          title: string
+          original_amount_cents: number
+          paid_amount_cents?: number
+          balance_cents: number
+          issue_date: string
+          due_date: string
+          status?: 'pendente' | 'parcial' | 'pago' | 'atrasado' | 'cancelado'
+          is_paid_by_pf?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          supplier_id?: string | null
+          title?: string
+          original_amount_cents?: number
+          paid_amount_cents?: number
+          balance_cents?: number
+          issue_date?: string
+          due_date?: string
+          status?: 'pendente' | 'parcial' | 'pago' | 'atrasado' | 'cancelado'
+          is_paid_by_pf?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       business_transactions: {
         Row: {
           id: string
@@ -370,6 +461,23 @@ export interface Database {
           file_size_bytes?: number
           mime_type?: string
           created_at?: string
+        }
+      }
+    }
+    Views: {
+      v_defaulters: {
+        Row: {
+          receivable_id: string
+          organization_id: string
+          client_id: string | null
+          client_name: string
+          invoice_code: string
+          amount_cents: number
+          days_overdue: number
+          due_date: string
+          status: 'em_atraso' | 'em_cobranca' | 'juridico'
+          created_at: string
+          updated_at: string
         }
       }
     }
