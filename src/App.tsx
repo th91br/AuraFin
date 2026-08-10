@@ -41,7 +41,7 @@ import { PfInvestmentsView } from './components/PfInvestmentsView';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
 import { PfReportsView } from './components/PfReportsView';
 
-// PJ Component Views (Bloco 1 & Bloco 2)
+// PJ Component Views (Bloco 1, Bloco 2 & Bloco 4)
 import { PjOverview } from './components/PjOverview';
 import { PjCashflow } from './components/PjCashflow';
 import { PjReceivablesPayables } from './components/PjReceivablesPayables';
@@ -52,8 +52,10 @@ import { PjRunwayView } from './components/PjRunwayView';
 import { PjProjectsView } from './components/PjProjectsView';
 import { PjCostCentersView } from './components/PjCostCentersView';
 import { PjTaxControlView } from './components/PjTaxControlView';
-import { PjManagement } from './components/PjManagement';
 import { PjCollections } from './components/PjCollections';
+import { PjAccountantHubView } from './components/PjAccountantHubView';
+import { PjDocumentsView } from './components/PjDocumentsView';
+import { PjManagement } from './components/PjManagement';
 import { PjCardsView } from './components/PjCardsView';
 import { PjAccounting } from './components/PjAccounting';
 import { PjReports } from './components/PjReports';
@@ -488,8 +490,29 @@ export default function App() {
             />
           )}
 
+          {pjTab === 'delinquency' && (
+            <PjCollections
+              defaulters={defaulters}
+              isPrivacyMode={isPrivacyMode}
+              onOpenBillingModal={() => setIsBillingModalOpen(true)}
+            />
+          )}
+
           {pjTab === 'taxes' && (
             <PjTaxControlView
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'accountant' && (
+            <PjAccountantHubView
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'documents' && (
+            <PjDocumentsView
               isPrivacyMode={isPrivacyMode}
             />
           )}

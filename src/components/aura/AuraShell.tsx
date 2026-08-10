@@ -36,7 +36,11 @@ import {
   Scale,
   Clock,
   Layers,
-  Percent
+  Percent,
+  AlertTriangle,
+  UserCheck,
+  FolderOpen,
+  CheckSquare
 } from 'lucide-react';
 
 interface AuraShellProps {
@@ -88,7 +92,7 @@ export function AuraShell({
       isPJ ? 'bg-[#020617] text-slate-100' : 'bg-[#F8FAFC] text-slate-900'
     }`}>
       
-      {/* 1. AuraSidebar (230px-250px retractable, logo "A" always visible) */}
+      {/* 1. AuraSidebar */}
       <aside
         className={`sticky top-0 h-screen flex flex-col transition-all duration-300 z-30 select-none border-r ${
           isPJ 
@@ -408,6 +412,66 @@ export function AuraShell({
               </button>
 
               <button
+                onClick={() => setPjTab('delinquency')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'delinquency'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                {!isSidebarCollapsed && <span>Inadimplência</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('accounting')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'accounting'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <UserCheck className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Pró-labore & Sócios</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('conciliations')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'conciliations'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Conciliações PF ↔ PJ</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('accountant')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'accountant'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <CheckSquare className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Central do Contador</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('documents')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'documents'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <FolderOpen className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Documentos</span>}
+              </button>
+
+              <button
                 onClick={() => setPjTab('taxes')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   pjTab === 'taxes'
@@ -420,27 +484,15 @@ export function AuraShell({
               </button>
 
               <button
-                onClick={() => setPjTab('management')}
+                onClick={() => setPjTab('reports')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  pjTab === 'management'
+                  pjTab === 'reports'
                     ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Users className="w-4 h-4 text-cyan-400" />
-                {!isSidebarCollapsed && <span>Clientes & Fornecedores</span>}
-              </button>
-
-              <button
-                onClick={() => setPjTab('cards')}
-                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  pjTab === 'cards'
-                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
-              >
-                <CreditCard className="w-4 h-4 text-cyan-400" />
-                {!isSidebarCollapsed && <span>Cartões da Empresa</span>}
+                <LineChart className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Relatórios PJ</span>}
               </button>
             </>
           )}
@@ -560,7 +612,7 @@ export function AuraShell({
           </div>
         </header>
 
-        {/* 3. AuraMainContent (Fluid 12-column grid max-width 1440px) */}
+        {/* 3. AuraMainContent */}
         <main className="flex-1 p-6 md:p-8 max-w-[1440px] w-full mx-auto space-y-8">
           {children}
         </main>
