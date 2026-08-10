@@ -6,7 +6,6 @@ import {
   Search, 
   Bell, 
   PanelLeft, 
-  PanelRight, 
   Globe, 
   Eye, 
   EyeOff, 
@@ -75,10 +74,8 @@ export function AuraShell({
   onOpenTransactionModal,
   onOpenBillingModal,
   children,
-  rightRailContent,
 }: AuraShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isRightRailOpen, setIsRightRailOpen] = useState(true);
 
   const isPJ = mode === 'PJ';
 
@@ -518,21 +515,6 @@ export function AuraShell({
               >
                 {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-
-              {/* Botão de Painel Lateral desabilitado no PF para garantir barra única */}
-              {isPJ && (
-                <button
-                  onClick={() => setIsRightRailOpen(prev => !prev)}
-                  className={`p-2 rounded-xl border transition-all ${
-                    isRightRailOpen
-                      ? 'bg-slate-800 text-white border-white/10'
-                      : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'
-                  }`}
-                  title="Painel Lateral"
-                >
-                  <PanelRight className="w-4 h-4" />
-                </button>
-              )}
             </div>
 
           </div>
@@ -543,13 +525,6 @@ export function AuraShell({
           {children}
         </main>
       </div>
-
-      {/* 4. AuraRightRail (Apenas em PJ quando ativo) */}
-      {isPJ && isRightRailOpen && (
-        <aside className="w-80 h-screen sticky top-0 flex flex-col border-l border-white/5 z-10 transition-all duration-300 overflow-y-auto scrollbar-none p-6 space-y-6 bg-[#0F172A] text-white">
-          {rightRailContent}
-        </aside>
-      )}
 
     </div>
   );

@@ -251,19 +251,6 @@ export default function App() {
       onResetDemo={handleResetDemo}
       onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
       onOpenBillingModal={() => setIsBillingModalOpen(true)}
-      rightRailContent={
-        <RightRail
-          mode={mode}
-          transactions={transactions}
-          assets={assets}
-          defaulters={defaulters}
-          pendingReimbursementAmount={pendingReimbursementAmount}
-          onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-          onOpenBillingModal={() => setIsBillingModalOpen(true)}
-          onReimburseSocio={handleReimburseSocio}
-          isPrivacyMode={isPrivacyMode}
-        />
-      }
     >
       {/* MODO PESSOA FÍSICA (PF) */}
       {mode === 'PF' && (
@@ -420,6 +407,8 @@ export default function App() {
             <PjOverview
               transactions={transactions}
               events={events}
+              creditCards={creditCards.filter(c => c.context === 'PJ')}
+              isPrivacyMode={isPrivacyMode}
               onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
               onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
               onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
@@ -428,6 +417,8 @@ export default function App() {
               onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
               onActionClickEvent={() => setIsBillingModalOpen(true)}
               onOpenBillingModal={() => setIsBillingModalOpen(true)}
+              onNavigateTab={(tab) => setPjTab(tab as PJTab)}
+              onAddCard={() => setIsAddCardModalOpen(true)}
             />
           )}
 
