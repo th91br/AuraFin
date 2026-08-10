@@ -493,17 +493,20 @@ export function AuraShell({
                 {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
 
-              <button
-                onClick={() => setIsRightRailOpen(prev => !prev)}
-                className={`p-2 rounded-xl border transition-all ${
-                  isRightRailOpen
-                    ? isPJ ? 'bg-slate-800 text-white border-white/10' : 'bg-slate-900 text-white border-slate-800'
-                    : isPJ ? 'bg-slate-900 border-white/10 text-slate-400 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
-                }`}
-                title="Painel Lateral"
-              >
-                <PanelRight className="w-4 h-4" />
-              </button>
+              {/* Botão de Painel Lateral desabilitado no PF para garantir barra única */}
+              {isPJ && (
+                <button
+                  onClick={() => setIsRightRailOpen(prev => !prev)}
+                  className={`p-2 rounded-xl border transition-all ${
+                    isRightRailOpen
+                      ? 'bg-slate-800 text-white border-white/10'
+                      : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                  title="Painel Lateral"
+                >
+                  <PanelRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
           </div>
@@ -515,11 +518,9 @@ export function AuraShell({
         </main>
       </div>
 
-      {/* 4. AuraRightRail */}
-      {isRightRailOpen && (
-        <aside className={`w-80 h-screen sticky top-0 flex flex-col border-l z-10 transition-all duration-300 overflow-y-auto scrollbar-none p-6 space-y-6 ${
-          isPJ ? 'bg-[#0F172A] border-white/5 text-white' : 'bg-white border-slate-200/80 text-slate-900'
-        }`}>
+      {/* 4. AuraRightRail (Apenas em PJ quando ativo) */}
+      {isPJ && isRightRailOpen && (
+        <aside className="w-80 h-screen sticky top-0 flex flex-col border-l border-white/5 z-10 transition-all duration-300 overflow-y-auto scrollbar-none p-6 space-y-6 bg-[#0F172A] text-white">
           {rightRailContent}
         </aside>
       )}

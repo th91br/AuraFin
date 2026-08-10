@@ -283,6 +283,8 @@ export default function App() {
               onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
               onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
               onActionClickEvent={() => {}}
+              onNavigateTab={(tab) => setPfTab(tab as PFTab)}
+              onAddCard={() => setIsAddCardModalOpen(true)}
             />
           )}
 

@@ -1,7 +1,7 @@
-import React from 'react';
+import { useState } from 'react';
 import { Transaction, CalendarEvent, Asset, BudgetItem, Goal, CreditCard } from '../types';
 import { DonutChartCard, GoalCard, VisualPaymentCard, ActivityRow, MetricCard } from './aura/AuraCards';
-import { Plus, CreditCard as CreditCardIcon, ArrowUpRight, ArrowDownRight, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, CreditCard as CreditCardIcon, ArrowUpRight, ArrowDownRight, RefreshCw, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
@@ -20,6 +20,8 @@ interface Props {
   onEditEvent: (e: CalendarEvent) => void;
   onDeleteEvent: (id: string) => void;
   onActionClickEvent: (e: CalendarEvent) => void;
+  onNavigateTab?: (tab: string) => void;
+  onAddCard?: () => void;
 }
 
 export function PfOverview({
@@ -32,7 +34,11 @@ export function PfOverview({
   isPrivacyMode = false,
   onAddTransaction,
   onAddAsset,
+  onNavigateTab,
+  onAddCard,
 }: Props) {
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+
   const pfTxs = transactions.filter(t => t.context === 'PF');
 
   const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) + 8500;
@@ -47,6 +53,15 @@ export function PfOverview({
     { label: 'Educação & Cursos', amount: 980, color: '#D97706' },
     { label: 'Lazer & Viagens', amount: 650, color: '#0284C7' },
   ];
+
+  const defaultCards: CreditCard[] = creditCards.length > 0 ? creditCards : [
+    { id: 'c1', name: 'Nubank Violeta Ultra', institution: 'Nubank', limitTotal: 15000, limitUsed: 4250, currentInvoice: 2450, closingDay: 20, dueDay: 28, context: 'PF' },
+    { id: 'c2', name: 'Itaú Personnalité Black', institution: 'Itaú', limitTotal: 25000, limitUsed: 8900, currentInvoice: 3800, closingDay: 15, dueDay: 23, context: 'PF' },
+  ];
+
+  const activeCard = defaultCards[activeCardIndex] || defaultCards[0];
+  const availableLimit = activeCard ? activeCard.limitTotal - activeCard.limitUsed : 0;
+  const usedPercentage = activeCard ? Math.min(100, Math.round((activeCard.limitUsed / (activeCard.limitTotal || 1)) * 100)) : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -80,23 +95,140 @@ export function PfOverview({
         <MetricCard title="Pró-labore" value={8500} isPrivacyMode={isPrivacyMode} subtitle="Recebido da PJ" />
       </div>
 
-      {/* 2. Grid Modular 12 Colunas Inspirado na Referência Dribbble */}
+      {/* 2. Grid Modular 12 Colunas Integrado sem Painel Oculto */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Coluna Esquerda: Donut Chart Card ("Meu Orçamento") */}
-        <div className="lg:col-span-5">
+        {/* Coluna Esquerda (5 cols): "Meu Orçamento" + Módulo "Meus Cartões" */}
+        <div className="lg:col-span-5 space-y-6">
+          
           <DonutChartCard
-            title="Meu Orçamento de Outubro"
-            subtitle="Excelente! Seu orçamento está no teto esperado."
+            title="Meu Orçamento de Gastos"
+            subtitle="Excelente! Seu orçamento está dentro do planejado."
             spent={totalSpent || 6450.50}
             target={8000}
             categories={budgetCategories}
           />
+
+          {/* MÓDULO ESTRATÉGICO: MEUS CARTÕES (Logo abaixo de Meu Orçamento) */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+            
+            {/* Header do Módulo de Cartões */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-sm text-slate-950 flex items-center space-x-2">
+                  <CreditCardIcon className="w-4 h-4 text-indigo-600" />
+                  <span>Meus Cartões de Crédito</span>
+                </h3>
+                {defaultCards.length > 1 && (
+                  <span className="text-[11px] text-slate-400 font-semibold">
+                    Cartão {activeCardIndex + 1} de {defaultCards.length}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {defaultCards.length > 1 && (
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => setActiveCardIndex(prev => (prev > 0 ? prev - 1 : defaultCards.length - 1))}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 bg-slate-50"
+                      title="Cartão anterior"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setActiveCardIndex(prev => (prev < defaultCards.length - 1 ? prev + 1 : 0))}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 bg-slate-50"
+                      title="Próximo cartão"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão')}
+                  className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition-all shadow-xs"
+                >
+                  + Adicionar
+                </button>
+              </div>
+            </div>
+
+            {/* Cartão Ativo Visual + Detalhes Compactos */}
+            {activeCard ? (
+              <div className="space-y-4">
+                <VisualPaymentCard
+                  cardName={activeCard.name}
+                  cardNumberMasked="•••• •••• •••• 4554"
+                  balance={availableLimit}
+                  dueDate={`${activeCard.dueDay}/28`}
+                />
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-2 font-mono">
+                  <div className="flex justify-between text-slate-700 font-sans font-semibold">
+                    <span>Fatura Atual ({activeCard.closingDay}/28):</span>
+                    <span className="font-mono font-bold text-slate-950">R$ {activeCard.currentInvoice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+
+                  <div className="flex justify-between text-slate-500 text-[11px]">
+                    <span>Limite Disponível:</span>
+                    <span className="font-bold text-emerald-600">R$ {availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+
+                  <div className="flex justify-between text-slate-500 text-[11px]">
+                    <span>Limite Utilizado ({usedPercentage}%):</span>
+                    <span className="font-bold text-slate-900">R$ {activeCard.limitUsed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de R$ {activeCard.limitTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+
+                  <div className="h-1.5 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${usedPercentage}%` }} />
+                  </div>
+                </div>
+
+                <div className="pt-1 text-right">
+                  <button
+                    onClick={() => onNavigateTab && onNavigateTab('cards')}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center justify-end ml-auto"
+                  >
+                    <span>Ver todos os cartões</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 ml-0.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+                <CreditCardIcon className="w-8 h-8 text-slate-300 mx-auto" />
+                <h4 className="font-bold text-xs text-slate-900">Você ainda não cadastrou nenhum cartão</h4>
+                <button
+                  onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão')}
+                  className="px-4 py-2 bg-slate-950 text-white text-xs font-bold rounded-xl"
+                >
+                  + Adicionar Cartão
+                </button>
+              </div>
+            )}
+
+          </div>
+
         </div>
 
-        {/* Coluna Central: Cashflow Bar, Line Chart e Goals Grid 2x2 */}
+        {/* Coluna Central / Direita (7 cols): Fluxo, Insight, Evolução & Metas */}
         <div className="lg:col-span-7 space-y-6">
           
+          {/* Card: Insight AuraFin Integrado ao Grid */}
+          <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 text-indigo-950 flex items-center justify-between text-xs font-semibold">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider block">Insight AuraFin</span>
+                <p>Você já atingiu <strong>95% da sua meta de Reserva de Emergência</strong> (R$ 28.500 de R$ 30.000).</p>
+              </div>
+            </div>
+          </div>
+
           {/* Card: Fluxo do Mês (Progress Bars) */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex justify-between items-center">
@@ -127,34 +259,11 @@ export function PfOverview({
             </div>
           </div>
 
-          {/* Line Chart Card: Evolução Financeira 6 Meses */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-sm tracking-tight">Evolução Financeira (Últimos 6 Meses)</h3>
-              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded">Renda Fixa & Reserva</span>
-            </div>
-
-            {/* Simulated Line Chart Curve */}
-            <div className="h-36 w-full flex items-end justify-between px-2 pt-6 pb-2 border-b border-slate-100 relative">
-              <svg className="absolute inset-0 w-full h-full text-indigo-500/20" preserveAspectRatio="none" viewBox="0 0 100 50">
-                <path d="M0,45 Q20,35 40,25 T80,15 T100,5 L100,50 L0,50 Z" fill="currentColor" />
-                <path d="M0,45 Q20,35 40,25 T80,15 T100,5" fill="none" stroke="#4F46E5" strokeWidth="2" />
-              </svg>
-
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-400">Mai</div>
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-400">Jun</div>
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-400">Jul</div>
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-400">Ago</div>
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-400">Set</div>
-              <div className="relative z-10 text-center text-[10px] font-bold text-slate-900">Out</div>
-            </div>
-          </div>
-
           {/* Progress of Financial Goals Grid 2x2 */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-sm tracking-tight">Progresso das Metas Financeiras</h3>
-              <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800">+ Nova Meta</button>
+              <button onClick={() => onNavigateTab && onNavigateTab('goals')} className="text-xs font-bold text-indigo-600 hover:text-indigo-800">Ver todas as metas →</button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -169,7 +278,7 @@ export function PfOverview({
 
       </div>
 
-      {/* 3. Bottom Section: Gastos da Semana & Atividades Recentes */}
+      {/* 3. Bottom Section: Gastos da Semana & Atividades Recentes Integradas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Gastos da Semana (Mini Bar Chart) */}
@@ -188,15 +297,21 @@ export function PfOverview({
           </div>
         </div>
 
-        {/* Atividades Recentes List */}
+        {/* Atividades Recentes List Integrada no Grid */}
         <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm tracking-tight">Atividades & Movimentações Recentes</h3>
-            <span className="text-xs text-slate-400 font-semibold">Hoje, 09 de Agosto</span>
+            <button
+              onClick={() => onNavigateTab && onNavigateTab('transactions')}
+              className="text-xs text-indigo-600 font-bold hover:underline flex items-center"
+            >
+              <span>Ver todas as movimentações</span>
+              <ArrowUpRight className="w-3.5 h-3.5 ml-0.5" />
+            </button>
           </div>
 
           <div className="space-y-2">
-            {pfTxs.slice(0, 4).map(tx => (
+            {pfTxs.slice(0, 5).map(tx => (
               <ActivityRow
                 key={tx.id}
                 title={tx.title}
