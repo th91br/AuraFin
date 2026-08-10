@@ -1,213 +1,225 @@
 import { useState } from 'react';
 import { Project, Customer, Supplier, CostCenter } from '../types';
-import { Briefcase, Building2, Users, Layers, Plus, Clock } from 'lucide-react';
+import { MetricCard } from './aura/AuraCards';
+import { Plus, Users, Truck, Briefcase, Filter, Search, Phone, Mail, Building, ArrowUpRight, DollarSign } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
-  projects: Project[];
-  customers: Customer[];
-  suppliers: Supplier[];
-  costCenters: CostCenter[];
-  isPrivacyMode: boolean;
-  onAddProject: () => void;
+  projects?: Project[];
+  customers?: Customer[];
+  suppliers?: Supplier[];
+  costCenters?: CostCenter[];
+  isPrivacyMode?: boolean;
+  onAddProject?: () => void;
+  onAddCustomer?: () => void;
+  onAddSupplier?: () => void;
 }
 
 export function PjManagement({
-  projects,
-  customers,
-  suppliers,
-  costCenters,
-  isPrivacyMode,
+  projects = [],
+  customers = [],
+  suppliers = [],
+  costCenters = [],
+  isPrivacyMode = false,
   onAddProject,
+  onAddCustomer,
+  onAddSupplier,
 }: Props) {
-  const [subTab, setSubTab] = useState<'projetos' | 'clientes' | 'fornecedores' | 'centros'>('projetos');
+  const [subTab, setSubTab] = useState<'customers' | 'suppliers'>('customers');
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+
+  const mockCustomers = customers.length > 0 ? customers : [
+    { id: 'cli1', name: 'TechCorp Brasil', documentCnpjCpf: '12.345.678/0001-90', contactEmail: 'financeiro@techcorp.com.br', phone: '(11) 98765-4321', totalBilled: 45000, totalReceived: 36500, totalPending: 8500 },
+    { id: 'cli2', name: 'Grupo Varejo Sul', documentCnpjCpf: '98.765.432/0001-10', contactEmail: 'contato@varejosul.com', phone: '(41) 99887-6655', totalBilled: 28000, totalReceived: 16000, totalPending: 12000 },
+    { id: 'cli3', name: 'Startup Innovate', documentCnpjCpf: '45.123.789/0001-55', contactEmail: 'hello@innovate.io', phone: '(31) 97766-5544', totalBilled: 14500, totalReceived: 14500, totalPending: 0 },
+  ];
+
+  const mockSuppliers = suppliers.length > 0 ? suppliers : [
+    { id: 'sup1', name: 'AWS Amazon Web Services', category: 'Infraestrutura Cloud', documentCnpj: '00.000.000/0001-00', contactEmail: 'aws-billing@amazon.com', totalSpent: 38400 },
+    { id: 'sup2', name: 'Google Workspace', category: 'SaaS & E-mail', documentCnpj: '11.111.111/0001-11', contactEmail: 'workspace-support@google.com', totalSpent: 10200 },
+    { id: 'sup3', name: 'Escritório de Contabilidade', category: 'Serviços Profissionais', documentCnpj: '22.222.222/0001-22', contactEmail: 'contabilidade@contabil.com.br', totalSpent: 17400 },
+  ];
+
+  const totalPortfolioBilled = mockCustomers.reduce((acc, c) => acc + c.totalBilled, 0);
+  const totalPortfolioPending = mockCustomers.reduce((acc, c) => acc + c.totalPending, 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-slate-900 text-white rounded">
-              Gestão PJ
-            </span>
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1.5">
-            Gestão Corporativa & Projetos
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 rounded">
+            Carteira & Relacionamento Comercial
+          </span>
+          <h1 className="text-2xl font-black tracking-tight text-white mt-1">
+            Clientes & Fornecedores
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            Rentabilidade de projetos, perfil 360° de clientes, fornecedores e centros de custo.
-          </p>
         </div>
 
-        <button
-          onClick={onAddProject}
-          className="flex items-center space-x-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95 text-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Projeto / Cliente</span>
-        </button>
+        {/* SubTab Switcher */}
+        <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-white/10">
+          <button
+            onClick={() => setSubTab('customers')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              subTab === 'customers' ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Clientes (Visão 360°)
+          </button>
+          <button
+            onClick={() => setSubTab('suppliers')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              subTab === 'suppliers' ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Fornecedores (Custos)
+          </button>
+        </div>
       </div>
 
-      {/* Sub-Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
-        <button
-          onClick={() => setSubTab('projetos')}
-          className={`flex items-center space-x-2 px-4 py-2 font-bold text-xs rounded-xl transition-all ${
-            subTab === 'projetos' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Briefcase className="w-4 h-4 text-white" />
-          <span>Projetos & Rentabilidade ({projects.length})</span>
-        </button>
+      {/* SUBTAB: CLIENTES */}
+      {subTab === 'customers' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard title="Clientes Ativos" value={mockCustomers.length} isPrivacyMode={isPrivacyMode} subtitle="Carteira comercial" />
+            <MetricCard title="Faturamento da Carteira" value={totalPortfolioBilled} isPrivacyMode={isPrivacyMode} subtitle="Acumulado histórico" trend="up" trendValue="+12%" />
+            <MetricCard title="Total em Aberto" value={totalPortfolioPending} isPrivacyMode={isPrivacyMode} subtitle="Valores a receber" />
+            <MetricCard title="Total Vencido Inadimplente" value={12000} isPrivacyMode={isPrivacyMode} subtitle="Atraso > 7 dias" trend="down" trendValue="-2%" />
+          </div>
 
-        <button
-          onClick={() => setSubTab('clientes')}
-          className={`flex items-center space-x-2 px-4 py-2 font-bold text-xs rounded-xl transition-all ${
-            subTab === 'clientes' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>Clientes 360° ({customers.length})</span>
-        </button>
+          <div className="bg-[#0F172A] rounded-2xl border border-white/5 overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center">
+              <h3 className="font-bold text-sm text-white">Carteira de Clientes</h3>
+              <button
+                onClick={onAddCustomer ? onAddCustomer : () => alert('Formulário de novo cliente')}
+                className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs"
+              >
+                + Novo Cliente
+              </button>
+            </div>
 
-        <button
-          onClick={() => setSubTab('fornecedores')}
-          className={`flex items-center space-x-2 px-4 py-2 font-bold text-xs rounded-xl transition-all ${
-            subTab === 'fornecedores' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Fornecedores ({suppliers.length})</span>
-        </button>
-
-        <button
-          onClick={() => setSubTab('centros')}
-          className={`flex items-center space-x-2 px-4 py-2 font-bold text-xs rounded-xl transition-all ${
-            subTab === 'centros' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Centros de Custo ({costCenters.length})</span>
-        </button>
-      </div>
-
-      {/* SUB-TAB 1: PROJETOS & RENTABILIDADE */}
-      {subTab === 'projetos' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-mono">
-          {projects.map((proj) => {
-            const profit = proj.revenue - proj.cost;
-            const margin = proj.revenue > 0 ? Math.round((profit / proj.revenue) * 100) : 0;
-
-            return (
-              <div key={proj.id} className="bg-white p-7 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-6">
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-slate-900">
-                      <Briefcase className="w-5 h-5" />
-                    </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded border font-sans ${
-                      proj.status === 'concluido' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-900 border-amber-200'
-                    }`}>
-                      {proj.status === 'concluido' ? 'Concluído' : 'Em Andamento'}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-slate-900 tracking-tight font-sans">{proj.name}</h3>
-                  <p className="text-sm font-semibold text-slate-500 mt-0.5 font-sans">{proj.client}</p>
-                  {proj.deadline && <p className="text-xs text-slate-400 mt-2 flex items-center font-sans"><Clock className="w-3.5 h-3.5 mr-1" /> {proj.deadline}</p>}
-                </div>
-
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span className="font-sans">Faturamento:</span>
-                    <span className="font-bold text-slate-900">R$ {proj.revenue.toLocaleString('pt-BR')}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span className="font-sans">Custos Diretos:</span>
-                    <span className="font-bold text-rose-700">- R$ {proj.cost.toLocaleString('pt-BR')}</span>
-                  </div>
-
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 font-sans">Margem de Lucro:</span>
-                    <span className="text-lg font-extrabold text-emerald-700">
-                      {margin}% <span className="text-xs font-semibold text-slate-500">(R$ {profit.toLocaleString('pt-BR')})</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-medium border-collapse">
+                <thead>
+                  <tr className="bg-slate-900 border-b border-white/5 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4">Cliente / Razão Social</th>
+                    <th className="py-3 px-4">Documento</th>
+                    <th className="py-3 px-4">Contato</th>
+                    <th className="py-3 px-4 text-right">Total Faturado</th>
+                    <th className="py-3 px-4 text-right">Em Aberto</th>
+                    <th className="py-3 px-4 text-center">Perfil 360°</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-mono">
+                  {mockCustomers.map(c => (
+                    <tr key={c.id} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="py-3.5 px-4 font-sans font-bold text-white">{c.name}</td>
+                      <td className="py-3.5 px-4 text-slate-400">{c.documentCnpjCpf}</td>
+                      <td className="py-3.5 px-4 font-sans text-slate-400">
+                        <div>{c.contactEmail}</div>
+                        <div className="text-[10px] text-slate-500">{c.phone}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-bold text-white">R$ {c.totalBilled.toLocaleString('pt-BR')}</td>
+                      <td className="py-3.5 px-4 text-right font-bold text-amber-400">R$ {c.totalPending.toLocaleString('pt-BR')}</td>
+                      <td className="py-3.5 px-4 text-center font-sans">
+                        <button
+                          onClick={() => setSelectedClient(c)}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold text-[11px] rounded-lg border border-white/10"
+                        >
+                          Ver Perfil 360°
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* SUB-TAB 2: CLIENTES 360 */}
-      {subTab === 'clientes' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {customers.map(c => (
-            <div key={c.id} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">{c.name}</h3>
-                  <p className="text-xs text-slate-500">CNPJ: {c.documentCnpjCpf}</p>
-                </div>
-                <span className="text-xs font-bold text-slate-500">{c.contactEmail}</span>
-              </div>
+      {/* SUBTAB: FORNECEDORES */}
+      {subTab === 'suppliers' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard title="Fornecedores Ativos" value={mockSuppliers.length} isPrivacyMode={isPrivacyMode} subtitle="Parceiros operacionais" />
+            <MetricCard title="Gasto no Período" value={66000} isPrivacyMode={isPrivacyMode} subtitle="Custo total acumulado" />
+            <MetricCard title="Total a Pagar" value={5500} isPrivacyMode={isPrivacyMode} subtitle="Compromissos pendentes" />
+            <MetricCard title="Contratos Recorrentes" value={3} isPrivacyMode={isPrivacyMode} subtitle="AWS, Google, Contador" />
+          </div>
 
-              <div className="grid grid-cols-3 gap-3 pt-2 font-mono text-xs">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                  <span className="text-[10px] text-slate-400 font-sans uppercase">Total Faturado</span>
-                  <p className="font-bold text-slate-900 mt-1">R$ {c.totalBilled.toLocaleString('pt-BR')}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                  <span className="text-[10px] text-slate-400 font-sans uppercase">Recebido</span>
-                  <p className="font-bold text-emerald-700 mt-1">R$ {c.totalReceived.toLocaleString('pt-BR')}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                  <span className="text-[10px] text-slate-400 font-sans uppercase">Pendente</span>
-                  <p className="font-bold text-amber-800 mt-1">R$ {c.totalPending.toLocaleString('pt-BR')}</p>
-                </div>
-              </div>
+          <div className="bg-[#0F172A] rounded-2xl border border-white/5 overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center">
+              <h3 className="font-bold text-sm text-white">Lista de Fornecedores</h3>
+              <button
+                onClick={onAddSupplier ? onAddSupplier : () => alert('Formulário de novo fornecedor')}
+                className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs"
+              >
+                + Novo Fornecedor
+              </button>
             </div>
-          ))}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-medium border-collapse">
+                <thead>
+                  <tr className="bg-slate-900 border-b border-white/5 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4">Fornecedor</th>
+                    <th className="py-3 px-4">Categoria</th>
+                    <th className="py-3 px-4">CNPJ</th>
+                    <th className="py-3 px-4">E-mail</th>
+                    <th className="py-3 px-4 text-right">Total Gasto Acumulado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-mono">
+                  {mockSuppliers.map(s => (
+                    <tr key={s.id} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="py-3.5 px-4 font-sans font-bold text-white">{s.name}</td>
+                      <td className="py-3.5 px-4 font-sans text-slate-400">{s.category}</td>
+                      <td className="py-3.5 px-4 text-slate-400">{s.documentCnpj}</td>
+                      <td className="py-3.5 px-4 font-sans text-slate-400">{s.contactEmail}</td>
+                      <td className="py-3.5 px-4 text-right font-bold text-white">R$ {s.totalSpent.toLocaleString('pt-BR')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* SUB-TAB 3: FORNECEDORES */}
-      {subTab === 'fornecedores' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {suppliers.map(s => (
-            <div key={s.id} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
-              <h3 className="font-bold text-slate-900 text-lg">{s.name}</h3>
-              <p className="text-xs text-slate-500">Categoria: {s.category}</p>
-              <div className="pt-2 border-t border-slate-100 flex justify-between text-xs font-mono">
-                <span className="text-slate-500">Total Pago:</span>
-                <span className="font-bold text-rose-700">- R$ {s.totalSpent.toLocaleString('pt-BR')}</span>
+      {/* Modal Perfil 360° do Cliente */}
+      {selectedClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-[#0F172A] border border-white/10 rounded-2xl p-6 max-w-lg w-full space-y-4 text-white">
+            <div className="flex justify-between items-start border-b border-white/10 pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-cyan-400 uppercase">Perfil Financeiro 360°</span>
+                <h3 className="font-bold text-lg">{selectedClient.name}</h3>
+                <p className="text-xs text-slate-400">{selectedClient.documentCnpjCpf}</p>
               </div>
+              <button onClick={() => setSelectedClient(null)} className="text-slate-400 hover:text-white text-sm font-bold">✕</button>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* SUB-TAB 4: CENTROS DE CUSTO */}
-      {subTab === 'centros' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-          {costCenters.map(cc => (
-            <div key={cc.id} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
-              <h3 className="font-bold text-slate-900 text-base font-sans">{cc.name}</h3>
-              <div className="space-y-1 text-xs text-slate-500">
-                <div className="flex justify-between">
-                  <span className="font-sans">Orçamento:</span>
-                  <span className="font-bold text-slate-900">R$ {cc.budgetAllocated.toLocaleString('pt-BR')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-sans">Executado:</span>
-                  <span className="font-bold text-rose-700">R$ {cc.totalSpent.toLocaleString('pt-BR')}</span>
-                </div>
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+              <div className="p-3 bg-slate-900 rounded-xl">
+                <span className="text-slate-400 font-sans block text-[10px]">Total Faturado</span>
+                <span className="font-bold text-white text-sm">R$ {selectedClient.totalBilled.toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="p-3 bg-slate-900 rounded-xl">
+                <span className="text-slate-400 font-sans block text-[10px]">Total Recebido</span>
+                <span className="font-bold text-emerald-400 text-sm">R$ {selectedClient.totalReceived.toLocaleString('pt-BR')}</span>
+              </div>
+              <div className="p-3 bg-slate-900 rounded-xl col-span-2">
+                <span className="text-slate-400 font-sans block text-[10px]">Pendente em Aberto</span>
+                <span className="font-bold text-amber-400 text-sm">R$ {selectedClient.totalPending.toLocaleString('pt-BR')}</span>
               </div>
             </div>
-          ))}
+
+            <div className="pt-2 flex justify-end">
+              <button onClick={() => setSelectedClient(null)} className="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-xl">Fechar Perfil</button>
+            </div>
+          </div>
         </div>
       )}
 

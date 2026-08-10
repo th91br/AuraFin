@@ -31,7 +31,9 @@ import {
   RefreshCw,
   Target,
   ShieldAlert,
-  TrendingUp
+  TrendingUp,
+  Users,
+  Truck
 } from 'lucide-react';
 
 interface AuraShellProps {
@@ -317,7 +319,7 @@ export function AuraShell({
                 }`}
               >
                 <BarChart3 className="w-4 h-4 text-cyan-400" />
-                {!isSidebarCollapsed && <span>Caixa & DRE</span>}
+                {!isSidebarCollapsed && <span>Caixa Operacional</span>}
               </button>
 
               <button
@@ -333,6 +335,18 @@ export function AuraShell({
               </button>
 
               <button
+                onClick={() => setPjTab('billing')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'billing'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Receipt className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Faturamento</span>}
+              </button>
+
+              <button
                 onClick={() => setPjTab('management')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   pjTab === 'management'
@@ -340,8 +354,20 @@ export function AuraShell({
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Briefcase className="w-4 h-4 text-cyan-400" />
-                {!isSidebarCollapsed && <span>Gestão Projetos</span>}
+                <Users className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Clientes & Fornecedores</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('cards')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'cards'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <CreditCard className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Cartões da Empresa</span>}
               </button>
 
               <button

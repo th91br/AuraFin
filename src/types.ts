@@ -21,8 +21,10 @@ export type PJTab =
   | 'overview' 
   | 'cashflow' 
   | 'receivables_payables' 
+  | 'billing'
   | 'management' 
   | 'collections' 
+  | 'cards'
   | 'accounting' 
   | 'reports'
   | 'conciliations';

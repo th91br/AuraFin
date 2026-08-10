@@ -45,8 +45,10 @@ import { PfReportsView } from './components/PfReportsView';
 import { PjOverview } from './components/PjOverview';
 import { PjCashflow } from './components/PjCashflow';
 import { PjReceivablesPayables } from './components/PjReceivablesPayables';
+import { PjBillingView } from './components/PjBillingView';
 import { PjManagement } from './components/PjManagement';
 import { PjCollections } from './components/PjCollections';
+import { PjCardsView } from './components/PjCardsView';
 import { PjAccounting } from './components/PjAccounting';
 import { PjReports } from './components/PjReports';
 
@@ -214,7 +216,7 @@ export default function App() {
       currentInvoice: 0,
       closingDay: cardData.closingDay || 20,
       dueDay: cardData.dueDay || 28,
-      context: 'PF',
+      context: mode,
     };
     setCreditCards(prev => [...prev, newCard]);
   };
@@ -433,6 +435,8 @@ export default function App() {
             <PjCashflow
               transactions={transactions}
               isPrivacyMode={isPrivacyMode}
+              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
             />
           )}
 
@@ -445,6 +449,13 @@ export default function App() {
             />
           )}
 
+          {pjTab === 'billing' && (
+            <PjBillingView
+              isPrivacyMode={isPrivacyMode}
+              onAddBilling={() => setIsBillingModalOpen(true)}
+            />
+          )}
+
           {pjTab === 'management' && (
             <PjManagement
               projects={projects}
@@ -453,6 +464,27 @@ export default function App() {
               costCenters={costCenters}
               isPrivacyMode={isPrivacyMode}
               onAddProject={() => setIsProjectModalOpen(true)}
+            />
+          )}
+
+          {pjTab === 'cards' && (
+            <PjCardsView
+              isPrivacyMode={isPrivacyMode}
+              onAddCard={() => setIsAddCardModalOpen(true)}
+              onPayInvoice={(cardId, amount) => {
+                const newTx: Transaction = {
+                  id: `tx_card_pay_${Date.now()}`,
+                  context: 'PJ',
+                  type: 'expense',
+                  title: `Pagamento Fatura Cartão PJ`,
+                  amount,
+                  amountCents: Math.round(amount * 100),
+                  date: new Date().toISOString().split('T')[0],
+                  category: 'software_infra',
+                };
+                setTransactions(prev => [newTx, ...prev]);
+                alert(`Pagamento da fatura de R$ ${amount.toLocaleString('pt-BR')} registrado como saída real no Caixa PJ!`);
+              }}
             />
           )}
 
