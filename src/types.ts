@@ -76,12 +76,15 @@ export interface Transaction {
   subCategory?: string;
   accountId?: string;
   cardId?: string;
+  creditCardId?: string;
+  corporateCardId?: string;
   projectId?: string;
   clientId?: string;
   supplierId?: string;
   costCenterId?: string;
   recurrence?: 'mensal' | 'semanal' | 'anual' | 'unica';
   attachmentUrl?: string;
+  notes?: string;
   
   // Flags Cruzadas & Fiscais
   isTaxDeductiblePF?: boolean;

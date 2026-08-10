@@ -60,6 +60,7 @@ interface AuraShellProps {
   onResetDemo?: () => void;
   onOpenTransactionModal: () => void;
   onOpenBillingModal: () => void;
+  onOpenAuthModal?: () => void;
   children: React.ReactNode;
   rightRailContent?: React.ReactNode;
 }
@@ -81,6 +82,7 @@ export function AuraShell({
   onResetDemo,
   onOpenTransactionModal,
   onOpenBillingModal,
+  onOpenAuthModal,
   children,
 }: AuraShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -619,6 +621,20 @@ export function AuraShell({
               >
                 {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
+
+              {onOpenAuthModal && (
+                <button
+                  onClick={onOpenAuthModal}
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    isPJ
+                      ? 'bg-cyan-950/60 text-cyan-300 border-cyan-800/60 hover:bg-cyan-900/60'
+                      : 'bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Conta & Nuvem</span>
+                </button>
+              )}
             </div>
 
           </div>

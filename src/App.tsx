@@ -70,8 +70,34 @@ import { AssetModal } from './components/AssetModal';
 import { EventModal } from './components/EventModal';
 import { AddCreditCardModal } from './components/AddCreditCardModal';
 import { GlobalSearchModal } from './components/ui/GlobalSearchModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { OrganizationProvider, useOrganization } from './context/OrganizationContext';
+import { RepositoryProvider, useRepositories } from './context/RepositoryContext';
+import { AuthModal } from './components/auth/AuthModal';
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <OrganizationProvider>
+        <RepositoryProvider>
+          <AppContent />
+        </RepositoryProvider>
+      </OrganizationProvider>
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const { user, isAuthenticated } = useAuth();
+  const { activeOrganization } = useOrganization();
+  const { 
+    config, 
+    personalAccountRepository, 
+    personalTransactionRepository, 
+    businessAccountRepository, 
+    businessTransactionRepository 
+  } = useRepositories();
+
   const [viewMode, setViewMode] = useState<ViewMode>('app');
   const [mode, setMode] = useState<ContextMode>('PF');
   const [pfTab, setPfTab] = useState<PFTab>('overview');
@@ -94,6 +120,7 @@ export default function App() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>(() => StorageRepository.getCostCenters());
 
   // Modals
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -104,8 +131,46 @@ export default function App() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // Persistence Effects
-  useEffect(() => { StorageRepository.saveTransactions(transactions); }, [transactions]);
+  // Synchronize PF Accounts & Transactions when module is in Supabase mode
+  useEffect(() => {
+    if (config.personalAccounts === 'supabase' && user) {
+      personalAccountRepository.list(user.id).then(supAccounts => {
+        setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
+      }).catch(err => console.error('[App] Erro ao carregar contas PF do Supabase:', err));
+    }
+  }, [config.personalAccounts, user, personalAccountRepository]);
+
+  useEffect(() => {
+    if (config.personalTransactions === 'supabase' && user) {
+      personalTransactionRepository.list(user.id).then(supTxs => {
+        setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+      }).catch(err => console.error('[App] Erro ao carregar transações PF do Supabase:', err));
+    }
+  }, [config.personalTransactions, user, personalTransactionRepository]);
+
+  // Synchronize PJ Accounts & Transactions when module is in Supabase mode
+  useEffect(() => {
+    if (config.businessAccounts === 'supabase' && activeOrganization) {
+      businessAccountRepository.list(activeOrganization.id).then(supAccounts => {
+        setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
+      }).catch(err => console.error('[App] Erro ao carregar contas PJ do Supabase:', err));
+    }
+  }, [config.businessAccounts, activeOrganization, businessAccountRepository]);
+
+  useEffect(() => {
+    if (config.businessTransactions === 'supabase' && activeOrganization) {
+      businessTransactionRepository.list(activeOrganization.id).then(supTxs => {
+        setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+      }).catch(err => console.error('[App] Erro ao carregar transações PJ do Supabase:', err));
+    }
+  }, [config.businessTransactions, activeOrganization, businessTransactionRepository]);
+
+  // Persistence Effects for local modules
+  useEffect(() => { 
+    if (config.personalTransactions === 'local' || config.businessTransactions === 'local') {
+      StorageRepository.saveTransactions(transactions); 
+    }
+  }, [transactions, config.personalTransactions, config.businessTransactions]);
   useEffect(() => { StorageRepository.saveAssets(assets); }, [assets]);
   useEffect(() => { StorageRepository.saveProjects(projects); }, [projects]);
   useEffect(() => { StorageRepository.saveDefaulters(defaulters); }, [defaulters]);
@@ -176,14 +241,40 @@ export default function App() {
     }
   };
 
-  const handleSaveTransaction = (txData: Partial<Transaction>) => {
+  const handleSaveTransaction = async (txData: Partial<Transaction>) => {
+    const txContext = txData.context || mode;
+
+    if (txContext === 'PF' && config.personalTransactions === 'supabase' && user) {
+      try {
+        const saved = await personalTransactionRepository.create(txData, user.id);
+        setTransactions(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+        return;
+      } catch (e: any) {
+        console.error('[App] Erro ao salvar transação PF no Supabase:', e);
+        alert(`Erro ao salvar transação no Supabase: ${e.message || 'Falha na operação'}`);
+        return;
+      }
+    }
+
+    if (txContext === 'PJ' && config.businessTransactions === 'supabase' && activeOrganization) {
+      try {
+        const saved = await businessTransactionRepository.create(txData, activeOrganization.id);
+        setTransactions(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+        return;
+      } catch (e: any) {
+        console.error('[App] Erro ao salvar transação PJ no Supabase:', e);
+        alert(`Erro ao salvar transação no Supabase: ${e.message || 'Falha na operação'}`);
+        return;
+      }
+    }
+
     if (editingTransaction) {
       setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? { ...t, ...txData } as Transaction : t));
       setEditingTransaction(null);
     } else {
       const newTx: Transaction = {
         id: `tx_${Date.now()}`,
-        context: txData.context || mode,
+        context: txContext,
         type: txData.type || 'expense',
         title: txData.title || 'Novo Lançamento',
         amount: txData.amount || 0,
@@ -266,6 +357,7 @@ export default function App() {
       onResetDemo={handleResetDemo}
       onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
       onOpenBillingModal={() => setIsBillingModalOpen(true)}
+      onOpenAuthModal={() => setIsAuthModalOpen(true)}
     >
       {/* MODO PESSOA FÍSICA (PF) */}
       {mode === 'PF' && (
@@ -694,6 +786,11 @@ export default function App() {
           setEditingTransaction(t);
           setIsTransactionModalOpen(true);
         }}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
 
     </AuraShell>
