@@ -269,11 +269,8 @@ export default function App() {
     >
       {/* MODO PESSOA FÍSICA (PF) */}
       {mode === 'PF' && (
-        isPrivacyMode ? (
-          <PfPrivacyShieldView onUnlock={() => setIsPrivacyMode(false)} />
-        ) : (
-          <>
-            {pfTab === 'overview' && (
+        <>
+          {pfTab === 'overview' && (
               <PfOverview
                 transactions={transactions}
                 events={events}
@@ -416,16 +413,12 @@ export default function App() {
               />
             )}
           </>
-        )
       )}
 
       {/* MODO PESSOA JURÍDICA (PJ) */}
       {mode === 'PJ' && (
-        isPrivacyMode ? (
-          <PjPrivacyShieldView onUnlock={() => setIsPrivacyMode(false)} />
-        ) : (
-          <>
-            {pjTab === 'overview' && (
+        <>
+          {pjTab === 'overview' && (
               <PjOverview
                 transactions={transactions}
                 events={events}
@@ -605,7 +598,6 @@ export default function App() {
               />
             )}
           </>
-        )
       )}
 
       {/* Modais */}

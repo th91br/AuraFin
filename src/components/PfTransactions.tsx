@@ -142,7 +142,7 @@ export function PfTransactions({
                 >
                   <td className="py-3.5 px-4 font-bold text-slate-900">{tx.title}</td>
                   <td className="py-3.5 px-4 text-slate-500 capitalize">{tx.category}</td>
-                  <td className="py-3.5 px-4 font-mono text-slate-500">{tx.date}</td>
+                  <td className="py-3.5 px-4 font-mono text-slate-500">{isPrivacyMode ? '••/••/••••' : tx.date}</td>
                   <td className="py-3.5 px-4">
                     <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
                       tx.type === 'income' 
@@ -155,7 +155,7 @@ export function PfTransactions({
                   <td className={`py-3.5 px-4 font-mono font-bold text-right text-sm ${
                     tx.type === 'income' ? 'text-emerald-600' : 'text-slate-900'
                   }`}>
-                    {tx.type === 'income' ? '+' : '-'} R$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    <PrivacyText value={tx.amount} isPrivacyMode={isPrivacyMode} prefix={tx.type === 'income' ? '+ R$' : '- R$'} />
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <button

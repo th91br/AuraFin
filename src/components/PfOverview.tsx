@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Transaction, CalendarEvent, Asset, BudgetItem, Goal, CreditCard } from '../types';
-import { DonutChartCard, GoalCard, VisualPaymentCard, ActivityRow, MetricCard } from './aura/AuraCards';
-import { Plus, CreditCard as CreditCardIcon, ArrowUpRight, ArrowDownRight, RefreshCw, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, AlertCircle, ShieldCheck, TrendingDown } from 'lucide-react';
+import { MetricCard, DonutChartCard, GoalCard, ActivityRow, VisualPaymentCard } from './aura/AuraCards';
+import { Plus, Sparkles, ChevronLeft, ChevronRight, CreditCard as CreditCardIcon, ArrowUpRight, TrendingDown } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
   transactions: Transaction[];
   events: CalendarEvent[];
   assets: Asset[];
-  budgetItems?: BudgetItem[];
-  goals?: Goal[];
+  budgetItems: BudgetItem[];
+  goals: Goal[];
   creditCards?: CreditCard[];
   isPrivacyMode?: boolean;
   onAddTransaction: () => void;
@@ -26,14 +26,9 @@ interface Props {
 
 export function PfOverview({
   transactions,
-  events,
-  assets,
-  budgetItems = [],
-  goals = [],
   creditCards = [],
   isPrivacyMode = false,
   onAddTransaction,
-  onAddAsset,
   onNavigateTab,
   onAddCard,
 }: Props) {
@@ -41,40 +36,37 @@ export function PfOverview({
 
   const pfTxs = transactions.filter(t => t.context === 'PF');
 
-  const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) + 8500;
-  const totalSpent = pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-  const currentBalance = totalIncome - totalSpent;
+  const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) || 12500;
+  const totalSpent = pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) || 6450.50;
+  const currentBalance = 24850;
 
-  // Categorias de orçamento para o Donut Chart
+  const weeklySpentTotal = 2840.78;
+  const weeklyVariation = "-12.5%";
+
   const budgetCategories = [
-    { label: 'Moradia & Contas', amount: 2150, color: '#4F46E5' },
-    { label: 'Alimentação & Mercado', amount: 1420.50, color: '#059669' },
-    { label: 'Saúde & Farmácia', amount: 1250, color: '#E11D48' },
-    { label: 'Educação & Cursos', amount: 980, color: '#D97706' },
-    { label: 'Lazer & Viagens', amount: 650, color: '#0284C7' },
+    { label: 'Moradia & Contas', amount: 2800, color: '#4338CA' },
+    { label: 'Alimentação & Mercado', amount: 1800, color: '#0891B2' },
+    { label: 'Transporte & Veículo', amount: 950, color: '#10B981' },
+    { label: 'Lazer & Estilo de Vida', amount: 900.50, color: '#F43F5E' },
   ];
 
   const defaultCards: CreditCard[] = creditCards.length > 0 ? creditCards : [
-    { id: 'c1', name: 'Nubank Violeta Ultra', institution: 'Nubank', limitTotal: 15000, limitUsed: 4250, currentInvoice: 2450, closingDay: 20, dueDay: 28, context: 'PF' },
-    { id: 'c2', name: 'Itaú Personnalité Black', institution: 'Itaú', limitTotal: 25000, limitUsed: 8900, currentInvoice: 3800, closingDay: 15, dueDay: 23, context: 'PF' },
+    { id: 'c1', name: 'Nubank Violeta Ultra', institution: 'Nubank', limitTotal: 25000, limitUsed: 4550, currentInvoice: 3840, closingDay: 12, dueDay: 20, context: 'PF' },
+    { id: 'c2', name: 'Itaú Personnalité Black', institution: 'Itaú', limitTotal: 40000, limitUsed: 8200, currentInvoice: 6100, closingDay: 15, dueDay: 25, context: 'PF' },
   ];
 
   const activeCard = defaultCards[activeCardIndex] || defaultCards[0];
   const availableLimit = activeCard ? activeCard.limitTotal - activeCard.limitUsed : 0;
   const usedPercentage = activeCard ? Math.min(100, Math.round((activeCard.limitUsed / (activeCard.limitTotal || 1)) * 100)) : 0;
 
-  // Gastos da semana real/calculado
-  const weeklySpentTotal = 2840.50;
-  const weeklyVariation = '-8.2%';
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-8 animate-in fade-in duration-200 text-slate-900">
       
-      {/* 1. Page Header & Top KPIs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      {/* 1. Header do Dashboard com Botão de Novo Lançamento */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Dashboard PF — Tranquilidade & Futuro
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
+            Visão Geral PF — AuraFin
           </span>
           <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
             Minhas Finanças Pessoais
@@ -107,7 +99,7 @@ export function PfOverview({
           </div>
           <div>
             <span className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider block">Insight AuraFin</span>
-            <p>Você já atingiu <strong>95% da sua meta de Reserva de Emergência</strong> (R$ 28.500 de R$ 30.000).</p>
+            <p>Você já atingiu <strong>95% da sua meta de Reserva de Emergência</strong> (<PrivacyText value={28500} isPrivacyMode={isPrivacyMode} /> de <PrivacyText value={30000} isPrivacyMode={isPrivacyMode} />).</p>
           </div>
         </div>
       </div>
@@ -122,6 +114,7 @@ export function PfOverview({
             spent={totalSpent || 6450.50}
             target={8000}
             categories={budgetCategories}
+            isPrivacyMode={isPrivacyMode}
           />
         </div>
 
@@ -129,14 +122,18 @@ export function PfOverview({
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4 h-full flex flex-col justify-between">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-sm tracking-tight">Fluxo de Caixa do Mês</h3>
-              <span className="text-xs font-mono font-bold text-slate-950">Saldo: R$ {currentBalance.toLocaleString('pt-BR')}</span>
+              <span className="text-xs font-mono font-bold text-slate-950">
+                Saldo: <PrivacyText value={currentBalance} isPrivacyMode={isPrivacyMode} />
+              </span>
             </div>
 
             <div className="space-y-4 font-mono text-xs my-auto">
               <div>
                 <div className="flex justify-between text-[11px] font-sans font-medium text-slate-500 mb-1">
                   <span>Entradas (Receitas)</span>
-                  <span className="font-mono font-bold text-emerald-600">R$ {totalIncome.toLocaleString('pt-BR')}</span>
+                  <span className="font-mono font-bold text-emerald-600">
+                    <PrivacyText value={totalIncome} isPrivacyMode={isPrivacyMode} />
+                  </span>
                 </div>
                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: '85%' }} />
@@ -146,7 +143,9 @@ export function PfOverview({
               <div>
                 <div className="flex justify-between text-[11px] font-sans font-medium text-slate-500 mb-1">
                   <span>Saídas (Despesas)</span>
-                  <span className="font-mono font-bold text-rose-600">R$ {totalSpent.toLocaleString('pt-BR')}</span>
+                  <span className="font-mono font-bold text-rose-600">
+                    <PrivacyText value={totalSpent} isPrivacyMode={isPrivacyMode} />
+                  </span>
                 </div>
                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-rose-500 rounded-full" style={{ width: '45%' }} />
@@ -156,14 +155,16 @@ export function PfOverview({
 
             <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
               <span className="text-slate-500">Resultado do mês:</span>
-              <span className="font-mono font-bold text-emerald-600">+ R$ {(totalIncome - totalSpent).toLocaleString('pt-BR')}</span>
+              <span className="font-mono font-bold text-emerald-600">
+                <PrivacyText value={totalIncome - totalSpent} isPrivacyMode={isPrivacyMode} prefix="+ R$" />
+              </span>
             </div>
           </div>
         </div>
 
       </div>
 
-      {/* 4. SEÇÃO PRINCIPAL REORGANIZADA: DUA PILHAS VERTICAIS INDEPENDENTES (LEFT STACK & RIGHT STACK) */}
+      {/* 4. SEÇÃO PRINCIPAL REORGANIZADA: DUAS PILHAS VERTICAIS INDEPENDENTES */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* PILHA DA ESQUERDA (5 cols): Meus Cartões → Gastos da Semana */}
@@ -220,22 +221,29 @@ export function PfOverview({
                   cardNumberMasked="•••• •••• •••• 4554"
                   balance={availableLimit}
                   dueDate={`${activeCard.dueDay}/28`}
+                  isPrivacyMode={isPrivacyMode}
                 />
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-2 font-mono">
                   <div className="flex justify-between text-slate-700 font-sans font-semibold">
                     <span>Fatura Atual ({activeCard.closingDay}/28):</span>
-                    <span className="font-mono font-bold text-slate-950">R$ {activeCard.currentInvoice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono font-bold text-slate-950">
+                      <PrivacyText value={activeCard.currentInvoice} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="flex justify-between text-slate-500 text-[11px]">
                     <span>Limite Disponível:</span>
-                    <span className="font-bold text-emerald-600">R$ {availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-emerald-600">
+                      <PrivacyText value={availableLimit} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="flex justify-between text-slate-500 text-[11px]">
                     <span>Limite Utilizado ({usedPercentage}%):</span>
-                    <span className="font-bold text-slate-900">R$ {activeCard.limitUsed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de R$ {activeCard.limitTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-slate-900">
+                      <PrivacyText value={activeCard.limitUsed} isPrivacyMode={isPrivacyMode} /> de <PrivacyText value={activeCard.limitTotal} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="h-1.5 w-full bg-slate-200/60 rounded-full overflow-hidden">
@@ -282,22 +290,22 @@ export function PfOverview({
 
             <div className="pt-1">
               <span className="text-2xl font-black font-mono text-slate-950 tracking-tight">
-                R$ {weeklySpentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <PrivacyText value={weeklySpentTotal} isPrivacyMode={isPrivacyMode} />
               </span>
             </div>
 
             {/* Visual Bar Chart */}
             <div className="h-36 flex items-end justify-between px-2 pt-4 border-b border-slate-100">
               {[
-                { day: 'Seg', val: 'R$ 320', height: 40 },
-                { day: 'Ter', val: 'R$ 580', height: 65 },
-                { day: 'Qua', val: 'R$ 210', height: 30 },
-                { day: 'Qui', val: 'R$ 840', height: 85 },
-                { day: 'Sex', val: 'R$ 490', height: 55 },
-                { day: 'Sáb', val: 'R$ 310', height: 40 },
-                { day: 'Dom', val: 'R$ 90', height: 15 },
+                { day: 'Seg', val: 320, height: 40 },
+                { day: 'Ter', val: 580, height: 65 },
+                { day: 'Qua', val: 210, height: 30 },
+                { day: 'Qui', val: 840, height: 85 },
+                { day: 'Sex', val: 490, height: 55 },
+                { day: 'Sáb', val: 310, height: 40 },
+                { day: 'Dom', val: 90, height: 15 },
               ].map(item => (
-                <div key={item.day} className="flex flex-col items-center space-y-1.5 flex-1 group" title={`${item.day}: ${item.val}`}>
+                <div key={item.day} className="flex flex-col items-center space-y-1.5 flex-1 group">
                   <div className="w-5 bg-indigo-600 rounded-t-md transition-all group-hover:bg-indigo-500" style={{ height: `${item.height}%` }} />
                   <span className="text-[10px] font-bold text-slate-400">{item.day}</span>
                 </div>
@@ -305,14 +313,14 @@ export function PfOverview({
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1 font-medium">
-              <span>Maior gasto: Quinta (R$ 840,00)</span>
-              <span>Média: R$ 405,78/dia</span>
+              <span>Maior gasto: Quinta (<PrivacyText value={840} isPrivacyMode={isPrivacyMode} />)</span>
+              <span>Média: <PrivacyText value={405.78} isPrivacyMode={isPrivacyMode} />/dia</span>
             </div>
           </div>
 
         </div>
 
-        {/* PILHA DA DIREITA (7 cols): Metas Financeiras → Atividades Recentes (Sem delay vertical!) */}
+        {/* PILHA DA DIREITA (7 cols): Metas Financeiras → Atividades Recentes */}
         <div className="lg:col-span-7 space-y-6">
           
           {/* MÓDULO 1: PROGRESSO DAS METAS FINANCEIRAS */}
@@ -328,14 +336,14 @@ export function PfOverview({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <GoalCard title="Viagem de Férias Europa" current={18500} target={25000} daysLeft={120} />
-              <GoalCard title="Reserva de Emergência" current={28500} target={30000} daysLeft={45} />
-              <GoalCard title="Troca de Veículo" current={45000} target={80000} daysLeft={240} />
-              <GoalCard title="Pós-Graduação UX/UI" current={980} target={1200} daysLeft={15} />
+              <GoalCard title="Viagem de Férias Europa" current={18500} target={25000} daysLeft={120} isPrivacyMode={isPrivacyMode} />
+              <GoalCard title="Reserva de Emergência" current={28500} target={30000} daysLeft={45} isPrivacyMode={isPrivacyMode} />
+              <GoalCard title="Troca de Veículo" current={45000} target={80000} daysLeft={240} isPrivacyMode={isPrivacyMode} />
+              <GoalCard title="Pós-Graduação UX/UI" current={980} target={1200} daysLeft={15} isPrivacyMode={isPrivacyMode} />
             </div>
           </div>
 
-          {/* MÓDULO 2: ATIVIDADES RECENTES (Posicionado IMEDIATAMENTE após as Metas!) */}
+          {/* MÓDULO 2: ATIVIDADES RECENTES */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-sm tracking-tight text-slate-950">Atividades & Movimentações Recentes</h3>
@@ -356,6 +364,7 @@ export function PfOverview({
                   subtitle={`${tx.date} • ${tx.category}`}
                   amount={tx.amount}
                   isIncome={tx.type === 'income'}
+                  isPrivacyMode={isPrivacyMode}
                 />
               ))}
             </div>

@@ -157,20 +157,28 @@ export function PfCards({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
                 <span className="text-xs font-bold text-slate-500 uppercase">Fatura Atual</span>
-                <p className="text-2xl font-black font-mono text-slate-950">R$ {(selectedCard.currentInvoice || 2453).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-black font-mono text-slate-950">
+                  <PrivacyText value={selectedCard.currentInvoice || 2453} isPrivacyMode={isPrivacyMode} />
+                </p>
                 <span className="text-[11px] text-emerald-700 font-semibold">Fechamento em 12 dias</span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
                 <span className="text-xs font-bold text-slate-500 uppercase">Limite Livre</span>
-                <p className="text-2xl font-black font-mono text-emerald-600">R$ {((selectedCard.limitTotal || 15000) - (selectedCard.limitUsed || 2453)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                <span className="text-[11px] text-slate-500 font-semibold">De R$ {(selectedCard.limitTotal || 15000).toLocaleString('pt-BR')}</span>
+                <p className="text-2xl font-black font-mono text-emerald-600">
+                  <PrivacyText value={(selectedCard.limitTotal || 15000) - (selectedCard.limitUsed || 2453)} isPrivacyMode={isPrivacyMode} />
+                </p>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  De <PrivacyText value={selectedCard.limitTotal || 15000} isPrivacyMode={isPrivacyMode} />
+                </span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
                 <span className="text-xs font-bold text-slate-500 uppercase">Parcelamentos Ativos</span>
                 <p className="text-2xl font-black font-mono text-slate-950">3 Compras</p>
-                <span className="text-[11px] text-slate-500 font-semibold">Comprometendo R$ 1.020/mês</span>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  Comprometendo <PrivacyText value={1020} isPrivacyMode={isPrivacyMode} />/mês
+                </span>
               </div>
             </div>
           )}
