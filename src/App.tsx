@@ -575,7 +575,15 @@ export default function App() {
           {pjTab === 'reports' && (
             <PjReports
               transactions={transactions}
+              accounts={accounts}
+              customers={customers}
+              suppliers={suppliers}
+              projects={projects}
+              costCenters={costCenters}
+              defaulters={defaulters}
+              creditCards={creditCards}
               isPrivacyMode={isPrivacyMode}
+              onNavigateTab={(tab) => setPjTab(tab as PJTab)}
             />
           )}
 
