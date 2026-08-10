@@ -39,6 +39,7 @@ import { PfDebtsView } from './components/PfDebtsView';
 import { PfWealth } from './components/PfWealth';
 import { PfInvestmentsView } from './components/PfInvestmentsView';
 import { PfPrivacyShieldView } from './components/aura/PfPrivacyShieldView';
+import { PjPrivacyShieldView } from './components/aura/PjPrivacyShieldView';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
 import { PfReportsView } from './components/PfReportsView';
 
@@ -420,187 +421,191 @@ export default function App() {
 
       {/* MODO PESSOA JURÍDICA (PJ) */}
       {mode === 'PJ' && (
-        <>
-          {pjTab === 'overview' && (
-            <PjOverview
-              transactions={transactions}
-              events={events}
-              creditCards={creditCards.filter(c => c.context === 'PJ')}
-              isPrivacyMode={isPrivacyMode}
-              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-              onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
-              onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
-              onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
-              onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
-              onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
-              onActionClickEvent={() => setIsBillingModalOpen(true)}
-              onOpenBillingModal={() => setIsBillingModalOpen(true)}
-              onNavigateTab={(tab) => setPjTab(tab as PJTab)}
-              onAddCard={() => setIsAddCardModalOpen(true)}
-            />
-          )}
+        isPrivacyMode ? (
+          <PjPrivacyShieldView onUnlock={() => setIsPrivacyMode(false)} />
+        ) : (
+          <>
+            {pjTab === 'overview' && (
+              <PjOverview
+                transactions={transactions}
+                events={events}
+                creditCards={creditCards.filter(c => c.context === 'PJ')}
+                isPrivacyMode={isPrivacyMode}
+                onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
+                onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
+                onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
+                onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
+                onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                onActionClickEvent={() => setIsBillingModalOpen(true)}
+                onOpenBillingModal={() => setIsBillingModalOpen(true)}
+                onNavigateTab={(tab) => setPjTab(tab as PJTab)}
+                onAddCard={() => setIsAddCardModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'cashflow' && (
-            <PjCashflow
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-              onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-            />
-          )}
+            {pjTab === 'cashflow' && (
+              <PjCashflow
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              />
+            )}
 
-          {pjTab === 'receivables_payables' && (
-            <PjReceivablesPayables
-              customers={customers}
-              suppliers={suppliers}
-              costCenters={costCenters}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'receivables_payables' && (
+              <PjReceivablesPayables
+                customers={customers}
+                suppliers={suppliers}
+                costCenters={costCenters}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'billing' && (
-            <PjBillingView
-              isPrivacyMode={isPrivacyMode}
-              onAddBilling={() => setIsBillingModalOpen(true)}
-            />
-          )}
+            {pjTab === 'billing' && (
+              <PjBillingView
+                isPrivacyMode={isPrivacyMode}
+                onAddBilling={() => setIsBillingModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'dre' && (
-            <PjDreView
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'dre' && (
+              <PjDreView
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'breakeven' && (
-            <PjBreakEvenView
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'breakeven' && (
+              <PjBreakEvenView
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'runway' && (
-            <PjRunwayView
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'runway' && (
+              <PjRunwayView
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'projects' && (
-            <PjProjectsView
-              projects={projects}
-              customers={customers}
-              isPrivacyMode={isPrivacyMode}
-              onAddProject={() => setIsProjectModalOpen(true)}
-            />
-          )}
+            {pjTab === 'projects' && (
+              <PjProjectsView
+                projects={projects}
+                customers={customers}
+                isPrivacyMode={isPrivacyMode}
+                onAddProject={() => setIsProjectModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'cost_centers' && (
-            <PjCostCentersView
-              costCenters={costCenters}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'cost_centers' && (
+              <PjCostCentersView
+                costCenters={costCenters}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'delinquency' && (
-            <PjCollections
-              defaulters={defaulters}
-              isPrivacyMode={isPrivacyMode}
-              onOpenBillingModal={() => setIsBillingModalOpen(true)}
-            />
-          )}
+            {pjTab === 'delinquency' && (
+              <PjCollections
+                defaulters={defaulters}
+                isPrivacyMode={isPrivacyMode}
+                onOpenBillingModal={() => setIsBillingModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'taxes' && (
-            <PjTaxControlView
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'taxes' && (
+              <PjTaxControlView
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'accountant' && (
-            <PjAccountantHubView
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'accountant' && (
+              <PjAccountantHubView
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'documents' && (
-            <PjDocumentsView
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pjTab === 'documents' && (
+              <PjDocumentsView
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pjTab === 'management' && (
-            <PjManagement
-              projects={projects}
-              customers={customers}
-              suppliers={suppliers}
-              costCenters={costCenters}
-              isPrivacyMode={isPrivacyMode}
-              onAddProject={() => setIsProjectModalOpen(true)}
-            />
-          )}
+            {pjTab === 'management' && (
+              <PjManagement
+                projects={projects}
+                customers={customers}
+                suppliers={suppliers}
+                costCenters={costCenters}
+                isPrivacyMode={isPrivacyMode}
+                onAddProject={() => setIsProjectModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'cards' && (
-            <PjCardsView
-              creditCards={creditCards.filter(c => c.context === 'PJ')}
-              accounts={accounts}
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onAddCard={() => setIsAddCardModalOpen(true)}
-              onPayInvoice={(cardId, amount) => {
-                const newTx: Transaction = {
-                  id: `tx_card_pay_${Date.now()}`,
-                  context: 'PJ',
-                  type: 'expense',
-                  title: `Pagamento Fatura Cartão PJ`,
-                  amount,
-                  amountCents: Math.round(amount * 100),
-                  date: new Date().toISOString().split('T')[0],
-                  category: 'software_infra',
-                };
-                setTransactions(prev => [newTx, ...prev]);
-                alert(`Pagamento da fatura de R$ ${amount.toLocaleString('pt-BR')} registrado como saída real no Caixa PJ!`);
-              }}
-            />
-          )}
+            {pjTab === 'cards' && (
+              <PjCardsView
+                creditCards={creditCards.filter(c => c.context === 'PJ')}
+                accounts={accounts}
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onAddCard={() => setIsAddCardModalOpen(true)}
+                onPayInvoice={(cardId, amount) => {
+                  const newTx: Transaction = {
+                    id: `tx_card_pay_${Date.now()}`,
+                    context: 'PJ',
+                    type: 'expense',
+                    title: `Pagamento Fatura Cartão PJ`,
+                    amount,
+                    amountCents: Math.round(amount * 100),
+                    date: new Date().toISOString().split('T')[0],
+                    category: 'software_infra',
+                  };
+                  setTransactions(prev => [newTx, ...prev]);
+                  alert(`Pagamento da fatura de R$ ${amount.toLocaleString('pt-BR')} registrado como saída real no Caixa PJ!`);
+                }}
+              />
+            )}
 
-          {pjTab === 'collections' && (
-            <PjCollections
-              defaulters={defaulters}
-              isPrivacyMode={isPrivacyMode}
-              onOpenBillingModal={() => setIsBillingModalOpen(true)}
-            />
-          )}
+            {pjTab === 'collections' && (
+              <PjCollections
+                defaulters={defaulters}
+                isPrivacyMode={isPrivacyMode}
+                onOpenBillingModal={() => setIsBillingModalOpen(true)}
+              />
+            )}
 
-          {pjTab === 'accounting' && (
-            <PjAccounting
-              transactions={transactions}
-              onReimburse={handleReimburseSocio}
-            />
-          )}
+            {pjTab === 'accounting' && (
+              <PjAccounting
+                transactions={transactions}
+                onReimburse={handleReimburseSocio}
+              />
+            )}
 
-          {pjTab === 'reports' && (
-            <PjReports
-              transactions={transactions}
-              accounts={accounts}
-              customers={customers}
-              suppliers={suppliers}
-              projects={projects}
-              costCenters={costCenters}
-              defaulters={defaulters}
-              creditCards={creditCards}
-              isPrivacyMode={isPrivacyMode}
-              onNavigateTab={(tab) => setPjTab(tab as PJTab)}
-            />
-          )}
+            {pjTab === 'reports' && (
+              <PjReports
+                transactions={transactions}
+                accounts={accounts}
+                customers={customers}
+                suppliers={suppliers}
+                projects={projects}
+                costCenters={costCenters}
+                defaulters={defaulters}
+                creditCards={creditCards}
+                isPrivacyMode={isPrivacyMode}
+                onNavigateTab={(tab) => setPjTab(tab as PJTab)}
+              />
+            )}
 
-          {pjTab === 'conciliations' && (
-            <PfPjReconciliation
-              transactions={transactions}
-              onReimburseSocio={handleReimburseSocio}
-              isPrivacyMode={isPrivacyMode}
-              isPJ
-            />
-          )}
-        </>
+            {pjTab === 'conciliations' && (
+              <PfPjReconciliation
+                transactions={transactions}
+                onReimburseSocio={handleReimburseSocio}
+                isPrivacyMode={isPrivacyMode}
+                isPJ
+              />
+            )}
+          </>
+        )
       )}
 
       {/* Modais */}
