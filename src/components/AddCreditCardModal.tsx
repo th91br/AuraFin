@@ -14,15 +14,16 @@ export function AddCreditCardModal({ isOpen, onClose, onSave }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Form State
-  const [name, setName] = useState('Nubank Violeta');
-  const [institution, setInstitution] = useState('Nubank');
-  const [brand, setBrand] = useState('Visa');
-  const [lastFourDigits, setLastFourDigits] = useState('4554');
-  const [limitTotal, setLimitTotal] = useState(15000);
-  const [closingDay, setClosingDay] = useState(20);
-  const [dueDay, setDueDay] = useState(28);
+  const [cardType, setCardType] = useState<'credito' | 'debito'>('credito');
+  const [name, setName] = useState('BTG Pactual Corporate');
+  const [institution, setInstitution] = useState('BTG Pactual');
+  const [brand, setBrand] = useState('Mastercard');
+  const [lastFourDigits, setLastFourDigits] = useState('8842');
+  const [limitTotal, setLimitTotal] = useState(25000);
+  const [closingDay, setClosingDay] = useState(15);
+  const [dueDay, setDueDay] = useState(23);
   const [bestPurchaseDay, setBestPurchaseDay] = useState(21);
-  const [isPrimary, setIsPrimary] = useState(true);
+  const [isPrimary, setIsPrimary] = useState(false);
 
   if (!isOpen) return null;
 
@@ -32,12 +33,15 @@ export function AddCreditCardModal({ isOpen, onClose, onSave }: Props) {
       id: `card_${Date.now()}`,
       name,
       institution,
-      limitTotal,
+      brand,
+      lastFourDigits,
+      type: cardType,
+      limitTotal: cardType === 'debito' ? 0 : limitTotal,
       limitUsed: 0,
       currentInvoice: 0,
-      closingDay,
-      dueDay,
-      context: 'PF',
+      closingDay: cardType === 'debito' ? 0 : closingDay,
+      dueDay: cardType === 'debito' ? 0 : dueDay,
+      isPrimary,
     });
     onClose();
   };

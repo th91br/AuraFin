@@ -352,6 +352,18 @@ export function AuraShell({
               </button>
 
               <button
+                onClick={() => setPjTab('cards')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'cards'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <CreditCard className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Cartões Empresariais</span>}
+              </button>
+
+              <button
                 onClick={() => setPjTab('dre')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   pjTab === 'dre'

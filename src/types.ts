@@ -112,6 +112,12 @@ export interface CreditCard {
   closingDay: number;
   dueDay: number;
   context: ContextMode;
+  type?: 'credito' | 'debito';
+  brand?: string;
+  lastFourDigits?: string;
+  linkedAccountId?: string;
+  isPrimary?: boolean;
+  status?: 'ativo' | 'inativo' | 'arquivado';
 }
 
 export interface RecurrenceItem {

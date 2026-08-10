@@ -219,12 +219,17 @@ export default function App() {
       id: cardData.id || `card_${Date.now()}`,
       name: cardData.name || 'Novo Cartão',
       institution: cardData.institution || 'Banco',
-      limitTotal: cardData.limitTotal || 10000,
+      type: cardData.type || 'credito',
+      brand: cardData.brand || 'Mastercard',
+      lastFourDigits: cardData.lastFourDigits || '4554',
+      limitTotal: cardData.limitTotal || 0,
       limitUsed: 0,
       currentInvoice: 0,
-      closingDay: cardData.closingDay || 20,
-      dueDay: cardData.dueDay || 28,
+      closingDay: cardData.closingDay || 15,
+      dueDay: cardData.dueDay || 25,
       context: mode,
+      isPrimary: cardData.isPrimary || false,
+      status: 'ativo',
     };
     setCreditCards(prev => [...prev, newCard]);
   };
@@ -530,6 +535,9 @@ export default function App() {
 
           {pjTab === 'cards' && (
             <PjCardsView
+              creditCards={creditCards.filter(c => c.context === 'PJ')}
+              accounts={accounts}
+              transactions={transactions}
               isPrivacyMode={isPrivacyMode}
               onAddCard={() => setIsAddCardModalOpen(true)}
               onPayInvoice={(cardId, amount) => {
