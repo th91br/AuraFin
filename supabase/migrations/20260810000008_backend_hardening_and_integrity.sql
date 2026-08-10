@@ -139,6 +139,7 @@ where r.due_date < current_date
 comment on view public.v_defaulters is 'Visão dinâmica gerencial de inadimplência sem duplicação de estado, respeitando RLS via security_invoker.';
 
 -- 7. Hardening Storage Objects RLS Policies with Path and Bucket Validation
+drop policy if exists "Acesso PF ao Bucket Financeiro com isolamento por Pasta" on storage.objects;
 create policy "Acesso PF ao Bucket Financeiro com isolamento por Pasta"
   on storage.objects for all
   using (
@@ -152,6 +153,7 @@ create policy "Acesso PF ao Bucket Financeiro com isolamento por Pasta"
     and (storage.foldername(name))[2] = auth.uid()::text
   );
 
+drop policy if exists "Acesso PJ ao Bucket Financeiro com isolamento por Organização" on storage.objects;
 create policy "Acesso PJ ao Bucket Financeiro com isolamento por Organização"
   on storage.objects for all
   using (
