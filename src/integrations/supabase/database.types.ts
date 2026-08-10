@@ -38,6 +38,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      legacy_import_runs: {
+        Row: {
+          id: string
+          user_id: string
+          source_fingerprint: string
+          status: 'pending' | 'running' | 'failed' | 'completed'
+          counts: Json
+          started_at: string
+          completed_at: string | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source_fingerprint: string
+          status?: 'pending' | 'running' | 'failed' | 'completed'
+          counts?: Json
+          started_at?: string
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source_fingerprint?: string
+          status?: 'pending' | 'running' | 'failed' | 'completed'
+          counts?: Json
+          started_at?: string
+          completed_at?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+      }
       organizations: {
         Row: {
           id: string

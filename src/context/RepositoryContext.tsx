@@ -21,6 +21,14 @@ export type ModuleSource = 'local' | 'supabase';
 export interface ModulePersistenceConfig {
   personalAccounts: ModuleSource;
   personalTransactions: ModuleSource;
+  personalCards: ModuleSource;
+  budgets: ModuleSource;
+  goals: ModuleSource;
+  emergencyReserves: ModuleSource;
+  debts: ModuleSource;
+  assets: ModuleSource;
+  investments: ModuleSource;
+  taxMetadata: ModuleSource;
   businessAccounts: ModuleSource;
   businessTransactions: ModuleSource;
 }
@@ -40,10 +48,18 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   const { activeOrganization } = useOrganization();
 
   // Granular Module-Level Persistence Mode Flags
-  // Default to 'supabase' when user is authenticated for the Phase 2A migrated modules, 'local' otherwise.
+  // In Phase 2B, 100% of PF modules utilize Supabase when authenticated.
   const config: ModulePersistenceConfig = useMemo(() => ({
     personalAccounts: isAuthenticated ? 'supabase' : 'local',
     personalTransactions: isAuthenticated ? 'supabase' : 'local',
+    personalCards: isAuthenticated ? 'supabase' : 'local',
+    budgets: isAuthenticated ? 'supabase' : 'local',
+    goals: isAuthenticated ? 'supabase' : 'local',
+    emergencyReserves: isAuthenticated ? 'supabase' : 'local',
+    debts: isAuthenticated ? 'supabase' : 'local',
+    assets: isAuthenticated ? 'supabase' : 'local',
+    investments: isAuthenticated ? 'supabase' : 'local',
+    taxMetadata: isAuthenticated ? 'supabase' : 'local',
     businessAccounts: isAuthenticated && activeOrganization ? 'supabase' : 'local',
     businessTransactions: isAuthenticated && activeOrganization ? 'supabase' : 'local',
   }), [isAuthenticated, activeOrganization]);
