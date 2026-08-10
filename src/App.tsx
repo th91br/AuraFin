@@ -38,6 +38,7 @@ import { PfEmergencyReserveView } from './components/PfEmergencyReserveView';
 import { PfDebtsView } from './components/PfDebtsView';
 import { PfWealth } from './components/PfWealth';
 import { PfInvestmentsView } from './components/PfInvestmentsView';
+import { PfPrivacyShieldView } from './components/aura/PfPrivacyShieldView';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
 import { PfReportsView } from './components/PfReportsView';
 
@@ -267,150 +268,154 @@ export default function App() {
     >
       {/* MODO PESSOA FÍSICA (PF) */}
       {mode === 'PF' && (
-        <>
-          {pfTab === 'overview' && (
-            <PfOverview
-              transactions={transactions}
-              events={events}
-              assets={assets}
-              budgetItems={budgetItems}
-              goals={goals}
-              creditCards={creditCards}
-              isPrivacyMode={isPrivacyMode}
-              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-              onAddAsset={() => setIsAssetModalOpen(true)}
-              onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
-              onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
-              onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
-              onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
-              onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
-              onActionClickEvent={() => {}}
-              onNavigateTab={(tab) => setPfTab(tab as PFTab)}
-              onAddCard={() => setIsAddCardModalOpen(true)}
-            />
-          )}
+        isPrivacyMode ? (
+          <PfPrivacyShieldView onUnlock={() => setIsPrivacyMode(false)} />
+        ) : (
+          <>
+            {pfTab === 'overview' && (
+              <PfOverview
+                transactions={transactions}
+                events={events}
+                assets={assets}
+                budgetItems={budgetItems}
+                goals={goals}
+                creditCards={creditCards}
+                isPrivacyMode={isPrivacyMode}
+                onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+                onAddAsset={() => setIsAssetModalOpen(true)}
+                onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
+                onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
+                onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
+                onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
+                onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                onActionClickEvent={() => {}}
+                onNavigateTab={(tab) => setPfTab(tab as PFTab)}
+                onAddCard={() => setIsAddCardModalOpen(true)}
+              />
+            )}
 
-          {pfTab === 'transactions' && (
-            <PfTransactions
-              transactions={transactions}
-              accounts={accounts}
-              creditCards={creditCards}
-              isPrivacyMode={isPrivacyMode}
-              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-            />
-          )}
+            {pfTab === 'transactions' && (
+              <PfTransactions
+                transactions={transactions}
+                accounts={accounts}
+                creditCards={creditCards}
+                isPrivacyMode={isPrivacyMode}
+                onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              />
+            )}
 
-          {pfTab === 'accounts' && (
-            <PfAccounts
-              accounts={accounts}
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onAddAccount={() => alert('Formulário de nova conta')}
-              onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-            />
-          )}
+            {pfTab === 'accounts' && (
+              <PfAccounts
+                accounts={accounts}
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onAddAccount={() => alert('Formulário de nova conta')}
+                onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              />
+            )}
 
-          {pfTab === 'cards' && (
-            <PfCards
-              creditCards={creditCards}
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onAddCard={() => setIsAddCardModalOpen(true)}
-            />
-          )}
+            {pfTab === 'cards' && (
+              <PfCards
+                creditCards={creditCards}
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onAddCard={() => setIsAddCardModalOpen(true)}
+              />
+            )}
 
-          {pfTab === 'recurrences' && (
-            <PfRecurrences
-              isPrivacyMode={isPrivacyMode}
-              onAddRecurrence={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-            />
-          )}
+            {pfTab === 'recurrences' && (
+              <PfRecurrences
+                isPrivacyMode={isPrivacyMode}
+                onAddRecurrence={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              />
+            )}
 
-          {pfTab === 'planning' && (
-            <PfPlanning
-              transactions={transactions}
-              budgetItems={budgetItems}
-              isPrivacyMode={isPrivacyMode}
-              onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
-            />
-          )}
+            {pfTab === 'planning' && (
+              <PfPlanning
+                transactions={transactions}
+                budgetItems={budgetItems}
+                isPrivacyMode={isPrivacyMode}
+                onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
+              />
+            )}
 
-          {pfTab === 'goals' && (
-            <PfGoalsView
-              goals={goals}
-              isPrivacyMode={isPrivacyMode}
-              onAddGoal={() => alert('Formulário de nova meta')}
-            />
-          )}
+            {pfTab === 'goals' && (
+              <PfGoalsView
+                goals={goals}
+                isPrivacyMode={isPrivacyMode}
+                onAddGoal={() => alert('Formulário de nova meta')}
+              />
+            )}
 
-          {pfTab === 'reserve' && (
-            <PfEmergencyReserveView
-              isPrivacyMode={isPrivacyMode}
-              onAddDeposit={() => alert('Aporte registrado na reserva!')}
-            />
-          )}
+            {pfTab === 'reserve' && (
+              <PfEmergencyReserveView
+                isPrivacyMode={isPrivacyMode}
+                onAddDeposit={() => alert('Aporte registrado na reserva!')}
+              />
+            )}
 
-          {pfTab === 'debts' && (
-            <PfDebtsView
-              isPrivacyMode={isPrivacyMode}
-              onAddDebt={() => alert('Formulário de nova dívida')}
-              onPayInstallment={(debtId, amount) => {
-                const newTx: Transaction = {
-                  id: `tx_debt_${Date.now()}`,
-                  context: 'PF',
-                  type: 'expense',
-                  title: `Pagamento Parcela Dívida`,
-                  amount,
-                  amountCents: Math.round(amount * 100),
-                  date: new Date().toISOString().split('T')[0],
-                  category: 'outros',
-                };
-                setTransactions(prev => [newTx, ...prev]);
-                alert('Pagamento de parcela registrado como movimentação!');
-              }}
-            />
-          )}
+            {pfTab === 'debts' && (
+              <PfDebtsView
+                isPrivacyMode={isPrivacyMode}
+                onAddDebt={() => alert('Formulário de nova dívida')}
+                onPayInstallment={(debtId, amount) => {
+                  const newTx: Transaction = {
+                    id: `tx_debt_${Date.now()}`,
+                    context: 'PF',
+                    type: 'expense',
+                    title: `Pagamento Parcela Dívida`,
+                    amount,
+                    amountCents: Math.round(amount * 100),
+                    date: new Date().toISOString().split('T')[0],
+                    category: 'outros',
+                  };
+                  setTransactions(prev => [newTx, ...prev]);
+                  alert('Pagamento de parcela registrado como movimentação!');
+                }}
+              />
+            )}
 
-          {pfTab === 'wealth' && (
-            <PfWealth
-              assets={assets}
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onAddAsset={() => setIsAssetModalOpen(true)}
-            />
-          )}
+            {pfTab === 'wealth' && (
+              <PfWealth
+                assets={assets}
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onAddAsset={() => setIsAssetModalOpen(true)}
+              />
+            )}
 
-          {pfTab === 'investments' && (
-            <PfInvestmentsView
-              isPrivacyMode={isPrivacyMode}
-              onAddInvestment={() => alert('Formulário de novo investimento')}
-            />
-          )}
+            {pfTab === 'investments' && (
+              <PfInvestmentsView
+                isPrivacyMode={isPrivacyMode}
+                onAddInvestment={() => alert('Formulário de novo investimento')}
+              />
+            )}
 
-          {pfTab === 'tax_planning' && (
-            <PfTaxPlanning
-              assets={assets}
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
+            {pfTab === 'tax_planning' && (
+              <PfTaxPlanning
+                assets={assets}
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
 
-          {pfTab === 'reports' && (
-            <PfReportsView
-              transactions={transactions}
-              isPrivacyMode={isPrivacyMode}
-              onNavigateTab={(tab) => setPfTab(tab as PFTab)}
-            />
-          )}
+            {pfTab === 'reports' && (
+              <PfReportsView
+                transactions={transactions}
+                isPrivacyMode={isPrivacyMode}
+                onNavigateTab={(tab) => setPfTab(tab as PFTab)}
+              />
+            )}
 
-          {pfTab === 'conciliations' && (
-            <PfPjReconciliation
-              transactions={transactions}
-              onReimburseSocio={handleReimburseSocio}
-              isPrivacyMode={isPrivacyMode}
-            />
-          )}
-        </>
+            {pfTab === 'conciliations' && (
+              <PfPjReconciliation
+                transactions={transactions}
+                onReimburseSocio={handleReimburseSocio}
+                isPrivacyMode={isPrivacyMode}
+              />
+            )}
+          </>
+        )
       )}
 
       {/* MODO PESSOA JURÍDICA (PJ) */}
