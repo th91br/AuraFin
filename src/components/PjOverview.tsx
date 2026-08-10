@@ -84,10 +84,39 @@ export function PjOverview({
 
       {/* Top 4 Executive KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Faturamento Bruto" value={grossRevenue} isPJ subtitle="Mês Atual" trend="up" trendValue="+18.4%" />
-        <MetricCard title="Caixa Operacional" value={currentCash} isPJ subtitle="Contas PJ" trend="up" trendValue="+10.2%" />
-        <MetricCard title="Resultado Líquido" value={netProfit} isPJ subtitle="Após impostos e pró-labore" />
-        <MetricCard title="Margem Líquida" value={marginPercent} isPJ prefix="" subtitle={`Operacional: ${marginPercent}%`} />
+        <MetricCard
+          title="Faturamento Bruto"
+          value={grossRevenue}
+          isPrivacyMode={isPrivacyMode}
+          isPJ
+          subtitle="Mês Atual"
+          trend="up"
+          trendValue="+18.4%"
+        />
+        <MetricCard
+          title="Caixa Operacional"
+          value={currentCash}
+          isPrivacyMode={isPrivacyMode}
+          isPJ
+          subtitle="Contas PJ"
+          trend="up"
+          trendValue="+10.2%"
+        />
+        <MetricCard
+          title="Resultado Líquido"
+          value={netProfit}
+          isPrivacyMode={isPrivacyMode}
+          isPJ
+          subtitle="Após impostos e pró-labore"
+        />
+        <MetricCard
+          title="Margem Líquida"
+          value={marginPercent}
+          isPrivacyMode={isPrivacyMode}
+          isPJ
+          prefix=""
+          subtitle={isPrivacyMode ? "Operacional: •••••• %" : `Operacional: ${marginPercent}%`}
+        />
       </div>
 
       {/* 2. ÁREA ANALÍTICA EM DUAS COLUNAS VERTICAIS INDEPENDENTES (LEFT STACK 5/12 & RIGHT STACK 7/12) */}
@@ -104,9 +133,10 @@ export function PjOverview({
             target={18500}
             categories={budgetCategories}
             isPJ
+            isPrivacyMode={isPrivacyMode}
           />
 
-          {/* MÓDULO 2: CARTÕES CORPORATIVOS (Integrado diretamente ao Grid!) */}
+          {/* MÓDULO 2: CARTÕES CORPORATIVOS */}
           <div className="bg-[#172033] p-6 rounded-2xl border border-white/5 space-y-4 shadow-xs">
             <div className="flex justify-between items-center">
               <div>
@@ -157,22 +187,29 @@ export function PjOverview({
                   cardNumberMasked="•••• •••• •••• 4554"
                   balance={availableLimit}
                   dueDate={`${activeCard.dueDay}/28`}
+                  isPrivacyMode={isPrivacyMode}
                 />
 
                 <div className="p-4 rounded-xl bg-slate-900 border border-white/5 text-xs space-y-2 font-mono">
                   <div className="flex justify-between text-slate-300 font-sans font-semibold">
                     <span>Fatura Atual ({activeCard.closingDay}/28):</span>
-                    <span className="font-mono font-bold text-white">R$ {activeCard.currentInvoice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono font-bold text-white">
+                      <PrivacyText value={activeCard.currentInvoice} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="flex justify-between text-slate-400 text-[11px]">
                     <span>Limite Disponível:</span>
-                    <span className="font-bold text-emerald-400">R$ {availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-emerald-400">
+                      <PrivacyText value={availableLimit} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="flex justify-between text-slate-400 text-[11px]">
                     <span>Limite Utilizado ({usedPercentage}%):</span>
-                    <span className="font-bold text-slate-200">R$ {activeCard.limitUsed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de R$ {activeCard.limitTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-slate-200">
+                      <PrivacyText value={activeCard.limitUsed} isPrivacyMode={isPrivacyMode} /> de <PrivacyText value={activeCard.limitTotal} isPrivacyMode={isPrivacyMode} />
+                    </span>
                   </div>
 
                   <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -220,7 +257,9 @@ export function PjOverview({
               <div>
                 <div className="flex justify-between text-[11px] font-sans font-medium text-slate-400 mb-1">
                   <span>Faturamento Entradas</span>
-                  <span className="font-mono font-bold text-emerald-400">R$ {grossRevenue.toLocaleString('pt-BR')}</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    <PrivacyText value={grossRevenue} isPrivacyMode={isPrivacyMode} />
+                  </span>
                 </div>
                 <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: '90%' }} />
@@ -230,7 +269,9 @@ export function PjOverview({
               <div>
                 <div className="flex justify-between text-[11px] font-sans font-medium text-slate-400 mb-1">
                   <span>Saídas & Pró-labore</span>
-                  <span className="font-mono font-bold text-rose-400">R$ {(totalExpenses + prolaborePaid).toLocaleString('pt-BR')}</span>
+                  <span className="font-mono font-bold text-rose-400">
+                    <PrivacyText value={totalExpenses + prolaborePaid} isPrivacyMode={isPrivacyMode} />
+                  </span>
                 </div>
                 <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-rose-500 rounded-full" style={{ width: '55%' }} />
@@ -263,8 +304,8 @@ export function PjOverview({
 
           {/* Card 3: Indicadores Operacionais lado a lado */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GoalCard title="Ponto de Equilíbrio (Break-even)" current={5610} target={5610} daysLeft={0} isPJ />
-            <GoalCard title="Meta de Faturamento Mensal" current={grossRevenue} target={25000} daysLeft={21} isPJ />
+            <GoalCard title="Ponto de Equilíbrio (Break-even)" current={5610} target={5610} daysLeft={0} isPJ isPrivacyMode={isPrivacyMode} />
+            <GoalCard title="Meta de Faturamento Mensal" current={grossRevenue} target={25000} daysLeft={21} isPJ isPrivacyMode={isPrivacyMode} />
           </div>
 
         </div>
@@ -274,7 +315,7 @@ export function PjOverview({
       {/* 3. SEÇÃO FULL-WIDTH: LANÇAMENTOS RECENTES & INSIGHT CONTEXTUAL */}
       <div className="space-y-6">
         
-        {/* Business Insight Contextual Card (Exibido apenas quando houver informação relevante) */}
+        {/* Business Insight Contextual Card */}
         <div className="p-4 rounded-2xl bg-cyan-950/60 border border-cyan-800/80 text-cyan-200 flex items-center justify-between text-xs font-semibold">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-xl bg-cyan-600 text-white flex items-center justify-center font-bold">
@@ -309,6 +350,7 @@ export function PjOverview({
                 amount={tx.amount}
                 isIncome={tx.type === 'income'}
                 isPJ
+                isPrivacyMode={isPrivacyMode}
               />
             ))}
           </div>

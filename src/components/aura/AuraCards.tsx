@@ -23,6 +23,10 @@ export function MetricCard({
   isPJ = false,
   prefix = 'R$',
 }: MetricCardProps) {
+  const displaySubtitle = (isPrivacyMode && subtitle) 
+    ? subtitle.replace(/\d+([.,]\d+)?%/g, '•••••• %').replace(/\d+/g, '••••••')
+    : subtitle;
+
   return (
     <div className={`p-5 rounded-2xl transition-all duration-200 border ${
       isPJ 
@@ -46,19 +50,31 @@ export function MetricCard({
       </div>
 
       <div className="mt-2.5">
-        <PrivacyText
-          value={value}
-          isPrivacyMode={isPrivacyMode}
-          prefix={prefix}
-          className={`text-2xl font-black tracking-tight font-mono ${
-            isPJ ? 'text-white' : 'text-slate-950'
-          }`}
-        />
+        {prefix === '' ? (
+          isPrivacyMode ? (
+            <span className={`text-2xl font-black tracking-tight font-mono ${isPJ ? 'text-white' : 'text-slate-950'}`}>
+              •••••• %
+            </span>
+          ) : (
+            <span className={`text-2xl font-black tracking-tight font-mono ${isPJ ? 'text-white' : 'text-slate-950'}`}>
+              {value}%
+            </span>
+          )
+        ) : (
+          <PrivacyText
+            value={value}
+            isPrivacyMode={isPrivacyMode}
+            prefix={prefix}
+            className={`text-2xl font-black tracking-tight font-mono ${
+              isPJ ? 'text-white' : 'text-slate-950'
+            }`}
+          />
+        )}
       </div>
 
-      {subtitle && (
+      {displaySubtitle && (
         <p className={`text-[11px] font-medium mt-1.5 ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
-          {subtitle}
+          {displaySubtitle}
         </p>
       )}
     </div>
@@ -72,9 +88,10 @@ interface DonutChartCardProps {
   target: number;
   categories: { label: string; amount: number; color: string }[];
   isPJ?: boolean;
+  isPrivacyMode?: boolean;
 }
 
-export function DonutChartCard({ title, subtitle, spent, target, categories, isPJ = false }: DonutChartCardProps) {
+export function DonutChartCard({ title, subtitle, spent, target, categories, isPJ = false, isPrivacyMode = false }: DonutChartCardProps) {
   const percentage = Math.min(100, Math.round((spent / (target || 1)) * 100));
 
   return (
@@ -112,8 +129,12 @@ export function DonutChartCard({ title, subtitle, spent, target, categories, isP
           </svg>
           <div className="absolute text-center space-y-0.5">
             <span className={`text-[10px] font-bold uppercase tracking-wider block ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>Gasto</span>
-            <span className="text-lg font-black font-mono tracking-tight block">R$ {spent.toLocaleString('pt-BR')}</span>
-            <span className={`text-[10px] font-semibold block ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>de R$ {target.toLocaleString('pt-BR')}</span>
+            <span className="text-lg font-black font-mono tracking-tight block">
+              <PrivacyText value={spent} isPrivacyMode={isPrivacyMode} />
+            </span>
+            <span className={`text-[10px] font-semibold block ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
+              de <PrivacyText value={target} isPrivacyMode={isPrivacyMode} />
+            </span>
           </div>
         </div>
 
@@ -125,7 +146,9 @@ export function DonutChartCard({ title, subtitle, spent, target, categories, isP
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                 <span className={`font-medium ${isPJ ? 'text-slate-300' : 'text-slate-700'}`}>{cat.label}</span>
               </div>
-              <span className="font-mono font-bold">R$ {cat.amount.toLocaleString('pt-BR')}</span>
+              <span className="font-mono font-bold">
+                <PrivacyText value={cat.amount} isPrivacyMode={isPrivacyMode} />
+              </span>
             </div>
           ))}
         </div>
@@ -140,9 +163,10 @@ interface GoalCardProps {
   target: number;
   daysLeft: number;
   isPJ?: boolean;
+  isPrivacyMode?: boolean;
 }
 
-export function GoalCard({ title, current, target, daysLeft, isPJ = false }: GoalCardProps) {
+export function GoalCard({ title, current, target, daysLeft, isPJ = false, isPrivacyMode = false }: GoalCardProps) {
   const percentage = Math.min(100, Math.round((current / (target || 1)) * 100));
 
   return (
@@ -175,7 +199,7 @@ export function GoalCard({ title, current, target, daysLeft, isPJ = false }: Goa
       <div className="truncate flex-1">
         <h4 className="font-bold text-xs truncate">{title}</h4>
         <p className={`text-[11px] font-mono font-semibold ${isPJ ? 'text-emerald-400' : 'text-emerald-700'}`}>
-          R$ {current.toLocaleString('pt-BR')} <span className={`font-normal ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>de R$ {target.toLocaleString('pt-BR')}</span>
+          <PrivacyText value={current} isPrivacyMode={isPrivacyMode} /> <span className={`font-normal ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>de <PrivacyText value={target} isPrivacyMode={isPrivacyMode} /></span>
         </p>
         <span className={`text-[9px] block mt-0.5 ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>{daysLeft} dias restantes</span>
       </div>
@@ -189,9 +213,10 @@ interface VisualPaymentCardProps {
   balance: number;
   dueDate: string;
   isPJ?: boolean;
+  isPrivacyMode?: boolean;
 }
 
-export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, isPJ = false }: VisualPaymentCardProps) {
+export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, isPJ = false, isPrivacyMode = false }: VisualPaymentCardProps) {
   return (
     <div className="p-5 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-md space-y-4 relative overflow-hidden">
       <div className="flex justify-between items-center">
@@ -201,7 +226,9 @@ export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate
 
       <div className="py-2">
         <p className="font-mono text-sm tracking-widest text-sky-100">{cardNumberMasked}</p>
-        <p className="text-2xl font-black font-mono tracking-tight mt-1">R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+        <div className="text-2xl font-black font-mono tracking-tight mt-1">
+          <PrivacyText value={balance} isPrivacyMode={isPrivacyMode} />
+        </div>
       </div>
 
       <div className="flex justify-between items-center text-[10px] font-mono text-sky-100 pt-1 border-t border-white/20">
@@ -219,9 +246,10 @@ interface ActivityRowProps {
   amount: number;
   isIncome?: boolean;
   isPJ?: boolean;
+  isPrivacyMode?: boolean;
 }
 
-export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = false }: ActivityRowProps) {
+export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = false, isPrivacyMode = false }: ActivityRowProps) {
   return (
     <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
       isPJ ? 'bg-[#1E293B] border-white/5 text-white hover:bg-slate-800' : 'bg-slate-50 border-slate-200/80 text-slate-900 hover:bg-slate-100/80'
@@ -235,7 +263,7 @@ export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = 
       </div>
 
       <span className={`font-mono font-bold shrink-0 ${isIncome ? 'text-emerald-500' : isPJ ? 'text-slate-200' : 'text-slate-900'}`}>
-        {isIncome ? '+' : '-'} R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        <PrivacyText value={amount} isPrivacyMode={isPrivacyMode} prefix={isIncome ? '+ R$' : '- R$'} />
       </span>
     </div>
   );
