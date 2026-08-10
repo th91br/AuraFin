@@ -41,11 +41,17 @@ import { PfInvestmentsView } from './components/PfInvestmentsView';
 import { PfTaxPlanning } from './components/PfTaxPlanning';
 import { PfReportsView } from './components/PfReportsView';
 
-// PJ Component Views
+// PJ Component Views (Bloco 1 & Bloco 2)
 import { PjOverview } from './components/PjOverview';
 import { PjCashflow } from './components/PjCashflow';
 import { PjReceivablesPayables } from './components/PjReceivablesPayables';
 import { PjBillingView } from './components/PjBillingView';
+import { PjDreView } from './components/PjDreView';
+import { PjBreakEvenView } from './components/PjBreakEvenView';
+import { PjRunwayView } from './components/PjRunwayView';
+import { PjProjectsView } from './components/PjProjectsView';
+import { PjCostCentersView } from './components/PjCostCentersView';
+import { PjTaxControlView } from './components/PjTaxControlView';
 import { PjManagement } from './components/PjManagement';
 import { PjCollections } from './components/PjCollections';
 import { PjCardsView } from './components/PjCardsView';
@@ -444,6 +450,47 @@ export default function App() {
             <PjBillingView
               isPrivacyMode={isPrivacyMode}
               onAddBilling={() => setIsBillingModalOpen(true)}
+            />
+          )}
+
+          {pjTab === 'dre' && (
+            <PjDreView
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'breakeven' && (
+            <PjBreakEvenView
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'runway' && (
+            <PjRunwayView
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'projects' && (
+            <PjProjectsView
+              projects={projects}
+              customers={customers}
+              isPrivacyMode={isPrivacyMode}
+              onAddProject={() => setIsProjectModalOpen(true)}
+            />
+          )}
+
+          {pjTab === 'cost_centers' && (
+            <PjCostCentersView
+              costCenters={costCenters}
+              isPrivacyMode={isPrivacyMode}
+            />
+          )}
+
+          {pjTab === 'taxes' && (
+            <PjTaxControlView
+              isPrivacyMode={isPrivacyMode}
             />
           )}
 

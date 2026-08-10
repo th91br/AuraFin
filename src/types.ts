@@ -22,6 +22,12 @@ export type PJTab =
   | 'cashflow' 
   | 'receivables_payables' 
   | 'billing'
+  | 'dre'
+  | 'breakeven'
+  | 'runway'
+  | 'projects'
+  | 'cost_centers'
+  | 'taxes'
   | 'management' 
   | 'collections' 
   | 'cards'
@@ -148,6 +154,9 @@ export interface Project {
   client: string;
   revenue: number;
   cost: number;
+  revenueContracted?: number;
+  revenueReceived?: number;
+  directCosts?: number;
   status: 'proposta' | 'em_andamento' | 'concluido' | 'cancelado';
   deadline?: string;
 }

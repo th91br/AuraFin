@@ -32,7 +32,11 @@ import {
   ShieldAlert,
   TrendingUp,
   Users,
-  Truck
+  Truck,
+  Scale,
+  Clock,
+  Layers,
+  Percent
 } from 'lucide-react';
 
 interface AuraShellProps {
@@ -344,6 +348,78 @@ export function AuraShell({
               </button>
 
               <button
+                onClick={() => setPjTab('dre')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'dre'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <FileText className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>DRE Gerencial</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('breakeven')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'breakeven'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Scale className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Ponto de Equilíbrio</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('runway')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'runway'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Clock className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Runway de Caixa</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('projects')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'projects'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Briefcase className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Projetos & Contratos</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('cost_centers')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'cost_centers'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Layers className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Centros de Custo</span>}
+              </button>
+
+              <button
+                onClick={() => setPjTab('taxes')}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  pjTab === 'taxes'
+                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Percent className="w-4 h-4 text-cyan-400" />
+                {!isSidebarCollapsed && <span>Impostos (Controle)</span>}
+              </button>
+
+              <button
                 onClick={() => setPjTab('management')}
                 className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   pjTab === 'management'
@@ -365,42 +441,6 @@ export function AuraShell({
               >
                 <CreditCard className="w-4 h-4 text-cyan-400" />
                 {!isSidebarCollapsed && <span>Cartões da Empresa</span>}
-              </button>
-
-              <button
-                onClick={() => setPjTab('collections')}
-                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  pjTab === 'collections'
-                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
-              >
-                <div className={`flex items-center ${isSidebarCollapsed ? '' : 'space-x-3'}`}>
-                  <AlertCircle className="w-4 h-4 text-amber-400" />
-                  {!isSidebarCollapsed && <span>Cobranças</span>}
-                </div>
-                {!isSidebarCollapsed && defaultersCount > 0 && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
-                    {defaultersCount}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => setPjTab('accounting')}
-                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-between px-3.5'} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  pjTab === 'accounting'
-                    ? 'bg-[#1E293B] text-cyan-400 border border-cyan-500/20 shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
-              >
-                <div className={`flex items-center ${isSidebarCollapsed ? '' : 'space-x-3'}`}>
-                  <FileCheck2 className="w-4 h-4 text-cyan-400" />
-                  {!isSidebarCollapsed && <span>Contador</span>}
-                </div>
-                {!isSidebarCollapsed && pendingReimbursementAmount > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                )}
               </button>
             </>
           )}
