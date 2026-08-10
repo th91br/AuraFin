@@ -496,6 +496,13 @@ export interface Database {
         }
         Returns: boolean
       }
+      has_organization_role: {
+        Args: {
+          org_id: string
+          required_roles: string[]
+        }
+        Returns: boolean
+      }
     }
   }
 }
