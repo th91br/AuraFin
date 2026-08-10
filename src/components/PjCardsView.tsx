@@ -125,7 +125,7 @@ export function PjCardsView({
           className="flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Adicionar Cartão</span>
+          <span>Novo Cartão Empresarial</span>
         </button>
       </div>
 
@@ -291,7 +291,7 @@ export function PjCardsView({
             onClick={onAddCard ? onAddCard : () => alert('Formulário de novo cartão PJ')}
             className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
           >
-            + Adicionar Primeiro Cartão
+            Adicionar Primeiro Cartão
           </button>
         </div>
       )}

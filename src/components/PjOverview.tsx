@@ -145,7 +145,7 @@ export function PjOverview({
                   onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão PJ')}
                   className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs transition-all shadow-xs"
                 >
-                  + Adicionar
+                  Adicionar Cartão
                 </button>
               </div>
             </div>
@@ -198,7 +198,7 @@ export function PjOverview({
                   onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão PJ')}
                   className="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-xl"
                 >
-                  + Adicionar Cartão
+                  Adicionar Cartão
                 </button>
               </div>
             )}

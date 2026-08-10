@@ -208,7 +208,7 @@ export function PfOverview({
                   onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão')}
                   className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition-all shadow-xs"
                 >
-                  + Adicionar
+                  Adicionar Cartão
                 </button>
               </div>
             </div>
@@ -261,7 +261,7 @@ export function PfOverview({
                   onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão')}
                   className="px-4 py-2 bg-slate-950 text-white text-xs font-bold rounded-xl"
                 >
-                  + Adicionar Cartão
+                  Adicionar Cartão
                 </button>
               </div>
             )}
