@@ -17,7 +17,8 @@ export function PrivacyText({
     return <span className={`font-mono select-none tracking-widest ${className}`}>{prefix} ••••••</span>;
   }
 
-  const formatted = value.toLocaleString('pt-BR', { minimumFractionDigits });
+  const safeValue = (value !== undefined && value !== null && !isNaN(value)) ? value : 0;
+  const formatted = safeValue.toLocaleString('pt-BR', { minimumFractionDigits });
   return (
     <span className={className}>
       {prefix} {formatted}

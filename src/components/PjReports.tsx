@@ -104,11 +104,26 @@ export function PjReports({
     { label: 'Impostos & Taxas', amount: 1800, pct: 10, color: '#F43F5E' },
   ];
 
-  // Projects Profitability
-  const projectProfits = projects.length > 0 ? projects : [
-    { id: 'p1', name: 'Plataforma SaaS Enterprise', clientName: 'TechCorp Brasil', revenueContracted: 45000, revenueReceived: 35000, directCosts: 12000, profit: 23000, marginPct: 65.7 },
-    { id: 'p2', name: 'App Mobile iOS/Android', clientName: 'Grupo Inovação', revenueContracted: 28500, revenueReceived: 20000, directCosts: 8500, profit: 11500, marginPct: 57.5 },
-  ];
+  // Normalized Projects Profitability
+  const projectProfits = (projects.length > 0 ? projects : [
+    { id: 'p1', name: 'Plataforma SaaS Enterprise', client: 'TechCorp Brasil', revenue: 45000, cost: 12000, status: 'em_andamento' },
+    { id: 'p2', name: 'App Mobile iOS/Android', client: 'Grupo Inovação', revenue: 28500, cost: 8500, status: 'em_andamento' },
+  ]).map(p => {
+    const rev = (p as any).revenueContracted || (p as any).revenue || 0;
+    const costVal = (p as any).directCosts || (p as any).cost || 0;
+    const profitVal = rev - costVal;
+    const marginPctVal = rev > 0 ? Math.round((profitVal / rev) * 100) : 0;
+    const clientNameVal = (p as any).clientName || (p as any).client || 'Cliente';
+    return {
+      id: p.id,
+      name: p.name,
+      clientName: clientNameVal,
+      revenueContracted: rev,
+      directCosts: costVal,
+      profit: profitVal,
+      marginPct: marginPctVal,
+    };
+  });
 
   // Inadimplência Aging
   const totalDelinquent = 8400;
