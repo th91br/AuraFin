@@ -76,6 +76,7 @@ import { RepositoryProvider, useRepositories } from './context/RepositoryContext
 import { AuthModal } from './components/auth/AuthModal';
 import { LegacyImportModal } from './components/auth/LegacyImportModal';
 import { LegacyPjImportModal } from './components/auth/LegacyPjImportModal';
+import { CrossContextModal } from './components/aura/CrossContextModal';
 import { LegacyImportService } from './services/migration/legacyImportService';
 import { LegacyPjImportService } from './services/migration/legacyPjImportService';
 
@@ -127,6 +128,7 @@ function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLegacyImportModalOpen, setIsLegacyImportModalOpen] = useState(false);
   const [isLegacyPjImportModalOpen, setIsLegacyPjImportModalOpen] = useState(false);
+  const [isCrossContextModalOpen, setIsCrossContextModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -836,6 +838,23 @@ function AppContent() {
         isOpen={isLegacyPjImportModalOpen}
         onClose={() => setIsLegacyPjImportModalOpen(false)}
         onSuccess={() => {
+          if (activeOrganization) {
+            businessAccountRepository.list(activeOrganization.id).then(supAccounts => setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]));
+            businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
+          }
+        }}
+      />
+
+      <CrossContextModal
+        isOpen={isCrossContextModalOpen}
+        onClose={() => setIsCrossContextModalOpen(false)}
+        pfAccounts={accounts.filter(a => a.context === 'PF')}
+        pjAccounts={accounts.filter(a => a.context === 'PJ')}
+        onSuccess={() => {
+          if (user) {
+            personalAccountRepository.list(user.id).then(supAccounts => setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]));
+            personalTransactionRepository.list(user.id).then(supTxs => setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]));
+          }
           if (activeOrganization) {
             businessAccountRepository.list(activeOrganization.id).then(supAccounts => setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]));
             businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
