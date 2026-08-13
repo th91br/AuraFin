@@ -42,6 +42,8 @@ export interface Database {
         Row: {
           id: string
           user_id: string
+          organization_id: string | null
+          context_type: 'PF' | 'PJ'
           source_fingerprint: string
           status: 'pending' | 'running' | 'failed' | 'completed'
           counts: Json
@@ -53,6 +55,8 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          organization_id?: string | null
+          context_type?: 'PF' | 'PJ'
           source_fingerprint: string
           status?: 'pending' | 'running' | 'failed' | 'completed'
           counts?: Json
@@ -64,6 +68,8 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          organization_id?: string | null
+          context_type?: 'PF' | 'PJ'
           source_fingerprint?: string
           status?: 'pending' | 'running' | 'failed' | 'completed'
           counts?: Json

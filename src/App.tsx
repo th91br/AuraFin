@@ -75,7 +75,9 @@ import { OrganizationProvider, useOrganization } from './context/OrganizationCon
 import { RepositoryProvider, useRepositories } from './context/RepositoryContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LegacyImportModal } from './components/auth/LegacyImportModal';
+import { LegacyPjImportModal } from './components/auth/LegacyPjImportModal';
 import { LegacyImportService } from './services/migration/legacyImportService';
+import { LegacyPjImportService } from './services/migration/legacyPjImportService';
 
 export default function App() {
   return (
@@ -124,6 +126,7 @@ function AppContent() {
   // Modals
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLegacyImportModalOpen, setIsLegacyImportModalOpen] = useState(false);
+  const [isLegacyPjImportModalOpen, setIsLegacyPjImportModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -134,16 +137,27 @@ function AppContent() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // Legacy Import Assistant Check
+  // Legacy PF Import Assistant Check
   useEffect(() => {
     if (isAuthenticated && user) {
       LegacyImportService.previewImport(user.id).then(res => {
         if (res.hasLegacyData && !res.alreadyImported) {
           setIsLegacyImportModalOpen(true);
         }
-      }).catch(e => console.warn('[App] Erro ao checar legado:', e));
+      }).catch(e => console.warn('[App] Erro ao checar legado PF:', e));
     }
   }, [isAuthenticated, user]);
+
+  // Legacy PJ Import Assistant Check
+  useEffect(() => {
+    if (isAuthenticated && activeOrganization) {
+      LegacyPjImportService.previewImport(activeOrganization.id).then(res => {
+        if (res.hasLegacyData && !res.alreadyImported) {
+          setIsLegacyPjImportModalOpen(true);
+        }
+      }).catch(e => console.warn('[App] Erro ao checar legado PJ:', e));
+    }
+  }, [isAuthenticated, activeOrganization]);
 
   // Synchronize PF Accounts & Transactions when module is in Supabase mode
   useEffect(() => {
@@ -814,6 +828,17 @@ function AppContent() {
           if (user) {
             personalAccountRepository.list(user.id).then(supAccounts => setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]));
             personalTransactionRepository.list(user.id).then(supTxs => setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]));
+          }
+        }}
+      />
+
+      <LegacyPjImportModal
+        isOpen={isLegacyPjImportModalOpen}
+        onClose={() => setIsLegacyPjImportModalOpen(false)}
+        onSuccess={() => {
+          if (activeOrganization) {
+            businessAccountRepository.list(activeOrganization.id).then(supAccounts => setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]));
+            businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
           }
         }}
       />

@@ -31,6 +31,18 @@ export interface ModulePersistenceConfig {
   taxMetadata: ModuleSource;
   businessAccounts: ModuleSource;
   businessTransactions: ModuleSource;
+  clients: ModuleSource;
+  suppliers: ModuleSource;
+  receivables: ModuleSource;
+  payables: ModuleSource;
+  invoices: ModuleSource;
+  corporateCards: ModuleSource;
+  projects: ModuleSource;
+  costCenters: ModuleSource;
+  taxRecords: ModuleSource;
+  partners: ModuleSource;
+  collectionEvents: ModuleSource;
+  monthlyClosings: ModuleSource;
 }
 
 interface RepositoryContextType {
@@ -48,7 +60,7 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   const { activeOrganization } = useOrganization();
 
   // Granular Module-Level Persistence Mode Flags
-  // In Phase 2B, 100% of PF modules utilize Supabase when authenticated.
+  // In Phase 2C, 100% of PF and PJ modules utilize Supabase when authenticated.
   const config: ModulePersistenceConfig = useMemo(() => ({
     personalAccounts: isAuthenticated ? 'supabase' : 'local',
     personalTransactions: isAuthenticated ? 'supabase' : 'local',
@@ -62,6 +74,18 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
     taxMetadata: isAuthenticated ? 'supabase' : 'local',
     businessAccounts: isAuthenticated && activeOrganization ? 'supabase' : 'local',
     businessTransactions: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    clients: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    suppliers: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    receivables: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    payables: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    invoices: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    corporateCards: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    projects: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    costCenters: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    taxRecords: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    partners: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    collectionEvents: isAuthenticated && activeOrganization ? 'supabase' : 'local',
+    monthlyClosings: isAuthenticated && activeOrganization ? 'supabase' : 'local',
   }), [isAuthenticated, activeOrganization]);
 
   // Instantiate Repositories strictly according to current module configuration
