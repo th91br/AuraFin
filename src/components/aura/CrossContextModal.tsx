@@ -23,7 +23,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
   const { user, isAuthenticated } = useAuth();
   const { activeOrganization, isViewerReadOnly } = useOrganization();
 
-  const [mode, setMode] = useState<'reimbursement' | 'pro_labore'>('reimbursement');
+  const [mode, setMode] = useState<'reimbursement' | 'pro_labore' | 'profit_distribution'>('reimbursement');
   const [amountStr, setAmountStr] = useState('');
   const [selectedPfAccountId, setSelectedPfAccountId] = useState('');
   const [selectedPjAccountId, setSelectedPjAccountId] = useState('');
@@ -70,7 +70,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           notes,
         });
         setSuccessMsg('Reembolso processado com sucesso! Saldo e conciliação atualizados.');
-      } else {
+      } else if (mode === 'pro_labore') {
         await CrossContextService.processProLabore({
           organizationId: activeOrganization.id,
           partnerId: user.id,
@@ -80,6 +80,16 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           notes,
         });
         setSuccessMsg('Pró-labore transferido com sucesso! Entrada e saída vinculadas no PostgreSQL.');
+      } else {
+        await CrossContextService.processProfitDistribution({
+          organizationId: activeOrganization.id,
+          partnerId: user.id,
+          amountCents,
+          pjAccountId: selectedPjAccountId,
+          pfAccountId: selectedPfAccountId,
+          notes,
+        });
+        setSuccessMsg('Distribuição de lucros processada com sucesso! Lançamentos vinculados no PostgreSQL.');
       }
 
       setTimeout(() => {
@@ -123,20 +133,27 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
         </div>
 
         {/* Mode Selector */}
-        <div className="flex bg-slate-950 border border-slate-800 rounded-2xl p-1 text-xs font-bold">
+        <div className="flex bg-slate-950 border border-slate-800 rounded-2xl p-1 text-xs font-bold gap-1">
           <button
             type="button"
             onClick={() => setMode('reimbursement')}
             className={`flex-1 py-2 rounded-xl transition-all ${mode === 'reimbursement' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
           >
-            Reembolso PJ ➔ PF
+            Reembolso
           </button>
           <button
             type="button"
             onClick={() => setMode('pro_labore')}
             className={`flex-1 py-2 rounded-xl transition-all ${mode === 'pro_labore' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
           >
-            Pró-Labore Sócio
+            Pró-Labore
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('profit_distribution')}
+            className={`flex-1 py-2 rounded-xl transition-all ${mode === 'profit_distribution' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            Lucros
           </button>
         </div>
 

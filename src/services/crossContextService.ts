@@ -20,6 +20,16 @@ export interface ProLaboreParams {
   notes?: string;
 }
 
+export interface ProfitDistributionParams {
+  organizationId: string;
+  partnerId: string;
+  amountCents: number;
+  pjAccountId: string;
+  pfAccountId: string;
+  transactionDate?: string;
+  notes?: string;
+}
+
 export class CrossContextService {
   private static inProgressKeys = new Set<string>();
 
@@ -76,6 +86,37 @@ export class CrossContextService {
 
       if (error) {
         throw normalizeSupabaseError(error, 'CrossContextService.processProLabore');
+      }
+
+      return data as string;
+    } finally {
+      this.inProgressKeys.delete(lockKey);
+    }
+  }
+
+  /**
+   * Processa a distribuição de lucros societária entre PJ e PF de forma atômica no PostgreSQL
+   */
+  public static async processProfitDistribution(params: ProfitDistributionParams): Promise<string> {
+    const lockKey = `profitdist:${params.organizationId}:${params.partnerId}:${params.amountCents}`;
+    if (this.inProgressKeys.has(lockKey)) {
+      throw new Error('Esta distribuição de lucros já está em processamento.');
+    }
+
+    this.inProgressKeys.add(lockKey);
+    try {
+      const { data, error } = await (supabase.rpc as any)('process_profit_distribution_payout', {
+        p_org_id: params.organizationId,
+        p_partner_id: params.partnerId,
+        p_amount_cents: params.amountCents,
+        p_pj_account_id: params.pjAccountId,
+        p_pf_account_id: params.pfAccountId,
+        p_transaction_date: params.transactionDate || new Date().toISOString().split('T')[0],
+        p_notes: params.notes || null,
+      });
+
+      if (error) {
+        throw normalizeSupabaseError(error, 'CrossContextService.processProfitDistribution');
       }
 
       return data as string;
