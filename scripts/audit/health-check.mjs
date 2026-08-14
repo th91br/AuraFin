@@ -9,29 +9,39 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+// Load .env, .env.local if available
+const rootDir = path.resolve(__dirname, '../../');
+if (fs.existsSync(path.join(rootDir, '.env'))) {
+  dotenv.config({ path: path.join(rootDir, '.env') });
+}
+if (fs.existsSync(path.join(rootDir, '.env.local'))) {
+  dotenv.config({ path: path.join(rootDir, '.env.local'), override: true });
+}
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[HealthCheck] ERRO: VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não encontradas.');
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function main() {
   console.log('================================================================');
   console.log('AURAFIN — OPERATIONAL HEALTH CHECK & DIAGNOSTICS');
   console.log('================================================================');
-  console.log(`Target URL: ${supabaseUrl}`);
-  console.log(`Timestamp:  ${new Date().toISOString()}\n`);
+  console.log(`Timestamp:  ${new Date().toISOString()}`);
 
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
+    console.log('\n[STATUS] NEEDS CONFIGURATION: VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não configuradas no ambiente local/CI.');
+    console.log('Para executar contra o Staging/Production, configure as variáveis em .env ou no ambiente.\n');
+    console.log('================================================================\n');
+    process.exit(0);
+  }
+
+  console.log(`Target URL: ${supabaseUrl}\n`);
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
   let allHealthy = true;
 
   // 1. Auth Service Ping
@@ -56,8 +66,7 @@ async function main() {
     const { data: dbData, error: dbErr } = await supabase.rpc('health_check');
     const dbLatency = Date.now() - dbStart;
     if (dbErr) {
-      // Fallback check if RPC is not yet executed in current database
-      console.log(`[DATABASE HEALTH] DEGRADED (${dbLatency}ms) — RPC health_check not yet deployed: ${dbErr.message}`);
+      console.log(`[DATABASE HEALTH] DEGRADED (${dbLatency}ms) — RPC health_check pendente de aplicação: ${dbErr.message}`);
     } else {
       console.log(`[DATABASE HEALTH] PASS (${dbLatency}ms) — Status: ${dbData?.status}, Version: ${dbData?.version}`);
     }

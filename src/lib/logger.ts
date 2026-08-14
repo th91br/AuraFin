@@ -60,6 +60,16 @@ const SENSITIVE_KEYS = new Set([
   'pin',
   'jwt',
   'session',
+  'cookie',
+  'set-cookie',
+  'setcookie',
+  'signed_url',
+  'signedurl',
+  'totp_secret',
+  'totpsecret',
+  'totp_code',
+  'recovery_token',
+  'recovery_code',
 ]);
 
 const FINANCIAL_COLLECTION_KEYS = new Set([

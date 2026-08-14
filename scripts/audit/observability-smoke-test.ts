@@ -37,8 +37,17 @@ const sensitivePayload = {
     password: 'SuperSecretPassword123!',
     currentPassword: 'OldPassword123!',
     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.doNotLeakThis',
+    access_token: 'secret_access_token_123',
+    refresh_token: 'secret_refresh_token_456',
     metadata: {
       apiKey: 'sk_live_123456789abcdef',
+      service_role: 'secret_service_role_key',
+      cookie: 'sb-access-token=xyz; sb-refresh-token=abc',
+      setCookie: 'session=123; HttpOnly',
+      signed_url: 'https://supabase.co/storage/v1/object/sign/doc.pdf?token=secret_signed_token',
+      totp_secret: 'JBSWY3DPEHPK3PXP',
+      totp_code: '123456',
+      recovery_token: 'rec_tok_998877',
       nested: {
         smtpPassword: 'emailPassword',
         authorization: 'Bearer secret_access_token_xyz',
@@ -51,7 +60,16 @@ const sanitized = redactSensitiveData(sensitivePayload);
 assert(sanitized.user.password === '[REDACTED]', 'Senha em primeiro nível redigida');
 assert(sanitized.user.currentPassword === '[REDACTED]', 'currentPassword redigido');
 assert(sanitized.user.token === '[REDACTED]', 'Token JWT em objeto redigido');
+assert(sanitized.user.access_token === '[REDACTED]', 'access_token redigido');
+assert(sanitized.user.refresh_token === '[REDACTED]', 'refresh_token redigido');
 assert(sanitized.user.metadata.apiKey === '[REDACTED]', 'apiKey aninhada redigida');
+assert(sanitized.user.metadata.service_role === '[REDACTED]', 'service_role key redigida');
+assert(sanitized.user.metadata.cookie === '[REDACTED]', 'cookie header redigido');
+assert(sanitized.user.metadata.setCookie === '[REDACTED]', 'setCookie header redigido');
+assert(sanitized.user.metadata.signed_url === '[REDACTED]', 'signed_url redigida');
+assert(sanitized.user.metadata.totp_secret === '[REDACTED]', 'totp_secret redigido');
+assert(sanitized.user.metadata.totp_code === '[REDACTED]', 'totp_code redigido');
+assert(sanitized.user.metadata.recovery_token === '[REDACTED]', 'recovery_token redigido');
 assert(sanitized.user.metadata.nested.smtpPassword === '[REDACTED]', 'smtpPassword profundamente aninhada redigida');
 assert(sanitized.user.metadata.nested.authorization === '[REDACTED]', 'Authorization header redigido');
 

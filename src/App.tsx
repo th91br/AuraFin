@@ -303,7 +303,7 @@ function AppContent() {
         setTransactions(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
         return;
       } catch (e: any) {
-        console.error('[App] Erro ao salvar transação PF no Supabase:', e);
+        AuraLogger.error('[App] Erro ao salvar transação PF no Supabase', { module: 'transactions_pf', event: 'save_failed', error: e?.message });
         alert(`Erro ao salvar transação no Supabase: ${e.message || 'Falha na operação'}`);
         return;
       }
@@ -315,7 +315,7 @@ function AppContent() {
         setTransactions(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
         return;
       } catch (e: any) {
-        console.error('[App] Erro ao salvar transação PJ no Supabase:', e);
+        AuraLogger.error('[App] Erro ao salvar transação PJ no Supabase', { module: 'transactions_pj', event: 'save_failed', error: e?.message });
         alert(`Erro ao salvar transação no Supabase: ${e.message || 'Falha na operação'}`);
         return;
       }

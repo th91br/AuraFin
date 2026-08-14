@@ -8,7 +8,7 @@
 CREATE OR REPLACE FUNCTION public.health_check()
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = ''
 AS $$
 DECLARE
@@ -24,7 +24,8 @@ BEGIN
 END;
 $$;
 
--- Permissões mínimas controladas (disponível para anon e authenticated)
+-- Revoga privilégio implícito de PUBLIC e concede explicitamente aos papéis necessários
+REVOKE EXECUTE ON FUNCTION public.health_check() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.health_check() TO anon, authenticated, service_role;
 
 COMMENT ON FUNCTION public.health_check() IS 'RPC segura para health check e monitoramento de liveness sem expor topologia interna.';

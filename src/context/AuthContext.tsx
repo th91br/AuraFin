@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { Database } from '../integrations/supabase/database.types';
+import { AuraLogger } from '../lib/logger';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -103,12 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (profErr) {
-        console.warn('[AuthProvider] Erro ao buscar perfil:', profErr.message);
+        AuraLogger.warn('[AuthProvider] Erro ao buscar perfil', { module: 'auth', event: 'fetch_profile_failed', error: profErr.message });
       } else {
         setProfile(data);
       }
-    } catch (e) {
-      console.warn('[AuthProvider] Exceção ao buscar perfil:', e);
+    } catch (e: any) {
+      AuraLogger.warn('[AuthProvider] Exceção ao buscar perfil', { module: 'auth', event: 'fetch_profile_exception', error: e?.message });
     }
   };
 
@@ -124,8 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (aalData) {
         setAal(aalData.currentLevel as 'aal1' | 'aal2');
       }
-    } catch (e) {
-      console.warn('[AuthProvider] Erro ao verificar status MFA:', e);
+    } catch (e: any) {
+      AuraLogger.warn('[AuthProvider] Erro ao verificar status MFA', { module: 'auth', event: 'check_mfa_failed', error: e?.message });
     }
   };
 
@@ -271,8 +272,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setMfaFactors([]);
       setAal('aal1');
-    } catch (e) {
-      console.error('[AuthProvider] Erro ao fazer logout:', e);
+    } catch (e: any) {
+      AuraLogger.error('[AuthProvider] Erro ao fazer logout', { module: 'auth', event: 'sign_out_failed', error: e?.message });
     } finally {
       setIsLoading(false);
     }
@@ -291,7 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setError('Muitas solicitações recentes. Aguarde alguns instantes.');
         } else {
           // Do not leak existence of email
-          console.warn('[AuthProvider] Erro reset senha:', err.message);
+          AuraLogger.warn('[AuthProvider] Falha na solicitação de reset de senha', { module: 'auth', event: 'password_reset_request_failed', status: 'failure' });
         }
       }
     } catch (e) {
