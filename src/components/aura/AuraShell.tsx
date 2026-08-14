@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { ContextMode, ViewMode, PFTab, PJTab } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { UserAccountMenu } from './UserAccountMenu';
+import { CreateOrganizationModal } from './CreateOrganizationModal';
 import { 
   User, 
   Building2, 
@@ -87,9 +90,13 @@ export function AuraShell({
   onOpenSecuritySettings,
   children,
 }: AuraShellProps) {
+  const { user, profile } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
 
   const isPJ = mode === 'PJ';
+  const firstName = profile?.full_name?.split(' ')[0] || user?.user_metadata?.full_name?.split(' ')[0] || 'Gestor';
+
 
   return (
     <div className={`min-h-screen font-sans flex transition-colors duration-300 ${
@@ -561,7 +568,7 @@ export function AuraShell({
               </button>
 
               <div>
-                <h2 className="font-extrabold text-sm tracking-tight">Olá, Thiago!</h2>
+                <h2 className="font-extrabold text-sm tracking-tight">Olá, {firstName}!</h2>
                 <p className={`text-[11px] font-medium ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
                   {isPJ ? 'Painel Executivo da Empresa' : 'Resumo da Vida Financeira'}
                 </p>
@@ -597,7 +604,7 @@ export function AuraShell({
               </button>
             </div>
 
-            {/* Right Tools */}
+            {/* Right Tools & User Account */}
             <div className="flex items-center space-x-2">
               <button
                 onClick={onOpenSearch}
@@ -624,34 +631,14 @@ export function AuraShell({
                 {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
 
-              {onOpenSecuritySettings && (
-                <button
-                  onClick={onOpenSecuritySettings}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                    isPJ
-                      ? 'bg-slate-900 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                  title="Segurança da Conta & MFA"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="hidden md:inline">Segurança & MFA</span>
-                </button>
-              )}
-
-              {onOpenAuthModal && (
-                <button
-                  onClick={onOpenAuthModal}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                    isPJ
-                      ? 'bg-cyan-950/60 text-cyan-300 border-cyan-800/60 hover:bg-cyan-900/60'
-                      : 'bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100'
-                  }`}
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Conta & Nuvem</span>
-                </button>
-              )}
+              {/* Executive User Profile & Organization Dropdown */}
+              <UserAccountMenu
+                isPJ={isPJ}
+                onOpenSecuritySettings={() => {
+                  if (onOpenSecuritySettings) onOpenSecuritySettings();
+                }}
+                onOpenCreateOrg={() => setIsCreateOrgModalOpen(true)}
+              />
             </div>
 
           </div>
@@ -662,6 +649,12 @@ export function AuraShell({
           {children}
         </main>
       </div>
+
+      {/* Modal for Creating New Organization */}
+      <CreateOrganizationModal
+        isOpen={isCreateOrgModalOpen}
+        onClose={() => setIsCreateOrgModalOpen(false)}
+      />
 
     </div>
   );

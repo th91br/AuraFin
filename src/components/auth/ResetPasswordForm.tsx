@@ -28,7 +28,7 @@ export function ResetPasswordForm({ onSuccess }: Props) {
     }
 
     if (!strength.isValid) {
-      setLocalError('A senha precisa ter no mínimo 12 caracteres e atender a todos os requisitos de segurança.');
+      setLocalError('A senha precisa ter no mínimo 8 caracteres e conter letras maiúsculas, minúsculas e números.');
       return;
     }
 
@@ -80,7 +80,7 @@ export function ResetPasswordForm({ onSuccess }: Props) {
                 type={showPassword ? 'text' : 'password'}
                 required
                 autoComplete="new-password"
-                placeholder="Mínimo 12 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={password}
                 onChange={(e) => { setLocalError(null); clearError(); setPassword(e.target.value); }}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono"
@@ -115,7 +115,7 @@ export function ResetPasswordForm({ onSuccess }: Props) {
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] pt-1">
                   <div className={`flex items-center space-x-1 ${strength.hasMinLength ? 'text-emerald-400' : 'text-slate-500'}`}>
                     {strength.hasMinLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                    <span>12+ caracteres</span>
+                    <span>8+ caracteres</span>
                   </div>
                   <div className={`flex items-center space-x-1 ${strength.hasUpper && strength.hasLower ? 'text-emerald-400' : 'text-slate-500'}`}>
                     {strength.hasUpper && strength.hasLower ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
@@ -125,9 +125,9 @@ export function ResetPasswordForm({ onSuccess }: Props) {
                     {strength.hasNumber ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                     <span>Ao menos 1 número</span>
                   </div>
-                  <div className={`flex items-center space-x-1 ${strength.hasSpecial ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {strength.hasSpecial ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                    <span>Ao menos 1 símbolo</span>
+                  <div className={`flex items-center space-x-1 ${strength.hasSpecial || password.length >= 12 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    {strength.hasSpecial || password.length >= 12 ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                    <span>Símbolo ou 12+ caracteres</span>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   validate:
-    name: Code Quality & Migration Check
+    name: Code Quality, Security & Migration Check
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +28,24 @@ jobs:
       - name: Deterministic Dependency Installation
         run: npm ci
 
+      - name: Security Vulnerability Audit
+        run: npm audit --audit-level=high
+
       - name: TypeScript Static Type Checking
         run: npm run lint
 
       - name: Production Application Build
         run: npm run build
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Local Supabase & Run Database Tests
+        run: |
+          supabase start
+          supabase test db
 
       - name: Validate Supabase SQL Migrations
         run: |

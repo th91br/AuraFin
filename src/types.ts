@@ -235,3 +235,17 @@ export interface FAQItem {
   question: string;
   answer: string;
 }
+
+export interface InvestmentItem {
+  id: string;
+  name: string;
+  assetType: string;
+  institution: string;
+  quantity?: number;
+  averagePrice?: number;
+  currentPrice?: number;
+  totalValue: number;
+  investedValue?: number;
+  yieldPct?: string;
+}
+

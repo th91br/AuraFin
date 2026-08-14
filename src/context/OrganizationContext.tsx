@@ -56,9 +56,35 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const validOrgs: Organization[] = (members || [])
+      let validOrgs: Organization[] = (members || [])
         .map(m => m.organizations as Organization)
         .filter(Boolean);
+
+      // Auto-provision initial organization if brand new user has no organizations yet
+      if (validOrgs.length === 0) {
+        const defaultName = (user.user_metadata?.full_name || 'Minha Empresa') + ' Gestão';
+        try {
+          const { data: newOrgId } = await (supabase.rpc as any)('create_organization_with_owner', {
+            org_name: defaultName,
+            legal_name: defaultName,
+            tax_id: ''
+          });
+
+          if (newOrgId) {
+            const { data: refreshedMembers } = await supabase
+              .from('organization_members')
+              .select('*, organizations(*)')
+              .eq('user_id', user.id)
+              .eq('status', 'active');
+
+            validOrgs = (refreshedMembers || [])
+              .map(m => m.organizations as Organization)
+              .filter(Boolean);
+          }
+        } catch (autoErr) {
+          console.warn('[OrganizationProvider] Tentativa de auto-provisionamento de organização:', autoErr);
+        }
+      }
 
       setOrganizations(validOrgs);
 

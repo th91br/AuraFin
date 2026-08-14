@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { Goal } from '../types';
 import { MetricCard } from './aura/AuraCards';
-import { Plus, Target, CheckCircle2, Calendar, Sparkles, ArrowRight, X } from 'lucide-react';
+import { Plus, Target, CheckCircle2, Sparkles, Trash2 } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
+import { GoalContributionModal } from './aura/GoalContributionModal';
 
 interface Props {
   goals?: Goal[];
   isPrivacyMode?: boolean;
   onAddGoal: () => void;
+  onContributeGoal?: (goalId: string, amount: number, notes?: string) => Promise<void>;
+  onDeleteGoal?: (id: string) => void;
 }
 
-export function PfGoalsView({ goals = [], isPrivacyMode = false, onAddGoal }: Props) {
-  const [filter, setFilter] = useState<'todas' | 'ativas' | 'concluidas'>('ativas');
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+export function PfGoalsView({
+  goals = [],
+  isPrivacyMode = false,
+  onAddGoal,
+  onContributeGoal,
+  onDeleteGoal,
+}: Props) {
+  const [selectedGoalForContribution, setSelectedGoalForContribution] = useState<Goal | null>(null);
 
-  const defaultGoals: Goal[] = [
-    { id: 'g1', title: 'Viagem de Férias Europa', targetAmount: 25000, currentAmount: 18500, targetDate: '2026-12-15', category: 'viagem' },
-    { id: 'g2', title: 'Reserva de Emergência 6M', targetAmount: 30000, currentAmount: 28500, targetDate: '2026-10-01', category: 'investimento' },
-    { id: 'g3', title: 'Entrada de Imóvel Próprio', targetAmount: 120000, currentAmount: 45000, targetDate: '2027-06-30', category: 'casa' },
-    { id: 'g4', title: 'Troca de Veículo', targetAmount: 80000, currentAmount: 32000, targetDate: '2027-01-15', category: 'veiculo' },
-  ];
-
-  const displayGoals = goals.length > 0 ? goals : defaultGoals;
-
-  const totalAccumulated = displayGoals.reduce((acc, g) => acc + g.currentAmount, 0);
-  const totalTarget = displayGoals.reduce((acc, g) => acc + g.targetAmount, 0);
+  const totalAccumulated = goals.reduce((acc, g) => acc + (g.currentAmount || 0), 0);
+  const totalTarget = goals.reduce((acc, g) => acc + (g.targetAmount || 0), 0);
+  const remainingTotal = Math.max(0, totalTarget - totalAccumulated);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -32,14 +32,14 @@ export function PfGoalsView({ goals = [], isPrivacyMode = false, onAddGoal }: Pr
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded">
             Objetivos de Vida
           </span>
           <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
             Metas Financeiras
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Transforme seus objetivos em planos claros e acompanhe cada avanço.
+            Defina objetivos, acompanhe seus aportes e saiba quanto poupar por mês.
           </p>
         </div>
 
@@ -54,59 +54,122 @@ export function PfGoalsView({ goals = [], isPrivacyMode = false, onAddGoal }: Pr
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Metas Ativas" value={displayGoals.length} prefix="" subtitle="Objetivos em andamento" />
-        <MetricCard title="Total Acumulado" value={totalAccumulated} isPrivacyMode={isPrivacyMode} subtitle="Guardado para metas" trend="up" trendValue="+14%" />
+        <MetricCard title="Metas Ativas" value={goals.length} prefix="" subtitle="Objetivos em andamento" />
+        <MetricCard title="Total Acumulado" value={totalAccumulated} isPrivacyMode={isPrivacyMode} subtitle="Guardado para metas" trend="up" trendValue="+100%" />
         <MetricCard title="Total Alvo Necessário" value={totalTarget} isPrivacyMode={isPrivacyMode} subtitle="Soma de todos os objetivos" />
-        <MetricCard title="Contribuição Sugerida" value={2150} isPrivacyMode={isPrivacyMode} subtitle="Recomendado por mês" />
+        <MetricCard title="Falta Conquistar" value={remainingTotal} isPrivacyMode={isPrivacyMode} subtitle="Para atingir 100% dos planos" />
       </div>
 
       {/* Goal Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {displayGoals.map(goal => {
-          const pct = Math.min(100, Math.round((goal.currentAmount / (goal.targetAmount || 1)) * 100));
-          const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
-          const monthlySuggested = Math.round(remaining / 8);
+      {goals.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {goals.map(goal => {
+            const pct = goal.targetAmount > 0 ? Math.min(100, Math.round(((goal.currentAmount || 0) / goal.targetAmount) * 100)) : 0;
+            const remaining = Math.max(0, (goal.targetAmount || 0) - (goal.currentAmount || 0));
+            const daysRemaining = Math.max(1, Math.ceil((new Date(goal.targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+            const monthsRemaining = Math.max(1, Math.ceil(daysRemaining / 30));
+            const monthlySuggested = Math.round(remaining / monthsRemaining);
 
-          return (
-            <div
-              key={goal.id}
-              onClick={() => setSelectedGoal(goal)}
-              className="p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-xs transition-all cursor-pointer space-y-4"
-            >
-              <div className="flex justify-between items-start">
+            return (
+              <div
+                key={goal.id}
+                className="p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-xs transition-all space-y-4"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      {goal.category}
+                    </span>
+                    <h3 className="font-bold text-base text-slate-950 mt-1">{goal.title}</h3>
+                    <p className="text-[11px] text-slate-500">Alvo: {goal.targetDate} ({daysRemaining} dias restantes)</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-emerald-500" strokeDasharray={`${pct}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span className="absolute text-xs font-black font-mono">{pct}%</span>
+                    </div>
+
+                    {onDeleteGoal && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Deseja excluir a meta "${goal.title}"?`)) {
+                            onDeleteGoal(goal.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-all"
+                        title="Excluir Meta"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                    {goal.category}
+                  <PrivacyText
+                    value={goal.currentAmount || 0}
+                    isPrivacyMode={isPrivacyMode}
+                    className="text-2xl font-black font-mono text-slate-950 tracking-tight block"
+                  />
+                  <p className="text-xs text-slate-500 font-medium">
+                    De R$ {goal.targetAmount.toLocaleString('pt-BR')} • Faltam R$ {remaining.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Poupança sugerida:</span>
+                  <span className="font-mono font-bold text-emerald-700">
+                    R$ {monthlySuggested.toLocaleString('pt-BR')}/mês
                   </span>
-                  <h3 className="font-bold text-base text-slate-950 mt-1">{goal.title}</h3>
                 </div>
 
-                <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path className="text-emerald-500" strokeDasharray={`${pct}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  </svg>
-                  <span className="absolute text-xs font-black font-mono">{pct}%</span>
-                </div>
+                <button
+                  onClick={() => setSelectedGoalForContribution(goal)}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-xs transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Registrar Aporte nesta Meta</span>
+                </button>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-white p-12 rounded-3xl border border-dashed border-slate-300 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+            <Target className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-950">Nenhuma meta cadastrada</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+              Transforme seus sonhos em planos. Crie metas com prazos e valores para acompanhar sua evolução.
+            </p>
+          </div>
+          <button
+            onClick={onAddGoal}
+            className="px-5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-md transition-all inline-flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Criar Primeira Meta</span>
+          </button>
+        </div>
+      )}
 
-              <div>
-                <PrivacyText
-                  value={goal.currentAmount}
-                  isPrivacyMode={isPrivacyMode}
-                  className="text-2xl font-black font-mono text-slate-950 tracking-tight block"
-                />
-                <p className="text-xs text-slate-500 font-medium">De R$ {goal.targetAmount.toLocaleString('pt-BR')} • Faltam R$ {remaining.toLocaleString('pt-BR')}</p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex justify-between items-center text-xs">
-                <span className="text-slate-500">Contribuição sugerida:</span>
-                <span className="font-mono font-bold text-emerald-700">R$ {monthlySuggested.toLocaleString('pt-BR')}/mês</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* Modal de Aporte na Meta */}
+      <GoalContributionModal
+        isOpen={!!selectedGoalForContribution}
+        onClose={() => setSelectedGoalForContribution(null)}
+        goal={selectedGoalForContribution}
+        onContribute={async (goalId, amount, notes) => {
+          if (onContributeGoal) {
+            await onContributeGoal(goalId, amount, notes);
+          }
+        }}
+      />
 
     </div>
   );

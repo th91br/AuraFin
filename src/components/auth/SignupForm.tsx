@@ -145,7 +145,7 @@ export function SignupForm({ onSwitchToLogin, onSignupSuccess }: Props) {
             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] pt-1">
               <div className={`flex items-center space-x-1 ${strength.hasMinLength ? 'text-emerald-400' : 'text-slate-500'}`}>
                 {strength.hasMinLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                <span>12+ caracteres</span>
+                <span>8+ caracteres</span>
               </div>
               <div className={`flex items-center space-x-1 ${strength.hasUpper && strength.hasLower ? 'text-emerald-400' : 'text-slate-500'}`}>
                 {strength.hasUpper && strength.hasLower ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
@@ -155,9 +155,9 @@ export function SignupForm({ onSwitchToLogin, onSignupSuccess }: Props) {
                 {strength.hasNumber ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                 <span>Ao menos 1 número</span>
               </div>
-              <div className={`flex items-center space-x-1 ${strength.hasSpecial ? 'text-emerald-400' : 'text-slate-500'}`}>
-                {strength.hasSpecial ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                <span>Ao menos 1 símbolo</span>
+              <div className={`flex items-center space-x-1 ${strength.hasSpecial || password.length >= 12 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                {strength.hasSpecial || password.length >= 12 ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                <span>Símbolo ou 12+ caracteres</span>
               </div>
             </div>
           </div>

@@ -18,24 +18,26 @@ export interface PasswordStrengthResult {
 }
 
 export function validatePasswordStrength(password: string): PasswordStrengthResult {
-  const hasMinLength = password.length >= 12;
+  const hasMinLength = password.length >= 8;
+  const has12Plus = password.length >= 12;
   const hasUpper = /[A-Z]/.test(password);
   const hasLower = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecial = /[^A-Za-z0-9]/.test(password);
 
   let score = 0;
-  if (password.length >= 8) score++;
   if (hasMinLength) score++;
   if (hasUpper && hasLower) score++;
-  if (hasNumber && hasSpecial) score++;
+  if (hasNumber) score++;
+  if (hasSpecial || has12Plus) score++;
 
   let message = 'Senha fraca';
   if (score === 2) message = 'Senha razoável';
   if (score === 3) message = 'Senha boa';
-  if (score === 4) message = 'Senha forte';
+  if (score === 4) message = 'Senha excelente e forte';
 
-  const isValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
+  // Valid password requires at least 8 chars, mixed case, and at least 1 number or special char
+  const isValid = hasMinLength && (hasUpper && hasLower && hasNumber);
   return {
     isValid,
     score,
@@ -133,6 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Check for password recovery hash in URL
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+      setIsPasswordRecoveryMode(true);
+    }
+
     // Initial Session Check
     supabase.auth.getSession().then(({ data: { session: initSession }, error: initErr }) => {
       if (!mounted) return;
@@ -195,14 +202,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (err) {
-        if (err.message.includes('Invalid login credentials') || err.message.includes('invalid_grant')) {
+        const msg = err.message || '';
+        if (msg.includes('Invalid login credentials') || msg.includes('invalid_grant') || msg.includes('invalid_credentials')) {
           setError('E-mail ou senha incorretos.');
-        } else if (err.message.includes('Email not confirmed')) {
+        } else if (msg.includes('Email not confirmed')) {
           setError('Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.');
-        } else if (err.message.includes('rate limit') || err.status === 429) {
+        } else if (msg.includes('rate limit') || err.status === 429) {
           setError('Muitas tentativas de acesso. Aguarde alguns instantes e tente novamente.');
+        } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+          setError('Não foi possível conectar ao servidor Supabase. Verifique sua conexão.');
         } else {
-          setError('Falha ao autenticar. Verifique suas credenciais.');
+          setError(err.message || 'Falha ao autenticar. Verifique suas credenciais.');
         }
         return { requiresMfa: false };
       }
@@ -212,8 +222,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const requiresMfa = aalData?.nextLevel === 'aal2' && aalData?.currentLevel !== 'aal2';
 
       return { requiresMfa: !!requiresMfa };
-    } catch (e) {
-      setError('Erro de conexão ao realizar login. Tente novamente.');
+    } catch (e: any) {
+      setError(e?.message?.includes('fetch') 
+        ? 'Não foi possível conectar ao servidor Supabase. Verifique sua conexão.' 
+        : 'Erro de conexão ao realizar login. Tente novamente.');
       return { requiresMfa: false };
     } finally {
       setIsLoading(false);
@@ -226,36 +238,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const strength = validatePasswordStrength(pass);
       if (!strength.isValid) {
-        setError('A senha deve conter no mínimo 12 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.');
+        setError('A senha deve conter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas e números.');
         return { requiresEmailConfirmation: false };
       }
 
       const normalizedEmail = email.trim().toLowerCase();
+      const cleanName = fullName.trim();
+
       const { data, error: err } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: pass,
         options: {
-          data: { full_name: fullName.trim() },
+          data: { 
+            full_name: cleanName,
+            organization_name: `${cleanName} Negócios`
+          },
           emailRedirectTo: `${window.location.origin}`,
         },
       });
 
       if (err) {
-        if (err.message.includes('User already registered')) {
-          // Generic message to prevent enumeration while still guiding legitimate user
+        const msg = err.message || '';
+        if (msg.includes('User already registered') || msg.includes('already registered')) {
           setError('Se este e-mail já estiver registrado, acesse sua conta ou solicite a recuperação de senha.');
-        } else if (err.status === 429) {
+        } else if (err.status === 429 || msg.includes('rate limit')) {
           setError('Muitas tentativas. Aguarde alguns instantes.');
+        } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+          setError('Não foi possível conectar ao servidor Supabase. Verifique sua conexão.');
         } else {
           setError(err.message);
         }
         return { requiresEmailConfirmation: false };
       }
 
+      // Check if user already existed (Supabase returns empty identities array when confirmations are enabled)
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setError('Este e-mail já possui uma conta cadastrada. Faça login ou recupere sua senha.');
+        return { requiresEmailConfirmation: false };
+      }
+
       const requiresEmailConfirmation = !data.session && !!data.user;
       return { requiresEmailConfirmation };
-    } catch (e) {
-      setError('Erro de conexão ao criar conta.');
+    } catch (e: any) {
+      setError(e?.message?.includes('fetch')
+        ? 'Não foi possível conectar ao servidor Supabase. Verifique sua conexão.'
+        : 'Erro de conexão ao criar conta.');
       return { requiresEmailConfirmation: false };
     } finally {
       setIsLoading(false);
@@ -272,6 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setMfaFactors([]);
       setAal('aal1');
+      localStorage.removeItem('aurafin_active_org_pref_v1');
     } catch (e: any) {
       AuraLogger.error('[AuthProvider] Erro ao fazer logout', { module: 'auth', event: 'sign_out_failed', error: e?.message });
     } finally {
