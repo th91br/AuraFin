@@ -61,6 +61,7 @@ interface AuraShellProps {
   onOpenTransactionModal: () => void;
   onOpenBillingModal: () => void;
   onOpenAuthModal?: () => void;
+  onOpenSecuritySettings?: () => void;
   children: React.ReactNode;
   rightRailContent?: React.ReactNode;
 }
@@ -83,6 +84,7 @@ export function AuraShell({
   onOpenTransactionModal,
   onOpenBillingModal,
   onOpenAuthModal,
+  onOpenSecuritySettings,
   children,
 }: AuraShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -621,6 +623,21 @@ export function AuraShell({
               >
                 {isPrivacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
+
+              {onOpenSecuritySettings && (
+                <button
+                  onClick={onOpenSecuritySettings}
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    isPJ
+                      ? 'bg-slate-900 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  title="Segurança da Conta & MFA"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="hidden md:inline">Segurança & MFA</span>
+                </button>
+              )}
 
               {onOpenAuthModal && (
                 <button

@@ -36,26 +36,20 @@ export function PfOverview({
 
   const pfTxs = transactions.filter(t => t.context === 'PF');
 
-  const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) || 12500;
-  const totalSpent = pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) || 6450.50;
-  const currentBalance = 24850;
-
-  const weeklySpentTotal = 2840.78;
-  const weeklyVariation = "-12.5%";
+  const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalSpent = pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const currentBalance = totalIncome - totalSpent;
+  const proLaboreReceived = pfTxs.filter(t => t.category === 'pro_labore' || t.title?.toLowerCase().includes('pró-labore') || t.title?.toLowerCase().includes('pro-labore')).reduce((acc, t) => acc + t.amount, 0);
 
   const budgetCategories = [
-    { label: 'Moradia & Contas', amount: 2800, color: '#4338CA' },
-    { label: 'Alimentação & Mercado', amount: 1800, color: '#0891B2' },
-    { label: 'Transporte & Veículo', amount: 950, color: '#10B981' },
-    { label: 'Lazer & Estilo de Vida', amount: 900.50, color: '#F43F5E' },
+    { label: 'Moradia & Contas', amount: pfTxs.filter(t => t.category === 'moradia').reduce((acc, t) => acc + t.amount, 0), color: '#4338CA' },
+    { label: 'Alimentação & Mercado', amount: pfTxs.filter(t => t.category === 'alimentacao').reduce((acc, t) => acc + t.amount, 0), color: '#0891B2' },
+    { label: 'Transporte & Veículo', amount: pfTxs.filter(t => t.category === 'transporte').reduce((acc, t) => acc + t.amount, 0), color: '#10B981' },
+    { label: 'Lazer & Estilo de Vida', amount: pfTxs.filter(t => t.category === 'lazer').reduce((acc, t) => acc + t.amount, 0), color: '#F43F5E' },
   ];
 
-  const defaultCards: CreditCard[] = creditCards.length > 0 ? creditCards : [
-    { id: 'c1', name: 'Nubank Violeta Ultra', institution: 'Nubank', limitTotal: 25000, limitUsed: 4550, currentInvoice: 3840, closingDay: 12, dueDay: 20, context: 'PF' },
-    { id: 'c2', name: 'Itaú Personnalité Black', institution: 'Itaú', limitTotal: 40000, limitUsed: 8200, currentInvoice: 6100, closingDay: 15, dueDay: 25, context: 'PF' },
-  ];
-
-  const activeCard = defaultCards[activeCardIndex] || defaultCards[0];
+  const activeCards = creditCards;
+  const activeCard = activeCards[activeCardIndex] || activeCards[0];
   const availableLimit = activeCard ? activeCard.limitTotal - activeCard.limitUsed : 0;
   const usedPercentage = activeCard ? Math.min(100, Math.round((activeCard.limitUsed / (activeCard.limitTotal || 1)) * 100)) : 0;
 
@@ -84,11 +78,11 @@ export function PfOverview({
 
       {/* Top 5 Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <MetricCard title="Saldo Atual" value={currentBalance} isPrivacyMode={isPrivacyMode} subtitle="Contas unificadas" trend="up" trendValue="+8.2%" />
-        <MetricCard title="Entradas" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Pró-labore e Aportes" trend="up" trendValue="+12%" />
-        <MetricCard title="Saídas" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Despesas do mês" trend="down" trendValue="-3.4%" />
-        <MetricCard title="Economizado" value={28500} isPrivacyMode={isPrivacyMode} subtitle="Renda Fixa" trend="up" trendValue="+15%" />
-        <MetricCard title="Pró-labore" value={8500} isPrivacyMode={isPrivacyMode} subtitle="Recebido da PJ" />
+        <MetricCard title="Saldo Atual" value={currentBalance} isPrivacyMode={isPrivacyMode} subtitle="Contas unificadas" />
+        <MetricCard title="Entradas" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas do mês" />
+        <MetricCard title="Saídas" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Despesas do mês" />
+        <MetricCard title="Resultado" value={currentBalance} isPrivacyMode={isPrivacyMode} subtitle="Balanço mensal" />
+        <MetricCard title="Pró-labore" value={proLaboreReceived} isPrivacyMode={isPrivacyMode} subtitle="Recebido da PJ" />
       </div>
 
       {/* 2. Insight Banner Integrado */}
@@ -98,8 +92,8 @@ export function PfOverview({
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider block">Insight AuraFin</span>
-            <p>Você já atingiu <strong>95% da sua meta de Reserva de Emergência</strong> (<PrivacyText value={28500} isPrivacyMode={isPrivacyMode} /> de <PrivacyText value={30000} isPrivacyMode={isPrivacyMode} />).</p>
+            <span className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider block">Inteligência AuraFin</span>
+            <p>{pfTxs.length === 0 ? 'Seu ambiente financeiro pessoal está pronto. Comece adicionando sua primeira conta ou transação.' : `Você possui ${pfTxs.length} lançamentos registrados neste ciclo.`}</p>
           </div>
         </div>
       </div>
@@ -110,9 +104,9 @@ export function PfOverview({
         <div className="lg:col-span-5">
           <DonutChartCard
             title="Meu Orçamento de Gastos"
-            subtitle="Excelente! Seu orçamento está dentro do planejado."
-            spent={totalSpent || 6450.50}
-            target={8000}
+            subtitle={totalSpent > 0 ? "Distribuição das suas despesas por categoria." : "Cadastre transações para visualizar o orçamento."}
+            spent={totalSpent}
+            target={totalIncome > 0 ? totalIncome : 1}
             categories={budgetCategories}
             isPrivacyMode={isPrivacyMode}
           />
@@ -178,25 +172,25 @@ export function PfOverview({
                   <CreditCardIcon className="w-4 h-4 text-indigo-600" />
                   <span>Meus Cartões</span>
                 </h3>
-                {defaultCards.length > 1 && (
+                {activeCards.length > 1 && (
                   <span className="text-[11px] text-slate-400 font-semibold">
-                    Cartão {activeCardIndex + 1} de {defaultCards.length}
+                    Cartão {activeCardIndex + 1} de {activeCards.length}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center space-x-2">
-                {defaultCards.length > 1 && (
+                {activeCards.length > 1 && (
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => setActiveCardIndex(prev => (prev > 0 ? prev - 1 : defaultCards.length - 1))}
+                      onClick={() => setActiveCardIndex(prev => (prev > 0 ? prev - 1 : activeCards.length - 1))}
                       className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 bg-slate-50"
                       title="Cartão anterior"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => setActiveCardIndex(prev => (prev < defaultCards.length - 1 ? prev + 1 : 0))}
+                      onClick={() => setActiveCardIndex(prev => (prev < activeCards.length - 1 ? prev + 1 : 0))}
                       className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 bg-slate-50"
                       title="Próximo cartão"
                     >
@@ -264,13 +258,8 @@ export function PfOverview({
             ) : (
               <div className="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
                 <CreditCardIcon className="w-8 h-8 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-xs text-slate-900">Você ainda não cadastrou nenhum cartão</h4>
-                <button
-                  onClick={() => onAddCard ? onAddCard() : alert('Formulário de novo cartão')}
-                  className="px-4 py-2 bg-slate-950 text-white text-xs font-bold rounded-xl"
-                >
-                  Adicionar Cartão
-                </button>
+                <p className="text-xs font-semibold text-slate-700">Nenhum cartão cadastrado</p>
+                <p className="text-[11px] text-slate-500">Adicione seus cartões para acompanhar limites e faturas.</p>
               </div>
             )}
           </div>
@@ -280,17 +269,13 @@ export function PfOverview({
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-sm tracking-tight text-slate-950">Gastos da Semana</h3>
-                <span className="text-[11px] text-slate-400 font-medium block mt-0.5">Total acumulado nos últimos 7 dias</span>
+                <span className="text-[11px] text-slate-400 font-medium block mt-0.5">Total acumulado nos lançamentos</span>
               </div>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 flex items-center">
-                <TrendingDown className="w-3.5 h-3.5 mr-1" />
-                {weeklyVariation} vs. anterior
-              </span>
             </div>
 
             <div className="pt-1">
               <span className="text-2xl font-black font-mono text-slate-950 tracking-tight">
-                <PrivacyText value={weeklySpentTotal} isPrivacyMode={isPrivacyMode} />
+                <PrivacyText value={totalSpent} isPrivacyMode={isPrivacyMode} />
               </span>
             </div>
 

@@ -35,27 +35,23 @@ export function PjOverview({
 
   const pjTxs = transactions.filter(t => t.context === 'PJ');
 
-  const grossRevenue = pjTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) || 37000;
-  const totalExpenses = pjTxs.filter(t => t.type === 'expense' && !t.isPersonalExpenseInPJ).reduce((acc, t) => acc + t.amount, 0) || 10160;
-  const prolaborePaid = pjTxs.filter(t => t.category === 'prolabore_pago').reduce((acc, t) => acc + t.amount, 0) || 8500;
+  const grossRevenue = pjTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = pjTxs.filter(t => t.type === 'expense' && !t.isPersonalExpenseInPJ).reduce((acc, t) => acc + t.amount, 0);
+  const prolaborePaid = pjTxs.filter(t => t.category === 'prolabore_pago' || t.category === 'pro_labore').reduce((acc, t) => acc + t.amount, 0);
 
-  const currentCash = 53330;
-  const netProfit = grossRevenue - totalExpenses - prolaborePaid;
-  const marginPercent = Math.round((netProfit / (grossRevenue || 1)) * 100);
+  const currentCash = grossRevenue - totalExpenses - prolaborePaid;
+  const netProfit = currentCash;
+  const marginPercent = grossRevenue > 0 ? Math.round((netProfit / grossRevenue) * 100) : 0;
 
   const budgetCategories = [
-    { label: 'Custos Operacionais', amount: 4500, color: '#0891B2' },
-    { label: 'Pró-labore dos Sócios', amount: 8500, color: '#4338CA' },
-    { label: 'Impostos Simples Nacional', amount: 1110, color: '#10B981' },
-    { label: 'Softwares & Ferramentas', amount: 850, color: '#F43F5E' },
+    { label: 'Custos Operacionais', amount: pjTxs.filter(t => t.category === 'operacional').reduce((acc, t) => acc + t.amount, 0), color: '#0891B2' },
+    { label: 'Pró-labore dos Sócios', amount: prolaborePaid, color: '#4338CA' },
+    { label: 'Impostos Simples Nacional', amount: pjTxs.filter(t => t.category === 'impostos').reduce((acc, t) => acc + t.amount, 0), color: '#10B981' },
+    { label: 'Softwares & Ferramentas', amount: pjTxs.filter(t => t.category === 'software').reduce((acc, t) => acc + t.amount, 0), color: '#F43F5E' },
   ];
 
-  const defaultCards: CreditCard[] = creditCards.length > 0 ? creditCards : [
-    { id: 'c_pj1', name: 'BTG Pactual Corporate Black', institution: 'BTG Pactual', limitTotal: 50000, limitUsed: 12400, currentInvoice: 24500, closingDay: 15, dueDay: 23, context: 'PJ' },
-    { id: 'c_pj2', name: 'C6 Bank Business Platinum', institution: 'C6 Bank', limitTotal: 30000, limitUsed: 4200, currentInvoice: 2100, closingDay: 20, dueDay: 28, context: 'PJ' },
-  ];
-
-  const activeCard = defaultCards[activeCardIndex] || defaultCards[0];
+  const activeCards = creditCards;
+  const activeCard = activeCards[activeCardIndex] || activeCards[0];
   const availableLimit = activeCard ? activeCard.limitTotal - activeCard.limitUsed : 0;
   const usedPercentage = activeCard ? Math.min(100, Math.round((activeCard.limitUsed / (activeCard.limitTotal || 1)) * 100)) : 0;
 
@@ -144,25 +140,25 @@ export function PjOverview({
                   <CreditCardIcon className="w-4 h-4 text-cyan-400" />
                   <span>Cartões Corporativos</span>
                 </h3>
-                {defaultCards.length > 1 && (
+                {activeCards.length > 1 && (
                   <span className="text-[11px] text-slate-400 font-semibold">
-                    Cartão {activeCardIndex + 1} de {defaultCards.length}
+                    Cartão {activeCardIndex + 1} de {activeCards.length}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center space-x-2">
-                {defaultCards.length > 1 && (
+                {activeCards.length > 1 && (
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => setActiveCardIndex(prev => (prev > 0 ? prev - 1 : defaultCards.length - 1))}
+                      onClick={() => setActiveCardIndex(prev => (prev > 0 ? prev - 1 : activeCards.length - 1))}
                       className="p-1.5 rounded-lg border border-white/10 text-slate-300 hover:text-white bg-slate-900"
                       title="Cartão anterior"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => setActiveCardIndex(prev => (prev < defaultCards.length - 1 ? prev + 1 : 0))}
+                      onClick={() => setActiveCardIndex(prev => (prev < activeCards.length - 1 ? prev + 1 : 0))}
                       className="p-1.5 rounded-lg border border-white/10 text-slate-300 hover:text-white bg-slate-900"
                       title="Próximo cartão"
                     >

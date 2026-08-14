@@ -74,6 +74,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { OrganizationProvider, useOrganization } from './context/OrganizationContext';
 import { RepositoryProvider, useRepositories } from './context/RepositoryContext';
 import { AuthModal } from './components/auth/AuthModal';
+import { AuthLayout } from './components/auth/AuthLayout';
+import { SecuritySettingsModal } from './components/auth/SecuritySettingsModal';
 import { LegacyImportModal } from './components/auth/LegacyImportModal';
 import { LegacyPjImportModal } from './components/auth/LegacyPjImportModal';
 import { CrossContextModal } from './components/aura/CrossContextModal';
@@ -93,7 +95,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { activeOrganization } = useOrganization();
   const { 
     config, 
@@ -126,6 +128,7 @@ function AppContent() {
 
   // Modals
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSecuritySettingsOpen, setIsSecuritySettingsOpen] = useState(false);
   const [isLegacyImportModalOpen, setIsLegacyImportModalOpen] = useState(false);
   const [isLegacyPjImportModalOpen, setIsLegacyPjImportModalOpen] = useState(false);
   const [isCrossContextModalOpen, setIsCrossContextModalOpen] = useState(false);
@@ -139,9 +142,26 @@ function AppContent() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // Legacy PF Import Assistant Check
+  // Clean Slate: purge memory when logging out
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (!isAuthenticated) {
+      setTransactions([]);
+      setAccounts([]);
+      setCreditCards([]);
+      setAssets([]);
+      setProjects([]);
+      setGoals([]);
+      setDebts([]);
+      setCustomers([]);
+      setSuppliers([]);
+      setCostCenters([]);
+    }
+  }, [isAuthenticated]);
+
+  // Legacy PF Import Assistant Check (disabled by default in Production)
+  useEffect(() => {
+    const isLegacyImportEnabled = (import.meta as any).env?.VITE_ENABLE_LEGACY_IMPORT === 'true';
+    if (isLegacyImportEnabled && isAuthenticated && user) {
       LegacyImportService.previewImport(user.id).then(res => {
         if (res.hasLegacyData && !res.alreadyImported) {
           setIsLegacyImportModalOpen(true);
@@ -150,9 +170,10 @@ function AppContent() {
     }
   }, [isAuthenticated, user]);
 
-  // Legacy PJ Import Assistant Check
+  // Legacy PJ Import Assistant Check (disabled by default in Production)
   useEffect(() => {
-    if (isAuthenticated && activeOrganization) {
+    const isLegacyImportEnabled = (import.meta as any).env?.VITE_ENABLE_LEGACY_IMPORT === 'true';
+    if (isLegacyImportEnabled && isAuthenticated && activeOrganization) {
       LegacyPjImportService.previewImport(activeOrganization.id).then(res => {
         if (res.hasLegacyData && !res.alreadyImported) {
           setIsLegacyPjImportModalOpen(true);
@@ -357,6 +378,10 @@ function AppContent() {
     setCreditCards(prev => [...prev, newCard]);
   };
 
+  if (!isAuthenticated && !isAuthLoading && viewMode !== 'landing') {
+    return <AuthLayout />;
+  }
+
   if (viewMode === 'landing') {
     return (
       <LandingPage
@@ -388,6 +413,7 @@ function AppContent() {
       onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
       onOpenBillingModal={() => setIsBillingModalOpen(true)}
       onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      onOpenSecuritySettings={() => setIsSecuritySettingsOpen(true)}
     >
       {/* MODO PESSOA FÍSICA (PF) */}
       {mode === 'PF' && (
@@ -860,6 +886,11 @@ function AppContent() {
             businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
           }
         }}
+      />
+
+      <SecuritySettingsModal
+        isOpen={isSecuritySettingsOpen}
+        onClose={() => setIsSecuritySettingsOpen(false)}
       />
 
     </AuraShell>
