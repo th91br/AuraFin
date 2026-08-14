@@ -4,6 +4,14 @@ build/
 dist/
 coverage/
 
+# Backups & Data Dumps (Security & Privacy)
+.backup/
+backups/
+storage-backup/
+*.dump
+*.sql.gz
+manifest.json
+
 # Logs & Environment
 *.log
 .env*
