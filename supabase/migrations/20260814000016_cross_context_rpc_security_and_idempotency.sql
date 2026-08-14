@@ -5,12 +5,13 @@
 -- 1. Preflight data check and unique cross_context_id index enforcement.
 -- 2. Add cross_context_id to partner_transactions and reimbursements (additive).
 -- 3. Replace cross-context RPCs with:
---    - Transaction-level advisory lock (pg_advisory_xact_lock) for race-free serialization.
---    - Strict AAL2 server-side check (auth.jwt() ->> 'aal' = 'aal2').
---    - RBAC enforcement (owner, admin, finance).
---    - Complete idempotency fingerprint validation across all parameters and tables.
+--    - 64-bit transaction-level advisory lock (pg_advisory_xact_lock) for race-free serialization.
+--    - Early authentication, AAL2 and RBAC authorization verification.
+--    - Immediate idempotent lookup BEFORE mutable state/status validation.
+--    - Full fingerprint verification across all related transactional entities.
+--    - Integridade estrita: rejeição de estados persistidos parciais.
 --    - Cross-RPC key reuse prevention.
---    - Tenant ownership & active status check on PJ and PF accounts.
+--    - Tenant ownership & active status check on PJ and PF accounts for NEW operations.
 --    - Reconciliation type whitelist ('pf_paid_pj', 'reimbursement').
 --    - Beneficiary consistency validation (user_id vs partner.profile_id).
 --    - Preservation of reconciliations.cross_context_id on partial reimbursements.
@@ -138,6 +139,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
+  v_lock_key bigint;
   v_rec record;
   v_partner record;
   v_pj_acc record;
@@ -145,16 +147,18 @@ DECLARE
   v_beneficiary_id uuid;
   v_new_resolved bigint;
   v_new_status text;
-  v_existing_tx record;
+  v_existing_biz record;
+  v_existing_pf record;
+  v_existing_reimb record;
   v_rows_affected integer;
 BEGIN
-  -- 1. Idempotency Key Validation & Advisory Lock
+  -- 1. Idempotency Key Check & 64-bit Advisory Transaction Lock
   IF p_idempotency_key IS NULL THEN
     RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de reembolso.';
   END IF;
 
-  -- Transaction-level advisory lock serializes concurrent attempts on the same key
-  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+  v_lock_key := ('x' || substr(replace(p_idempotency_key::text, '-', ''), 1, 16))::bit(64)::bigint;
+  PERFORM pg_advisory_xact_lock(v_lock_key);
 
   -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
@@ -178,7 +182,55 @@ BEGIN
     RAISE EXCEPTION 'O valor do reembolso deve ser maior que zero.';
   END IF;
 
-  -- 5. Lock and Validate Reconciliation
+  -- 5. IDEMPOTENT RETRY LOOKUP (BEFORE MUTABLE STATE VALIDATION)
+  SELECT id, organization_id, account_id, amount_cents, category
+  INTO v_existing_biz
+  FROM public.business_transactions
+  WHERE cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    SELECT id, user_id, account_id, amount_cents, category
+    INTO v_existing_pf
+    FROM public.personal_transactions
+    WHERE cross_context_id = p_idempotency_key;
+
+    SELECT id, organization_id, reconciliation_id, amount_cents
+    INTO v_existing_reimb
+    FROM public.reimbursements
+    WHERE cross_context_id = p_idempotency_key;
+
+    IF v_existing_pf.id IS NULL OR v_existing_reimb.id IS NULL THEN
+      RAISE EXCEPTION 'Inconsistência de integridade na transação idempotente persistida.'
+        USING ERRCODE = 'XX000';
+    END IF;
+
+    -- Validate full persisted fingerprint against request parameters
+    IF v_existing_biz.category = 'reimbursement'
+       AND v_existing_pf.category = 'reimbursement'
+       AND v_existing_biz.organization_id = p_org_id
+       AND v_existing_reimb.organization_id = p_org_id
+       AND v_existing_reimb.reconciliation_id = p_reconciliation_id
+       AND v_existing_biz.account_id = p_pj_account_id
+       AND v_existing_pf.account_id = p_pf_account_id
+       AND v_existing_biz.amount_cents = p_amount_cents
+       AND v_existing_pf.amount_cents = p_amount_cents
+       AND v_existing_reimb.amount_cents = p_amount_cents THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-table / cross-RPC collision defense
+  IF EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 6. NEW OPERATION: Lock and Validate Reconciliation
   SELECT * INTO v_rec
   FROM public.reconciliations
   WHERE id = p_reconciliation_id AND organization_id = p_org_id
@@ -188,7 +240,6 @@ BEGIN
     RAISE EXCEPTION 'Conciliação não encontrada para esta organização.';
   END IF;
 
-  -- Reconciliation Type Whitelist Validation
   IF v_rec.type NOT IN ('pf_paid_pj', 'reimbursement') THEN
     RAISE EXCEPTION 'Tipo de conciliação incompatível com reembolso PJ -> PF (tipo atual: %).', v_rec.type
       USING ERRCODE = '42501';
@@ -198,7 +249,7 @@ BEGIN
     RAISE EXCEPTION 'Esta conciliação já foi concluída ou cancelada.';
   END IF;
 
-  -- 6. Beneficiary Resolution & Consistency Check
+  -- 7. Beneficiary Resolution & Consistency Check
   IF v_rec.user_id IS NOT NULL AND v_rec.partner_id IS NOT NULL THEN
     SELECT profile_id, status INTO v_partner
     FROM public.partners
@@ -232,40 +283,6 @@ BEGIN
     v_beneficiary_id := v_partner.profile_id;
   ELSE
     RAISE EXCEPTION 'Beneficiário não identificado para a conciliação informada.';
-  END IF;
-
-  -- 7. Full Idempotency Fingerprint Validation
-  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category,
-         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
-         r.reconciliation_id
-  INTO v_existing_tx
-  FROM public.business_transactions bt
-  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
-  JOIN public.reimbursements r ON r.cross_context_id = bt.cross_context_id
-  WHERE bt.cross_context_id = p_idempotency_key;
-
-  IF FOUND THEN
-    IF v_existing_tx.category = 'reimbursement'
-       AND v_existing_tx.organization_id = p_org_id
-       AND v_existing_tx.reconciliation_id = p_reconciliation_id
-       AND v_existing_tx.account_id = p_pj_account_id
-       AND v_existing_tx.pf_account_id = p_pf_account_id
-       AND v_existing_tx.pf_user_id = v_beneficiary_id
-       AND v_existing_tx.amount_cents = p_amount_cents THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- Cross-RPC collision check
-  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
-    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-      USING ERRCODE = '23505';
   END IF;
 
   -- 8. Lock and Validate PJ Account (Tenant Ownership & Active Status)
@@ -432,21 +449,25 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
+  v_lock_key bigint;
   v_partner record;
   v_pj_acc record;
   v_pf_acc record;
   v_beneficiary_id uuid;
   v_biz_tx_id uuid;
-  v_existing_tx record;
+  v_existing_biz record;
+  v_existing_pf record;
+  v_existing_pt record;
   v_tx_date date;
   v_rows_affected integer;
 BEGIN
-  -- 1. Idempotency Key Validation & Advisory Lock
+  -- 1. Idempotency Key Check & 64-bit Advisory Transaction Lock
   IF p_idempotency_key IS NULL THEN
     RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de pró-labore.';
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+  v_lock_key := ('x' || substr(replace(p_idempotency_key::text, '-', ''), 1, 16))::bit(64)::bigint;
+  PERFORM pg_advisory_xact_lock(v_lock_key);
 
   -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
@@ -472,7 +493,59 @@ BEGIN
 
   v_tx_date := coalesce(p_transaction_date, CURRENT_DATE);
 
-  -- 5. Lock and Validate Partner (Organization ownership & active status)
+  -- 5. IDEMPOTENT RETRY LOOKUP (BEFORE MUTABLE STATE VALIDATION)
+  SELECT id, organization_id, account_id, amount_cents, category, transaction_date
+  INTO v_existing_biz
+  FROM public.business_transactions
+  WHERE cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    SELECT id, user_id, account_id, amount_cents, category, transaction_date
+    INTO v_existing_pf
+    FROM public.personal_transactions
+    WHERE cross_context_id = p_idempotency_key;
+
+    SELECT id, organization_id, partner_id, amount_cents, type, transaction_date
+    INTO v_existing_pt
+    FROM public.partner_transactions
+    WHERE cross_context_id = p_idempotency_key;
+
+    IF v_existing_pf.id IS NULL OR v_existing_pt.id IS NULL THEN
+      RAISE EXCEPTION 'Inconsistência de integridade na transação idempotente persistida.'
+        USING ERRCODE = 'XX000';
+    END IF;
+
+    -- Validate full persisted fingerprint against request parameters
+    IF v_existing_biz.category = 'pro_labore'
+       AND v_existing_pf.category = 'pro_labore'
+       AND v_existing_pt.type = 'pro_labore'
+       AND v_existing_biz.organization_id = p_org_id
+       AND v_existing_pt.organization_id = p_org_id
+       AND v_existing_pt.partner_id = p_partner_id
+       AND v_existing_biz.account_id = p_pj_account_id
+       AND v_existing_pf.account_id = p_pf_account_id
+       AND v_existing_biz.amount_cents = p_amount_cents
+       AND v_existing_pf.amount_cents = p_amount_cents
+       AND v_existing_pt.amount_cents = p_amount_cents
+       AND v_existing_biz.transaction_date = v_tx_date
+       AND v_existing_pf.transaction_date = v_tx_date
+       AND v_existing_pt.transaction_date = v_tx_date THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-table / cross-RPC collision defense
+  IF EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 6. NEW OPERATION: Lock and Validate Partner
   SELECT * INTO v_partner
   FROM public.partners
   WHERE id = p_partner_id AND organization_id = p_org_id
@@ -491,41 +564,6 @@ BEGIN
   END IF;
 
   v_beneficiary_id := v_partner.profile_id;
-
-  -- 6. Full Idempotency Fingerprint Validation
-  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category, bt.transaction_date,
-         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
-         ptr.partner_id
-  INTO v_existing_tx
-  FROM public.business_transactions bt
-  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
-  JOIN public.partner_transactions ptr ON ptr.cross_context_id = bt.cross_context_id
-  WHERE bt.cross_context_id = p_idempotency_key;
-
-  IF FOUND THEN
-    IF v_existing_tx.category = 'pro_labore'
-       AND v_existing_tx.organization_id = p_org_id
-       AND v_existing_tx.partner_id = p_partner_id
-       AND v_existing_tx.account_id = p_pj_account_id
-       AND v_existing_tx.pf_account_id = p_pf_account_id
-       AND v_existing_tx.pf_user_id = v_beneficiary_id
-       AND v_existing_tx.amount_cents = p_amount_cents
-       AND v_existing_tx.transaction_date = v_tx_date THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- Cross-RPC collision check
-  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
-    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-      USING ERRCODE = '23505';
-  END IF;
 
   -- 7. Lock and Validate PJ Account (Tenant Ownership & Active Status)
   SELECT * INTO v_pj_acc
@@ -675,21 +713,25 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
+  v_lock_key bigint;
   v_partner record;
   v_pj_acc record;
   v_pf_acc record;
   v_beneficiary_id uuid;
   v_biz_tx_id uuid;
-  v_existing_tx record;
+  v_existing_biz record;
+  v_existing_pf record;
+  v_existing_pt record;
   v_tx_date date;
   v_rows_affected integer;
 BEGIN
-  -- 1. Idempotency Key Validation & Advisory Lock
+  -- 1. Idempotency Key Check & 64-bit Advisory Transaction Lock
   IF p_idempotency_key IS NULL THEN
     RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de lucros.';
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+  v_lock_key := ('x' || substr(replace(p_idempotency_key::text, '-', ''), 1, 16))::bit(64)::bigint;
+  PERFORM pg_advisory_xact_lock(v_lock_key);
 
   -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
@@ -715,7 +757,59 @@ BEGIN
 
   v_tx_date := coalesce(p_transaction_date, CURRENT_DATE);
 
-  -- 5. Lock and Validate Partner (Organization ownership & active status)
+  -- 5. IDEMPOTENT RETRY LOOKUP (BEFORE MUTABLE STATE VALIDATION)
+  SELECT id, organization_id, account_id, amount_cents, category, transaction_date
+  INTO v_existing_biz
+  FROM public.business_transactions
+  WHERE cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    SELECT id, user_id, account_id, amount_cents, category, transaction_date
+    INTO v_existing_pf
+    FROM public.personal_transactions
+    WHERE cross_context_id = p_idempotency_key;
+
+    SELECT id, organization_id, partner_id, amount_cents, type, transaction_date
+    INTO v_existing_pt
+    FROM public.partner_transactions
+    WHERE cross_context_id = p_idempotency_key;
+
+    IF v_existing_pf.id IS NULL OR v_existing_pt.id IS NULL THEN
+      RAISE EXCEPTION 'Inconsistência de integridade na transação idempotente persistida.'
+        USING ERRCODE = 'XX000';
+    END IF;
+
+    -- Validate full persisted fingerprint against request parameters
+    IF v_existing_biz.category = 'profit_distribution'
+       AND v_existing_pf.category = 'profit_distribution'
+       AND v_existing_pt.type = 'profit_distribution'
+       AND v_existing_biz.organization_id = p_org_id
+       AND v_existing_pt.organization_id = p_org_id
+       AND v_existing_pt.partner_id = p_partner_id
+       AND v_existing_biz.account_id = p_pj_account_id
+       AND v_existing_pf.account_id = p_pf_account_id
+       AND v_existing_biz.amount_cents = p_amount_cents
+       AND v_existing_pf.amount_cents = p_amount_cents
+       AND v_existing_pt.amount_cents = p_amount_cents
+       AND v_existing_biz.transaction_date = v_tx_date
+       AND v_existing_pf.transaction_date = v_tx_date
+       AND v_existing_pt.transaction_date = v_tx_date THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-table / cross-RPC collision defense
+  IF EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 6. NEW OPERATION: Lock and Validate Partner
   SELECT * INTO v_partner
   FROM public.partners
   WHERE id = p_partner_id AND organization_id = p_org_id
@@ -734,41 +828,6 @@ BEGIN
   END IF;
 
   v_beneficiary_id := v_partner.profile_id;
-
-  -- 6. Full Idempotency Fingerprint Validation
-  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category, bt.transaction_date,
-         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
-         ptr.partner_id
-  INTO v_existing_tx
-  FROM public.business_transactions bt
-  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
-  JOIN public.partner_transactions ptr ON ptr.cross_context_id = bt.cross_context_id
-  WHERE bt.cross_context_id = p_idempotency_key;
-
-  IF FOUND THEN
-    IF v_existing_tx.category = 'profit_distribution'
-       AND v_existing_tx.organization_id = p_org_id
-       AND v_existing_tx.partner_id = p_partner_id
-       AND v_existing_tx.account_id = p_pj_account_id
-       AND v_existing_tx.pf_account_id = p_pf_account_id
-       AND v_existing_tx.pf_user_id = v_beneficiary_id
-       AND v_existing_tx.amount_cents = p_amount_cents
-       AND v_existing_tx.transaction_date = v_tx_date THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- Cross-RPC collision check
-  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
-     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
-    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-      USING ERRCODE = '23505';
-  END IF;
 
   -- 7. Lock and Validate PJ Account (Tenant Ownership & Active Status)
   SELECT * INTO v_pj_acc
