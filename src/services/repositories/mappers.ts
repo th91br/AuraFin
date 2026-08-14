@@ -24,7 +24,7 @@ export function mapPersonalAccountRowToDomain(row: PersonalAccountRow): Account 
   return {
     id: row.id,
     name: row.name,
-    type: row.type,
+    type: (row.type as Account['type']) || 'corrente',
     institution: row.institution,
     balance: safeCentsToReaisNumber(row.balance_cents),
     context: 'PF',
@@ -49,7 +49,7 @@ export function mapPersonalTransactionRowToDomain(row: PersonalTransactionRow): 
   return {
     id: row.id,
     context: 'PF',
-    type: row.type,
+    type: (row.type as Transaction['type']) || 'expense',
     title: row.title,
     amount: safeCentsToReaisNumber(row.amount_cents),
     amountCents: Number(row.amount_cents),
@@ -84,7 +84,7 @@ export function mapBusinessAccountRowToDomain(row: BusinessAccountRow): Account 
   return {
     id: row.id,
     name: row.name,
-    type: row.type,
+    type: (row.type as Account['type']) || 'corrente',
     institution: row.institution,
     balance: safeCentsToReaisNumber(row.balance_cents),
     context: 'PJ',
@@ -108,7 +108,7 @@ export function mapBusinessTransactionRowToDomain(row: BusinessTransactionRow): 
   return {
     id: row.id,
     context: 'PJ',
-    type: row.type,
+    type: (row.type as Transaction['type']) || 'expense',
     title: row.title,
     amount: safeCentsToReaisNumber(row.amount_cents),
     amountCents: Number(row.amount_cents),

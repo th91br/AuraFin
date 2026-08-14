@@ -4,8 +4,17 @@
 -- Scope:
 -- 1. Preflight data check and unique cross_context_id index enforcement.
 -- 2. Add cross_context_id to partner_transactions and reimbursements (additive).
--- 3. Replace cross-context RPCs with AAL2, RBAC, tenant ownership, beneficiary
---    resolution, explicit idempotency key and atomic balance management.
+-- 3. Replace cross-context RPCs with:
+--    - Transaction-level advisory lock (pg_advisory_xact_lock) for race-free serialization.
+--    - Strict AAL2 server-side check (auth.jwt() ->> 'aal' = 'aal2').
+--    - RBAC enforcement (owner, admin, finance).
+--    - Complete idempotency fingerprint validation across all parameters and tables.
+--    - Cross-RPC key reuse prevention.
+--    - Tenant ownership & active status check on PJ and PF accounts.
+--    - Reconciliation type whitelist ('pf_paid_pj', 'reimbursement').
+--    - Beneficiary consistency validation (user_id vs partner.profile_id).
+--    - Preservation of reconciliations.cross_context_id on partial reimbursements.
+--    - Row count validation (GET DIAGNOSTICS) after balance and status updates.
 -- 4. Set search_path = '', SECURITY DEFINER, and minimal execute grants.
 -- ==============================================================================
 
@@ -130,6 +139,7 @@ SET search_path = ''
 AS $$
 DECLARE
   v_rec record;
+  v_partner record;
   v_pj_acc record;
   v_pf_acc record;
   v_beneficiary_id uuid;
@@ -138,50 +148,37 @@ DECLARE
   v_existing_tx record;
   v_rows_affected integer;
 BEGIN
-  -- 1. Authentication Check
+  -- 1. Idempotency Key Validation & Advisory Lock
+  IF p_idempotency_key IS NULL THEN
+    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de reembolso.';
+  END IF;
+
+  -- Transaction-level advisory lock serializes concurrent attempts on the same key
+  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+
+  -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Não autenticado: sessão de usuário ausente.'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 2. AAL2 Server-Side Check
+  -- 3. AAL2 Server-Side Check
   IF coalesce(auth.jwt() ->> 'aal', '') <> 'aal2' THEN
     RAISE EXCEPTION 'Acesso negado: operação financeira sensível requer autenticação de dois fatores (MFA/AAL2).'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 3. RBAC Check (owner, admin, finance)
+  -- 4. RBAC Check (owner, admin, finance)
   IF NOT public.has_organization_role(p_org_id, ARRAY['owner', 'admin', 'finance']) THEN
     RAISE EXCEPTION 'Acesso negado: apenas membros autorizados podem processar reembolsos.'
       USING ERRCODE = '42501';
-  END IF;
-
-  -- 4. Idempotency Key Check
-  IF p_idempotency_key IS NULL THEN
-    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de reembolso.';
   END IF;
 
   IF p_amount_cents <= 0 THEN
     RAISE EXCEPTION 'O valor do reembolso deve ser maior que zero.';
   END IF;
 
-  -- 5. Idempotent Retry Detection
-  SELECT id, organization_id, account_id, amount_cents INTO v_existing_tx
-  FROM public.business_transactions
-  WHERE cross_context_id = p_idempotency_key;
-
-  IF FOUND THEN
-    IF v_existing_tx.organization_id = p_org_id 
-       AND v_existing_tx.account_id = p_pj_account_id 
-       AND v_existing_tx.amount_cents = p_amount_cents THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- 6. Lock and Validate Reconciliation
+  -- 5. Lock and Validate Reconciliation
   SELECT * INTO v_rec
   FROM public.reconciliations
   WHERE id = p_reconciliation_id AND organization_id = p_org_id
@@ -191,23 +188,87 @@ BEGIN
     RAISE EXCEPTION 'Conciliação não encontrada para esta organização.';
   END IF;
 
+  -- Reconciliation Type Whitelist Validation
+  IF v_rec.type NOT IN ('pf_paid_pj', 'reimbursement') THEN
+    RAISE EXCEPTION 'Tipo de conciliação incompatível com reembolso PJ -> PF (tipo atual: %).', v_rec.type
+      USING ERRCODE = '42501';
+  END IF;
+
   IF v_rec.status = 'resolved' OR v_rec.status = 'cancelled' THEN
     RAISE EXCEPTION 'Esta conciliação já foi concluída ou cancelada.';
   END IF;
 
-  -- 7. Beneficiary Resolution
-  v_beneficiary_id := v_rec.user_id;
-  IF v_beneficiary_id IS NULL AND v_rec.partner_id IS NOT NULL THEN
-    SELECT profile_id INTO v_beneficiary_id
+  -- 6. Beneficiary Resolution & Consistency Check
+  IF v_rec.user_id IS NOT NULL AND v_rec.partner_id IS NOT NULL THEN
+    SELECT profile_id, status INTO v_partner
     FROM public.partners
     WHERE id = v_rec.partner_id AND organization_id = p_org_id;
-  END IF;
 
-  IF v_beneficiary_id IS NULL THEN
+    IF NOT FOUND OR v_partner.status <> 'active' THEN
+      RAISE EXCEPTION 'Sócio vinculado à conciliação não encontrado ou inativo.';
+    END IF;
+
+    IF v_partner.profile_id IS NOT NULL AND v_rec.user_id <> v_partner.profile_id THEN
+      RAISE EXCEPTION 'Inconsistência de beneficiário: divergência entre user_id da conciliação e sócio vinculado.'
+        USING ERRCODE = '42501';
+    END IF;
+
+    v_beneficiary_id := coalesce(v_rec.user_id, v_partner.profile_id);
+  ELSIF v_rec.user_id IS NOT NULL THEN
+    v_beneficiary_id := v_rec.user_id;
+  ELSIF v_rec.partner_id IS NOT NULL THEN
+    SELECT profile_id, status INTO v_partner
+    FROM public.partners
+    WHERE id = v_rec.partner_id AND organization_id = p_org_id;
+
+    IF NOT FOUND OR v_partner.status <> 'active' THEN
+      RAISE EXCEPTION 'Sócio vinculado à conciliação não encontrado ou inativo.';
+    END IF;
+
+    IF v_partner.profile_id IS NULL THEN
+      RAISE EXCEPTION 'Sócio vinculado à conciliação não possui perfil de usuário cadastrado.';
+    END IF;
+
+    v_beneficiary_id := v_partner.profile_id;
+  ELSE
     RAISE EXCEPTION 'Beneficiário não identificado para a conciliação informada.';
   END IF;
 
-  -- 8. Lock and Validate PJ Account (Tenant Ownership)
+  -- 7. Full Idempotency Fingerprint Validation
+  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category,
+         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
+         r.reconciliation_id
+  INTO v_existing_tx
+  FROM public.business_transactions bt
+  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
+  JOIN public.reimbursements r ON r.cross_context_id = bt.cross_context_id
+  WHERE bt.cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    IF v_existing_tx.category = 'reimbursement'
+       AND v_existing_tx.organization_id = p_org_id
+       AND v_existing_tx.reconciliation_id = p_reconciliation_id
+       AND v_existing_tx.account_id = p_pj_account_id
+       AND v_existing_tx.pf_account_id = p_pf_account_id
+       AND v_existing_tx.pf_user_id = v_beneficiary_id
+       AND v_existing_tx.amount_cents = p_amount_cents THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-RPC collision check
+  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 8. Lock and Validate PJ Account (Tenant Ownership & Active Status)
   SELECT * INTO v_pj_acc
   FROM public.business_accounts
   WHERE id = p_pj_account_id AND organization_id = p_org_id
@@ -217,7 +278,11 @@ BEGIN
     RAISE EXCEPTION 'Conta PJ não encontrada ou não pertence à organização especificada.';
   END IF;
 
-  -- 9. Lock and Validate PF Account (Beneficiary Ownership)
+  IF v_pj_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PJ inativa ou arquivada não pode ser movimentada.';
+  END IF;
+
+  -- 9. Lock and Validate PF Account (Beneficiary Ownership & Active Status)
   SELECT * INTO v_pf_acc
   FROM public.personal_accounts
   WHERE id = p_pf_account_id AND user_id = v_beneficiary_id
@@ -225,6 +290,10 @@ BEGIN
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Conta PF de destino não encontrada ou não pertence ao beneficiário da conciliação.';
+  END IF;
+
+  IF v_pf_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PF de destino inativa ou arquivada não pode receber transferências.';
   END IF;
 
   -- 10. Compute Resolution Amounts
@@ -239,7 +308,7 @@ BEGIN
     v_new_status := 'partially_resolved';
   END IF;
 
-  -- 11. Insert Reimbursement Record
+  -- 11. Insert Reimbursement Record with cross_context_id
   INSERT INTO public.reimbursements (
     organization_id,
     reconciliation_id,
@@ -256,11 +325,10 @@ BEGIN
     p_idempotency_key
   );
 
-  -- 12. Update Reconciliation Row
+  -- 12. Update Reconciliation Row (Preserves original reconciliations.cross_context_id)
   UPDATE public.reconciliations
   SET resolved_amount_cents = v_new_resolved,
       status = v_new_status,
-      cross_context_id = p_idempotency_key,
       resolved_at = CASE WHEN v_new_status = 'resolved' THEN now() ELSE resolved_at END
   WHERE id = p_reconciliation_id AND organization_id = p_org_id;
 
@@ -343,7 +411,7 @@ REVOKE EXECUTE ON FUNCTION public.process_cross_context_reimbursement(uuid, uuid
 GRANT EXECUTE ON FUNCTION public.process_cross_context_reimbursement(uuid, uuid, bigint, uuid, uuid, uuid, text) TO authenticated;
 
 COMMENT ON FUNCTION public.process_cross_context_reimbursement IS 
-  'Liquida reembolsos societários com atomicidade, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
+  'Liquida reembolsos societários com advisory lock, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
 
 -- ------------------------------------------------------------------------------
 -- 6. FUNCTION: process_pro_labore_payout
@@ -370,52 +438,41 @@ DECLARE
   v_beneficiary_id uuid;
   v_biz_tx_id uuid;
   v_existing_tx record;
+  v_tx_date date;
   v_rows_affected integer;
 BEGIN
-  -- 1. Authentication Check
+  -- 1. Idempotency Key Validation & Advisory Lock
+  IF p_idempotency_key IS NULL THEN
+    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de pró-labore.';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+
+  -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Não autenticado: sessão de usuário ausente.'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 2. AAL2 Server-Side Check
+  -- 3. AAL2 Server-Side Check
   IF coalesce(auth.jwt() ->> 'aal', '') <> 'aal2' THEN
     RAISE EXCEPTION 'Acesso negado: operação financeira sensível requer autenticação de dois fatores (MFA/AAL2).'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 3. RBAC Check (owner, admin, finance)
+  -- 4. RBAC Check (owner, admin, finance)
   IF NOT public.has_organization_role(p_org_id, ARRAY['owner', 'admin', 'finance']) THEN
     RAISE EXCEPTION 'Acesso negado: apenas membros autorizados podem registrar pró-labore.'
       USING ERRCODE = '42501';
-  END IF;
-
-  -- 4. Idempotency Key Check
-  IF p_idempotency_key IS NULL THEN
-    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de pró-labore.';
   END IF;
 
   IF p_amount_cents <= 0 THEN
     RAISE EXCEPTION 'O valor do pró-labore deve ser maior que zero.';
   END IF;
 
-  -- 5. Idempotent Retry Detection
-  SELECT id, organization_id, account_id, amount_cents INTO v_existing_tx
-  FROM public.business_transactions
-  WHERE cross_context_id = p_idempotency_key;
+  v_tx_date := coalesce(p_transaction_date, CURRENT_DATE);
 
-  IF FOUND THEN
-    IF v_existing_tx.organization_id = p_org_id 
-       AND v_existing_tx.account_id = p_pj_account_id 
-       AND v_existing_tx.amount_cents = p_amount_cents THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- 6. Lock and Validate Partner
+  -- 5. Lock and Validate Partner (Organization ownership & active status)
   SELECT * INTO v_partner
   FROM public.partners
   WHERE id = p_partner_id AND organization_id = p_org_id
@@ -435,7 +492,42 @@ BEGIN
 
   v_beneficiary_id := v_partner.profile_id;
 
-  -- 7. Lock and Validate PJ Account (Tenant Ownership)
+  -- 6. Full Idempotency Fingerprint Validation
+  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category, bt.transaction_date,
+         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
+         ptr.partner_id
+  INTO v_existing_tx
+  FROM public.business_transactions bt
+  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
+  JOIN public.partner_transactions ptr ON ptr.cross_context_id = bt.cross_context_id
+  WHERE bt.cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    IF v_existing_tx.category = 'pro_labore'
+       AND v_existing_tx.organization_id = p_org_id
+       AND v_existing_tx.partner_id = p_partner_id
+       AND v_existing_tx.account_id = p_pj_account_id
+       AND v_existing_tx.pf_account_id = p_pf_account_id
+       AND v_existing_tx.pf_user_id = v_beneficiary_id
+       AND v_existing_tx.amount_cents = p_amount_cents
+       AND v_existing_tx.transaction_date = v_tx_date THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-RPC collision check
+  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 7. Lock and Validate PJ Account (Tenant Ownership & Active Status)
   SELECT * INTO v_pj_acc
   FROM public.business_accounts
   WHERE id = p_pj_account_id AND organization_id = p_org_id
@@ -445,7 +537,11 @@ BEGIN
     RAISE EXCEPTION 'Conta PJ não encontrada ou não pertence à organização especificada.';
   END IF;
 
-  -- 8. Lock and Validate PF Account (Beneficiary Ownership)
+  IF v_pj_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PJ inativa ou arquivada não pode ser movimentada.';
+  END IF;
+
+  -- 8. Lock and Validate PF Account (Beneficiary Ownership & Active Status)
   SELECT * INTO v_pf_acc
   FROM public.personal_accounts
   WHERE id = p_pf_account_id AND user_id = v_beneficiary_id
@@ -453,6 +549,10 @@ BEGIN
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Conta PF de destino não encontrada ou não pertence ao sócio beneficiário.';
+  END IF;
+
+  IF v_pf_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PF de destino inativa ou arquivada não pode receber transferências.';
   END IF;
 
   v_biz_tx_id := gen_random_uuid();
@@ -476,7 +576,7 @@ BEGIN
     'expense',
     coalesce(p_notes, 'Pagamento de Pró-Labore Sócio'),
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     'pro_labore',
     'Retirada mensal pró-labore societário',
     p_idempotency_key
@@ -507,7 +607,7 @@ BEGIN
     p_partner_id,
     'pro_labore',
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     v_biz_tx_id,
     p_notes,
     p_idempotency_key
@@ -530,7 +630,7 @@ BEGIN
     'income',
     'Recebimento de Pró-Labore',
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     'pro_labore',
     coalesce(p_notes, 'Pró-labore empresarial recebido'),
     p_idempotency_key
@@ -554,7 +654,7 @@ REVOKE EXECUTE ON FUNCTION public.process_pro_labore_payout(uuid, uuid, bigint, 
 GRANT EXECUTE ON FUNCTION public.process_pro_labore_payout(uuid, uuid, bigint, uuid, uuid, uuid, date, text) TO authenticated;
 
 COMMENT ON FUNCTION public.process_pro_labore_payout IS 
-  'Processa pagamento de pró-labore societário com atomicidade, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
+  'Processa pagamento de pró-labore societário com advisory lock, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
 
 -- ------------------------------------------------------------------------------
 -- 7. FUNCTION: process_profit_distribution_payout
@@ -581,52 +681,41 @@ DECLARE
   v_beneficiary_id uuid;
   v_biz_tx_id uuid;
   v_existing_tx record;
+  v_tx_date date;
   v_rows_affected integer;
 BEGIN
-  -- 1. Authentication Check
+  -- 1. Idempotency Key Validation & Advisory Lock
+  IF p_idempotency_key IS NULL THEN
+    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de lucros.';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('aurafin_idemp_' || p_idempotency_key::text));
+
+  -- 2. Authentication Check
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Não autenticado: sessão de usuário ausente.'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 2. AAL2 Server-Side Check
+  -- 3. AAL2 Server-Side Check
   IF coalesce(auth.jwt() ->> 'aal', '') <> 'aal2' THEN
     RAISE EXCEPTION 'Acesso negado: operação financeira sensível requer autenticação de dois fatores (MFA/AAL2).'
       USING ERRCODE = '42501';
   END IF;
 
-  -- 3. RBAC Check (owner, admin, finance)
+  -- 4. RBAC Check (owner, admin, finance)
   IF NOT public.has_organization_role(p_org_id, ARRAY['owner', 'admin', 'finance']) THEN
     RAISE EXCEPTION 'Acesso negado: apenas membros autorizados podem registrar distribuição de lucros.'
       USING ERRCODE = '42501';
-  END IF;
-
-  -- 4. Idempotency Key Check
-  IF p_idempotency_key IS NULL THEN
-    RAISE EXCEPTION 'Chave de idempotência (p_idempotency_key) obrigatória para liquidação de lucros.';
   END IF;
 
   IF p_amount_cents <= 0 THEN
     RAISE EXCEPTION 'O valor da distribuição de lucros deve ser maior que zero.';
   END IF;
 
-  -- 5. Idempotent Retry Detection
-  SELECT id, organization_id, account_id, amount_cents INTO v_existing_tx
-  FROM public.business_transactions
-  WHERE cross_context_id = p_idempotency_key;
+  v_tx_date := coalesce(p_transaction_date, CURRENT_DATE);
 
-  IF FOUND THEN
-    IF v_existing_tx.organization_id = p_org_id 
-       AND v_existing_tx.account_id = p_pj_account_id 
-       AND v_existing_tx.amount_cents = p_amount_cents THEN
-      RETURN p_idempotency_key;
-    ELSE
-      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
-        USING ERRCODE = '23505';
-    END IF;
-  END IF;
-
-  -- 6. Lock and Validate Partner
+  -- 5. Lock and Validate Partner (Organization ownership & active status)
   SELECT * INTO v_partner
   FROM public.partners
   WHERE id = p_partner_id AND organization_id = p_org_id
@@ -646,7 +735,42 @@ BEGIN
 
   v_beneficiary_id := v_partner.profile_id;
 
-  -- 7. Lock and Validate PJ Account (Tenant Ownership)
+  -- 6. Full Idempotency Fingerprint Validation
+  SELECT bt.id, bt.organization_id, bt.account_id, bt.amount_cents, bt.category, bt.transaction_date,
+         pt.user_id AS pf_user_id, pt.account_id AS pf_account_id,
+         ptr.partner_id
+  INTO v_existing_tx
+  FROM public.business_transactions bt
+  JOIN public.personal_transactions pt ON pt.cross_context_id = bt.cross_context_id
+  JOIN public.partner_transactions ptr ON ptr.cross_context_id = bt.cross_context_id
+  WHERE bt.cross_context_id = p_idempotency_key;
+
+  IF FOUND THEN
+    IF v_existing_tx.category = 'profit_distribution'
+       AND v_existing_tx.organization_id = p_org_id
+       AND v_existing_tx.partner_id = p_partner_id
+       AND v_existing_tx.account_id = p_pj_account_id
+       AND v_existing_tx.pf_account_id = p_pf_account_id
+       AND v_existing_tx.pf_user_id = v_beneficiary_id
+       AND v_existing_tx.amount_cents = p_amount_cents
+       AND v_existing_tx.transaction_date = v_tx_date THEN
+      RETURN p_idempotency_key;
+    ELSE
+      RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+        USING ERRCODE = '23505';
+    END IF;
+  END IF;
+
+  -- Cross-RPC collision check
+  IF EXISTS (SELECT 1 FROM public.business_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.personal_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.partner_transactions WHERE cross_context_id = p_idempotency_key)
+     OR EXISTS (SELECT 1 FROM public.reimbursements WHERE cross_context_id = p_idempotency_key) THEN
+    RAISE EXCEPTION 'Conflito de idempotência: a chave fornecida já foi utilizada para outra operação.'
+      USING ERRCODE = '23505';
+  END IF;
+
+  -- 7. Lock and Validate PJ Account (Tenant Ownership & Active Status)
   SELECT * INTO v_pj_acc
   FROM public.business_accounts
   WHERE id = p_pj_account_id AND organization_id = p_org_id
@@ -656,7 +780,11 @@ BEGIN
     RAISE EXCEPTION 'Conta PJ não encontrada ou não pertence à organização especificada.';
   END IF;
 
-  -- 8. Lock and Validate PF Account (Beneficiary Ownership)
+  IF v_pj_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PJ inativa ou arquivada não pode ser movimentada.';
+  END IF;
+
+  -- 8. Lock and Validate PF Account (Beneficiary Ownership & Active Status)
   SELECT * INTO v_pf_acc
   FROM public.personal_accounts
   WHERE id = p_pf_account_id AND user_id = v_beneficiary_id
@@ -664,6 +792,10 @@ BEGIN
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Conta PF de destino não encontrada ou não pertence ao sócio beneficiário.';
+  END IF;
+
+  IF v_pf_acc.status <> 'active' THEN
+    RAISE EXCEPTION 'Conta PF de destino inativa ou arquivada não pode receber transferências.';
   END IF;
 
   v_biz_tx_id := gen_random_uuid();
@@ -687,7 +819,7 @@ BEGIN
     'expense',
     coalesce(p_notes, 'Distribuição de Lucros Societária'),
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     'profit_distribution',
     'Distribuição de lucros societária',
     p_idempotency_key
@@ -718,7 +850,7 @@ BEGIN
     p_partner_id,
     'profit_distribution',
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     v_biz_tx_id,
     p_notes,
     p_idempotency_key
@@ -741,7 +873,7 @@ BEGIN
     'income',
     'Recebimento de Distribuição de Lucros',
     p_amount_cents,
-    coalesce(p_transaction_date, CURRENT_DATE),
+    v_tx_date,
     'profit_distribution',
     coalesce(p_notes, 'Distribuição de lucros recebida da empresa'),
     p_idempotency_key
@@ -765,4 +897,4 @@ REVOKE EXECUTE ON FUNCTION public.process_profit_distribution_payout(uuid, uuid,
 GRANT EXECUTE ON FUNCTION public.process_profit_distribution_payout(uuid, uuid, bigint, uuid, uuid, uuid, date, text) TO authenticated;
 
 COMMENT ON FUNCTION public.process_profit_distribution_payout IS 
-  'Processa distribuição de lucros societária com atomicidade, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
+  'Processa distribuição de lucros societária com advisory lock, AAL2, RBAC, resolução de beneficiário e idempotência estrita.';
