@@ -1,0 +1,60 @@
+name: CD — Deploy to Production (Controlled Release)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-production:
+    name: Production Release
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Strict Verification Gate (Lint & Build)
+        run: |
+          npm run lint
+          npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_PRODUCTION }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_PRODUCTION }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply Migrations to Production Supabase
+        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_ID_PRODUCTION != ''
+        run: |
+          echo "Connecting to Supabase Production..."
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PRODUCTION }}
+          echo "Applying versioned migrations to Production..."
+          supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID_PRODUCTION: ${{ secrets.SUPABASE_PROJECT_ID_PRODUCTION }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PRODUCTION }}
+
+      - name: Post-Deploy Production Status Notification
+        run: echo "Production deployment pipeline executed successfully."
