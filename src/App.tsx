@@ -79,6 +79,8 @@ import { SecuritySettingsModal } from './components/auth/SecuritySettingsModal';
 import { LegacyImportModal } from './components/auth/LegacyImportModal';
 import { LegacyPjImportModal } from './components/auth/LegacyPjImportModal';
 import { CrossContextModal } from './components/aura/CrossContextModal';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { AuraLogger } from './lib/logger';
 import { LegacyImportService } from './services/migration/legacyImportService';
 import { LegacyPjImportService } from './services/migration/legacyPjImportService';
 
@@ -166,7 +168,7 @@ function AppContent() {
         if (res.hasLegacyData && !res.alreadyImported) {
           setIsLegacyImportModalOpen(true);
         }
-      }).catch(e => console.warn('[App] Erro ao checar legado PF:', e));
+      }).catch(e => AuraLogger.warn('[App] Erro ao checar legado PF', { module: 'legacy_import', error: e?.message }));
     }
   }, [isAuthenticated, user]);
 
@@ -178,7 +180,7 @@ function AppContent() {
         if (res.hasLegacyData && !res.alreadyImported) {
           setIsLegacyPjImportModalOpen(true);
         }
-      }).catch(e => console.warn('[App] Erro ao checar legado PJ:', e));
+      }).catch(e => AuraLogger.warn('[App] Erro ao checar legado PJ', { module: 'legacy_import_pj', error: e?.message }));
     }
   }, [isAuthenticated, activeOrganization]);
 
@@ -187,7 +189,7 @@ function AppContent() {
     if (config.personalAccounts === 'supabase' && user) {
       personalAccountRepository.list(user.id).then(supAccounts => {
         setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
-      }).catch(err => console.error('[App] Erro ao carregar contas PF do Supabase:', err));
+      }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PF do Supabase', { module: 'accounts_pf', error: err?.message }));
     }
   }, [config.personalAccounts, user, personalAccountRepository]);
 
@@ -195,7 +197,7 @@ function AppContent() {
     if (config.personalTransactions === 'supabase' && user) {
       personalTransactionRepository.list(user.id).then(supTxs => {
         setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
-      }).catch(err => console.error('[App] Erro ao carregar transações PF do Supabase:', err));
+      }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PF do Supabase', { module: 'transactions_pf', error: err?.message }));
     }
   }, [config.personalTransactions, user, personalTransactionRepository]);
 
@@ -204,7 +206,7 @@ function AppContent() {
     if (config.businessAccounts === 'supabase' && activeOrganization) {
       businessAccountRepository.list(activeOrganization.id).then(supAccounts => {
         setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
-      }).catch(err => console.error('[App] Erro ao carregar contas PJ do Supabase:', err));
+      }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PJ do Supabase', { module: 'accounts_pj', error: err?.message }));
     }
   }, [config.businessAccounts, activeOrganization, businessAccountRepository]);
 
@@ -212,7 +214,7 @@ function AppContent() {
     if (config.businessTransactions === 'supabase' && activeOrganization) {
       businessTransactionRepository.list(activeOrganization.id).then(supTxs => {
         setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
-      }).catch(err => console.error('[App] Erro ao carregar transações PJ do Supabase:', err));
+      }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PJ do Supabase', { module: 'transactions_pj', error: err?.message }));
     }
   }, [config.businessTransactions, activeOrganization, businessTransactionRepository]);
 
@@ -419,6 +421,7 @@ function AppContent() {
       {mode === 'PF' && (
         <>
           {pfTab === 'overview' && (
+            <ErrorBoundary isAreaBoundary moduleName="pf_overview" fallbackTitle="Falha ao carregar visão geral PF">
               <PfOverview
                 transactions={transactions}
                 events={events}
@@ -438,7 +441,8 @@ function AppContent() {
                 onNavigateTab={(tab) => setPfTab(tab as PFTab)}
                 onAddCard={() => setIsAddCardModalOpen(true)}
               />
-            )}
+            </ErrorBoundary>
+          )}
 
             {pfTab === 'transactions' && (
               <PfTransactions
@@ -567,6 +571,7 @@ function AppContent() {
       {mode === 'PJ' && (
         <>
           {pjTab === 'overview' && (
+            <ErrorBoundary isAreaBoundary moduleName="pj_overview" fallbackTitle="Falha ao carregar visão geral PJ">
               <PjOverview
                 transactions={transactions}
                 events={events}
@@ -583,7 +588,8 @@ function AppContent() {
                 onNavigateTab={(tab) => setPjTab(tab as PJTab)}
                 onAddCard={() => setIsAddCardModalOpen(true)}
               />
-            )}
+            </ErrorBoundary>
+          )}
 
             {pjTab === 'cashflow' && (
               <PjCashflow

@@ -39,7 +39,8 @@ async function runDatabaseRestoreDrill() {
     'process_cross_context_reimbursement',
     'process_pro_labore_payout',
     'process_profit_distribution_payout',
-    'find_orphan_storage_objects'
+    'find_orphan_storage_objects',
+    'health_check'
   ];
 
   // Check that all required entities and RPCs are defined in migration SQL files
