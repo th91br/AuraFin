@@ -12,6 +12,10 @@ storage-backup/
 *.sql.gz
 manifest.json
 
+# Supabase CLI Local Scratch
+supabase/.temp/
+supabase/.branches/
+
 # Logs & Environment
 *.log
 .env*

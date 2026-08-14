@@ -31,6 +31,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [operationIdempotencyKey, setOperationIdempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   if (!isOpen || !isAuthenticated || !user || !activeOrganization) return null;
 
@@ -67,6 +68,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           amountCents,
           pjAccountId: selectedPjAccountId,
           pfAccountId: selectedPfAccountId,
+          idempotencyKey: operationIdempotencyKey,
           notes,
         });
         setSuccessMsg('Reembolso processado com sucesso! Saldo e conciliação atualizados.');
@@ -77,6 +79,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           amountCents,
           pjAccountId: selectedPjAccountId,
           pfAccountId: selectedPfAccountId,
+          idempotencyKey: operationIdempotencyKey,
           notes,
         });
         setSuccessMsg('Pró-labore transferido com sucesso! Entrada e saída vinculadas no PostgreSQL.');
@@ -87,6 +90,7 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           amountCents,
           pjAccountId: selectedPjAccountId,
           pfAccountId: selectedPfAccountId,
+          idempotencyKey: operationIdempotencyKey,
           notes,
         });
         setSuccessMsg('Distribuição de lucros processada com sucesso! Lançamentos vinculados no PostgreSQL.');

@@ -36,24 +36,24 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-slate-700 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/20 selection:text-indigo-200">
       
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.08]">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={onEnterApp}>
-            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center font-black text-indigo-400 shadow-xs">
               A
             </div>
             <div>
-              <span className="font-extrabold text-xl tracking-tight text-white">AURAFIN</span>
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-widest -mt-1">
+              <span className="font-extrabold text-lg tracking-tight text-white">AURAFIN</span>
+              <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-widest -mt-1">
                 Plataforma Híbrida PF + PJ
               </span>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-400">
+          <nav className="hidden md:flex items-center space-x-7 text-xs font-semibold text-slate-400">
             <a href="#solucao" className="hover:text-white transition-colors">A Solução</a>
             <a href="#modos" className="hover:text-white transition-colors">Modos PF / PJ</a>
             <a href="#conciliacao" className="hover:text-white transition-colors">Motor de Conciliação</a>
@@ -63,78 +63,82 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
 
           <button
             onClick={onEnterApp}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-sm text-sm"
+            className="tactile-button flex items-center space-x-2 px-4 py-2 bg-white hover:bg-slate-100 text-slate-950 font-bold rounded-xl shadow-xs text-xs"
           >
             <span>Acessar Plataforma</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* Hero Section (Editorial Fintech SaaS Look) */}
-      <section className="relative pt-20 pb-24 border-b border-slate-800 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-8 relative z-10">
+      {/* Hero Section (Stripe & Linear Ambient Glow Style) */}
+      <section className="relative pt-20 pb-24 border-b border-white/[0.06] overflow-hidden">
+        {/* Background Ambient Radial Lights */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-500/10 via-sky-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+        <div className="absolute -top-32 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-7 relative z-10">
           
-          {/* Matte Badge */}
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold tracking-wider">
-            <Sparkles className="w-4 h-4 text-slate-400" />
+          {/* Badge Pill with Subtle Glowing Border */}
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.12] text-slate-300 text-xs font-semibold tracking-wide shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>Fim da Confusão Patrimonial para Profissionais PJ</span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-5xl mx-auto leading-none">
-            A Plataforma Financeira Híbrida que <span className="text-slate-300 underline decoration-slate-600 underline-offset-8">Separa e Conecta</span> sua Vida Pessoal e sua Empresa.
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-[1.08]">
+            A Plataforma Financeira Híbrida que <span className="bg-gradient-to-r from-indigo-300 via-sky-200 to-indigo-400 bg-clip-text text-transparent">Separa e Conecta</span> sua Vida e sua Empresa.
           </h1>
 
           {/* Subheadline */}
-          <p className="text-slate-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-normal">
-            Garanta a separação jurídica do seu caixa corporativo enquanto sincroniza pró-labore, investimentos e realiza <strong className="text-white">reembolsos ao sócio em 1 clique</strong>.
+          <p className="text-slate-400 text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-normal">
+            Garanta a separação jurídica do caixa corporativo enquanto sincroniza pró-labore, investimentos e realiza <strong className="text-slate-200 font-semibold">reembolsos ao sócio em 1 clique</strong> com conformidade fiscal.
           </p>
 
-          {/* CTA Group (Matte Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          {/* CTA Group */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
             <button
               onClick={() => handleStartDemo('PJ')}
-              className="w-full sm:w-auto px-8 py-4 bg-slate-100 hover:bg-white text-slate-950 font-bold text-base rounded-xl transition-all shadow-md flex items-center justify-center space-x-2"
+              className="tactile-button w-full sm:w-auto px-7 py-3.5 bg-white hover:bg-slate-100 text-slate-950 font-bold text-sm rounded-xl shadow-md flex items-center justify-center space-x-2.5"
             >
-              <Building2 className="w-5 h-5 text-slate-700" />
+              <Building2 className="w-4 h-4 text-slate-800" />
               <span>Experimentar Modo PJ (Empresa)</span>
             </button>
 
             <button
               onClick={() => handleStartDemo('PF')}
-              className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-slate-850 text-white font-bold text-base rounded-xl transition-all shadow-md flex items-center justify-center space-x-2 border border-slate-800"
+              className="tactile-button w-full sm:w-auto px-7 py-3.5 bg-white/[0.05] hover:bg-white/[0.08] text-white font-bold text-sm rounded-xl shadow-xs flex items-center justify-center space-x-2.5 border border-white/[0.12]"
             >
-              <User className="w-5 h-5 text-indigo-400" />
+              <User className="w-4 h-4 text-indigo-400" />
               <span>Experimentar Modo PF (Vida)</span>
             </button>
           </div>
 
           {/* Product Preview Card */}
-          <div className="pt-12 max-w-5xl mx-auto">
-            <div className="bg-slate-900 p-3 rounded-3xl border border-slate-800 shadow-2xl relative">
-              <div className="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-950 rounded-t-2xl">
+          <div className="pt-10 max-w-5xl mx-auto" id="modos">
+            <div className="bg-slate-900/90 backdrop-blur-xl p-2.5 rounded-3xl border border-white/[0.1] shadow-2xl relative glow-card">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06] bg-slate-950/80 rounded-t-2xl">
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-slate-700 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-slate-700 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-slate-700 inline-block" />
-                  <span className="text-xs text-slate-400 ml-2 font-mono">aurafin.app</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block" />
+                  <span className="text-[11px] text-slate-500 ml-2 font-mono font-medium">aurafin.app</span>
                 </div>
 
                 {/* Preview Switcher */}
-                <div className="flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800">
+                <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-white/[0.08]">
                   <button
                     onClick={() => setDemoMode('PF')}
-                    className={`px-3 py-1 text-xs font-bold rounded transition-all ${
-                      demoMode === 'PF' ? 'bg-slate-800 text-white border border-slate-700' : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      demoMode === 'PF' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Visão PF (Pessoal)
                   </button>
                   <button
                     onClick={() => setDemoMode('PJ')}
-                    className={`px-3 py-1 text-xs font-bold rounded transition-all ${
-                      demoMode === 'PJ' ? 'bg-slate-800 text-white border border-slate-700' : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      demoMode === 'PJ' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Visão PJ (Empresa)
@@ -143,66 +147,66 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
               </div>
 
               {/* Dynamic Preview Container */}
-              <div className={`p-8 rounded-b-2xl transition-colors duration-300 text-left ${
+              <div className={`p-7 rounded-b-2xl transition-colors duration-300 text-left ${
                 demoMode === 'PF' ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'
               }`}>
                 {demoMode === 'PF' ? (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                  <div className="space-y-5">
+                    <div className="flex justify-between items-center border-b border-slate-200/80 pb-4">
                       <div>
-                        <span className="text-xs font-bold uppercase text-indigo-700 tracking-wider">Modo Pessoa Física</span>
-                        <h3 className="text-2xl font-bold text-slate-900">Seu Momento & Orçamento Pessoal</h3>
+                        <span className="text-[11px] font-bold uppercase text-indigo-700 tracking-wider">Modo Pessoa Física</span>
+                        <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">Seu Momento & Orçamento Pessoal</h3>
                       </div>
-                      <span className="text-xs font-bold px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg">
+                      <span className="text-xs font-bold px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg tabular-nums">
                         Disponível: R$ 7.052,45
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs text-slate-500 uppercase font-bold">Patrimônio Líquido</p>
-                        <h4 className="text-2xl font-extrabold text-slate-900 mt-1">R$ 611.700,00</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Patrimônio Líquido</p>
+                        <h4 className="text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">R$ 611.700,00</h4>
                         <p className="text-xs text-emerald-700 mt-1 font-medium">Imóvel + Veículo FIPE + Renda Fixa</p>
                       </div>
-                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs text-slate-500 uppercase font-bold">Reserva de Emergência</p>
-                        <h4 className="text-2xl font-extrabold text-indigo-900 mt-1">95% Concluída</h4>
-                        <p className="text-xs text-slate-500 mt-1">6 meses de vida cobertos</p>
+                      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Reserva de Emergência</p>
+                        <h4 className="text-2xl font-extrabold text-indigo-950 mt-1 tabular-nums">95% Concluída</h4>
+                        <p className="text-xs text-slate-500 mt-1">6 meses de custos cobertos</p>
                       </div>
-                      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-xs text-slate-500 uppercase font-bold">Pré-IRPF Dedutível</p>
-                        <h4 className="text-2xl font-extrabold text-emerald-800 mt-1">R$ 2.830,00</h4>
+                      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Pré-IRPF Dedutível</p>
+                        <h4 className="text-2xl font-extrabold text-emerald-800 mt-1 tabular-nums">R$ 2.830,00</h4>
                         <p className="text-xs text-slate-500 mt-1">Saúde & Educação registradas</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                  <div className="space-y-5">
+                    <div className="flex justify-between items-center border-b border-white/[0.08] pb-4">
                       <div>
-                        <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">Modo Pessoa Jurídica</span>
-                        <h3 className="text-2xl font-bold text-white">Dashboard Gerencial Executivo</h3>
+                        <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Modo Pessoa Jurídica</span>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Dashboard Gerencial Executivo</h3>
                       </div>
-                      <span className="text-xs font-bold px-3 py-1 bg-slate-900 text-slate-200 border border-slate-800 rounded-lg">
+                      <span className="text-xs font-bold px-3 py-1.5 bg-slate-900 text-slate-200 border border-white/[0.1] rounded-lg tabular-nums">
                         Caixa Operacional: R$ 35.000,00
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                        <p className="text-xs text-slate-400 uppercase font-bold">DRE Líquido (Mês)</p>
-                        <h4 className="text-2xl font-extrabold text-emerald-400 mt-1">R$ 13.358,00</h4>
-                        <p className="text-xs text-slate-400 mt-1 font-medium">Margem Líquida de 72%</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono-numbers">
+                      <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
+                        <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">DRE Líquido (Mês)</p>
+                        <h4 className="text-2xl font-extrabold text-emerald-400 mt-1 tabular-nums">R$ 13.358,00</h4>
+                        <p className="text-xs text-slate-400 mt-1 font-medium font-sans">Margem Líquida de 72%</p>
                       </div>
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                        <p className="text-xs text-slate-400 uppercase font-bold">Ponto de Equilíbrio</p>
-                        <h4 className="text-2xl font-extrabold text-slate-200 mt-1">123% Atingido</h4>
-                        <p className="text-xs text-slate-400 mt-1">Custos fixos cobertos</p>
+                      <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
+                        <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Ponto de Equilíbrio</p>
+                        <h4 className="text-2xl font-extrabold text-slate-100 mt-1 tabular-nums">123% Atingido</h4>
+                        <p className="text-xs text-slate-400 mt-1 font-sans">Custos fixos cobertos</p>
                       </div>
-                      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                        <p className="text-xs text-amber-400 uppercase font-bold">Aporte Sócio Pendente</p>
-                        <h4 className="text-2xl font-extrabold text-white mt-1">R$ 280,00</h4>
-                        <p className="text-xs text-amber-400 mt-1 font-bold">Reembolso 1 clique pronto</p>
+                      <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
+                        <p className="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Aporte Sócio Pendente</p>
+                        <h4 className="text-2xl font-extrabold text-white mt-1 tabular-nums">R$ 280,00</h4>
+                        <p className="text-xs text-amber-400 mt-1 font-bold font-sans">Reembolso 1 clique pronto</p>
                       </div>
                     </div>
                   </div>
@@ -214,76 +218,76 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Problem & Solution Section */}
-      <section id="solucao" className="py-24 border-b border-slate-800 bg-slate-950">
+      {/* Problem & Solution Bento Grid */}
+      <section id="solucao" className="py-24 border-b border-white/[0.06] bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 space-y-16">
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+          <div className="text-center space-y-3.5 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
               Os 6 Maiores Desafios do Profissional PJ no Brasil.
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-slate-400 text-base sm:text-lg">
               Entenda como o AuraFin elimina o caos financeiro e contábil entre você e sua empresa.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <ArrowRightLeft className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl w-fit border border-indigo-500/20">
+                <ArrowRightLeft className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">1. Mistura Patrimonial</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Pagar compras pessoais no cartão corporativo ou usar dinheiro do bolso para contas da empresa quebra o Princípio da Entidade.
+              <h3 className="text-lg font-bold text-white tracking-tight">1. Mistura Patrimonial</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Pagar compras pessoais no cartão corporativo ou usar dinheiro do bolso para contas da empresa quebra o Princípio da Entidade e gera riscos com o Fisco.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <RefreshCcw className="w-6 h-6" />
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl w-fit border border-sky-500/20">
+                <RefreshCcw className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">2. Reembolsos Esquecidos</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Aportes do sócio para a empresa não registrados viram prejuízo pessoal sem o ressarcimento correto.
+              <h3 className="text-lg font-bold text-white tracking-tight">2. Reembolsos Esquecidos</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Aportes do sócio para a empresa não registrados viram prejuízo pessoal sem o ressarcimento estruturado e sem comprovantes.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <Receipt className="w-6 h-6" />
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl w-fit border border-emerald-500/20">
+                <Receipt className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">3. Pró-labore Caótico</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Falta de clareza entre o que é salário do sócio, distribuição de lucros e custos operacionais da firma.
+              <h3 className="text-lg font-bold text-white tracking-tight">3. Pró-labore Caótico</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Falta de clareza entre o que é remuneração do sócio (tributada), distribuição isenta de lucros e custos operacionais da empresa.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <BarChart3 className="w-6 h-6" />
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl w-fit border border-amber-500/20">
+                <BarChart3 className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">4. Falta de Previsibilidade</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Sem calcular o Ponto de Equilíbrio e o Runway de caixa, a empresa corre riscos de liquidez nos meses fracos.
+              <h3 className="text-lg font-bold text-white tracking-tight">4. Falta de Previsibilidade</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Sem calcular o Ponto de Equilíbrio e o Runway de caixa, a empresa corre riscos de liquidez nos meses de menor faturamento.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <HeartPulse className="w-6 h-6" />
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl w-fit border border-rose-500/20">
+                <HeartPulse className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">5. Perda de Deduções no IRPF</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Comprovantes médicos e de educação da Pessoa Física perdidos ao longo do ano aumentam o imposto a pagar na declaração.
+              <h3 className="text-lg font-bold text-white tracking-tight">5. Perda de Deduções no IRPF</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Comprovantes médicos e de educação da Pessoa Física perdidos ao longo do ano aumentam desnecessariamente o imposto a pagar no IRPF.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors">
-              <div className="p-3 bg-slate-800 text-slate-200 rounded-xl w-fit border border-slate-700">
-                <FileText className="w-6 h-6" />
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3.5 glow-card">
+              <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl w-fit border border-purple-500/20">
+                <FileText className="w-5 h-5" />
               </div>
-              <h3 className="text-xl font-bold text-white">6. Fechamento Contábil Ruim</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Extratos desorganizados enviados de última hora para a contabilidade geram multas e inconsistências fiscais.
+              <h3 className="text-lg font-bold text-white tracking-tight">6. Fechamento Contábil Difícil</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                Extratos desorganizados enviados de última hora para o contador geram retrabalho, multas e inconsistências no Simples Nacional.
               </p>
             </div>
           </div>
@@ -291,36 +295,36 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
       </section>
 
       {/* Cross Reconciliation Engine */}
-      <section id="conciliacao" className="py-24 border-b border-slate-800 bg-slate-900">
+      <section id="conciliacao" className="py-24 border-b border-white/[0.06] bg-slate-950 relative">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Tecnologia de Conciliação Cruzada</span>
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Tecnologia de Conciliação Cruzada</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
               Motor de Reconciliação em 1 Clique.
             </h2>
-            <p className="text-slate-400 text-lg leading-relaxed">
-              O AuraFin cria uma ponte inteligente entre as duas esferas sem violar a lei fiscal.
+            <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
+              O AuraFin cria uma ponte inteligente entre as esferas pessoal e jurídica sem violar a legislação contábil.
             </p>
 
-            <div className="space-y-4 pt-2">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-start space-x-4">
-                <div className="p-2 bg-slate-800 text-white rounded-lg mt-0.5 border border-slate-700">
-                  <User className="w-5 h-5 text-indigo-400" />
+            <div className="space-y-3.5 pt-2">
+              <div className="p-4 bg-slate-900/80 rounded-2xl border border-white/[0.08] flex items-start space-x-4">
+                <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl mt-0.5 border border-indigo-500/20">
+                  <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-base">Uso Pessoal na PJ</h4>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Uso Pessoal na PJ</h4>
                   <p className="text-xs text-slate-400 mt-1">
                     Gera automaticamente um lançamento espelhado de Pró-labore/Retirada no caixa da Pessoa Física.
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-start space-x-4">
-                <div className="p-2 bg-slate-800 text-white rounded-lg mt-0.5 border border-slate-700">
-                  <Building2 className="w-5 h-5 text-sky-400" />
+              <div className="p-4 bg-slate-900/80 rounded-2xl border border-white/[0.08] flex items-start space-x-4">
+                <div className="p-2 bg-sky-500/10 text-sky-400 rounded-xl mt-0.5 border border-sky-500/20">
+                  <Building2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-base">Despesa da PJ paga via PF</h4>
+                  <h4 className="font-bold text-white text-sm sm:text-base">Despesa da PJ paga via PF</h4>
                   <p className="text-xs text-slate-400 mt-1">
                     Alimenta o contador de Aporte Reembolsável com botão de acerto de contas instantâneo.
                   </p>
@@ -329,37 +333,37 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
             </div>
           </div>
 
-          <div className="lg:col-span-6 bg-slate-950 p-8 rounded-3xl border border-slate-800 space-y-6 shadow-xl">
-            <h3 className="text-xl font-bold text-white flex items-center space-x-2">
-              <RefreshCcw className="w-5 h-5 text-slate-300" />
+          <div className="lg:col-span-6 bg-slate-900/80 p-7 rounded-3xl border border-white/[0.1] space-y-6 shadow-2xl glow-card">
+            <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+              <RefreshCcw className="w-4 h-4 text-indigo-400" />
               <span>Simulação da Conciliação em Tempo Real</span>
             </h3>
 
-            <div className="space-y-4 font-mono text-xs">
-              <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+            <div className="space-y-3 font-mono-numbers text-xs">
+              <div className="p-4 bg-slate-950 rounded-xl border border-white/[0.06] space-y-2">
                 <div className="flex justify-between text-slate-400">
                   <span>ORIGEM: Conta PJ</span>
-                  <span className="text-amber-400 font-bold">Uso Pessoal Identificado</span>
+                  <span className="text-amber-400 font-bold font-sans">Uso Pessoal Identificado</span>
                 </div>
-                <div className="flex justify-between text-white font-bold text-sm">
-                  <span>Licença Software Pessoal</span>
+                <div className="flex justify-between text-white font-bold text-sm tabular-nums">
+                  <span className="font-sans">Licença Software Pessoal</span>
                   <span>- R$ 280,00</span>
                 </div>
               </div>
 
               <div className="flex justify-center">
-                <div className="p-2 bg-slate-800 text-white rounded-full border border-slate-700 shadow-sm">
+                <div className="p-2 bg-indigo-500/10 text-indigo-300 rounded-full border border-indigo-500/30 shadow-xs">
                   <ArrowRightLeft className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+              <div className="p-4 bg-slate-950 rounded-xl border border-white/[0.06] space-y-2">
                 <div className="flex justify-between text-slate-400">
                   <span>DESTINO: Extrato PF</span>
-                  <span className="text-emerald-400 font-bold">Retirada de Pró-labore</span>
+                  <span className="text-emerald-400 font-bold font-sans">Retirada de Pró-labore</span>
                 </div>
-                <div className="flex justify-between text-white font-bold text-sm">
-                  <span>Pró-labore (Ajuste de Conta)</span>
+                <div className="flex justify-between text-white font-bold text-sm tabular-nums">
+                  <span className="font-sans">Pró-labore (Ajuste de Conta)</span>
                   <span>+ R$ 280,00</span>
                 </div>
               </div>
@@ -369,40 +373,40 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
       </section>
 
       {/* Security & Local-First Section */}
-      <section id="seguranca" className="py-24 border-b border-slate-800 bg-slate-950">
+      <section id="seguranca" className="py-24 border-b border-white/[0.06] bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Privacidade & Controle</span>
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-              Arquitetura 100% Local-First e Criptografada.
+          <div className="space-y-3.5 max-w-3xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Privacidade & Controle</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
+              Arquitetura 100% Local-First e Segura.
             </h2>
-            <p className="text-slate-400 text-lg">
-              Seus dados financeiros não ficam salvos em servidores de terceiros. Processamento total no seu próprio navegador.
+            <p className="text-slate-400 text-base sm:text-lg">
+              Seus dados financeiros não ficam expostos em servidores desnecessários. Processamento seguro no seu navegador.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-3">
-              <Lock className="w-8 h-8 text-slate-300 mb-2" />
-              <h3 className="text-lg font-bold text-white">Zero Vazamento de Dados</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3 glow-card">
+              <Lock className="w-6 h-6 text-indigo-400 mb-1" />
+              <h3 className="text-base font-bold text-white">Zero Vazamento de Dados</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Toda a persistência roda via LocalStorage criptografado localmente no seu dispositivo.
+                Toda a persistência roda via armazenamento seguro local no seu dispositivo com total soberania dos dados.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-3">
-              <FileText className="w-8 h-8 text-slate-300 mb-2" />
-              <h3 className="text-lg font-bold text-white">Pacote Fiscal JSON & OFX</h3>
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3 glow-card">
+              <FileText className="w-6 h-6 text-sky-400 mb-1" />
+              <h3 className="text-base font-bold text-white">Pacote Fiscal JSON & OFX</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
                 Exporte todo o fechamento do mês auditado em 1 clique para enviar direto para a sua contabilidade.
               </p>
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-3">
-              <ShieldCheck className="w-8 h-8 text-slate-300 mb-2" />
-              <h3 className="text-lg font-bold text-white">Trilha de Auditoria</h3>
+            <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/[0.08] space-y-3 glow-card">
+              <ShieldCheck className="w-6 h-6 text-emerald-400 mb-1" />
+              <h3 className="text-base font-bold text-white">Trilha de Auditoria</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Histórico completo de compensações entre sócio e empresa preparado para o Simples Nacional.
+                Histórico completo de compensações entre sócio e empresa preparado para demonstrar conformidade.
               </p>
             </div>
           </div>
@@ -410,32 +414,32 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-24 border-b border-slate-800 bg-slate-900">
+      <section id="faq" className="py-24 border-b border-white/[0.06] bg-slate-950">
         <div className="max-w-4xl mx-auto px-6 space-y-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+          <div className="text-center space-y-3.5">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
               Perguntas Frequentes (FAQ)
             </h2>
-            <p className="text-slate-400 text-base">
+            <p className="text-slate-400 text-sm sm:text-base">
               Tudo o que você precisa saber sobre o funcionamento do AuraFin.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {faqItems.map((item, i) => (
               <div
                 key={i}
-                className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden transition-colors"
+                className="bg-slate-900/50 border border-white/[0.08] rounded-2xl overflow-hidden transition-colors"
               >
                 <button
                   onClick={() => toggleFaq(i)}
-                  className="w-full p-6 text-left flex items-center justify-between font-bold text-white text-base hover:text-slate-300 transition-colors"
+                  className="w-full p-5 text-left flex items-center justify-between font-bold text-white text-sm sm:text-base hover:text-indigo-200 transition-colors"
                 >
                   <span>{item.question}</span>
-                  <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${activeFaq === i ? 'transform rotate-180 text-white' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${activeFaq === i ? 'transform rotate-180 text-white' : ''}`} />
                 </button>
                 {activeFaq === i && (
-                  <div className="px-6 pb-6 text-slate-400 text-sm leading-relaxed border-t border-slate-800 pt-4 animate-in fade-in duration-200">
+                  <div className="px-5 pb-5 text-slate-400 text-xs sm:text-sm leading-relaxed border-t border-white/[0.06] pt-3.5">
                     {item.answer}
                   </div>
                 )}
@@ -446,20 +450,21 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
       </section>
 
       {/* Final CTA Footer */}
-      <section className="py-20 bg-slate-950 text-center">
-        <div className="max-w-4xl mx-auto px-6 space-y-8">
-          <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+      <section className="py-20 bg-slate-950 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/20 to-transparent pointer-events-none" />
+        <div className="max-w-4xl mx-auto px-6 space-y-7 relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
             Pronto para Organizar sua Vida e Sua Empresa?
           </h2>
-          <p className="text-slate-400 text-lg">
+          <p className="text-slate-400 text-base sm:text-lg">
             Experimente o AuraFin agora mesmo sem necessidade de cadastro complexo.
           </p>
           <button
             onClick={onEnterApp}
-            className="px-10 py-5 bg-white text-slate-950 font-black text-lg rounded-xl hover:bg-slate-100 transition-all shadow-md inline-flex items-center space-x-3"
+            className="tactile-button px-8 py-4 bg-white hover:bg-slate-100 text-slate-950 font-black text-base rounded-xl shadow-lg inline-flex items-center space-x-2.5"
           >
             <span>Entrar na Plataforma Demonstrativa</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
           <p className="text-xs text-slate-500">100% Gratuito • Processamento Local • Seguro</p>
         </div>
@@ -468,3 +473,4 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
     </div>
   );
 }
+
