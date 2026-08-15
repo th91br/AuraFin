@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Transaction, Account, CreditCard } from '../types';
 import { MetricCard } from './aura/AuraCards';
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreHorizontal, FileText, Trash2, Edit2, Copy, RefreshCw, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
@@ -10,6 +10,42 @@ interface Props {
   creditCards: CreditCard[];
   isPrivacyMode?: boolean;
   onAddTransaction: () => void;
+}
+
+const PAGE_SIZE = 50;
+
+function toDateKey(value: string): string | null {
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`;
+
+  const brazilianDate = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (brazilianDate) return `${brazilianDate[3]}-${brazilianDate[2]}-${brazilianDate[1]}`;
+
+  return null;
+}
+
+function localDateKey(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getPeriodBounds(period: string): { start: string; end: string } {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = new Date(start);
+
+  if (period === 'hoje') return { start: localDateKey(start), end: localDateKey(end) };
+  if (period === '7d') start.setDate(start.getDate() - 6);
+  if (period === '30d') start.setDate(start.getDate() - 29);
+  if (period === 'este_mes') start.setDate(1);
+  if (period === 'mes_anterior') {
+    start.setMonth(start.getMonth() - 1, 1);
+    end.setDate(0);
+  }
+
+  return { start: localDateKey(start), end: localDateKey(end) };
 }
 
 export function PfTransactions({
@@ -24,14 +60,23 @@ export function PfTransactions({
   const [selectedPeriod, setSelectedPeriod] = useState<string>('este_mes');
   const [selectedDetailTx, setSelectedDetailTx] = useState<Transaction | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const pfTxs = transactions.filter(t => t.context === 'PF');
+  const selectedPeriodBounds = getPeriodBounds(selectedPeriod);
 
   const filteredTxs = pfTxs.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || t.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'todos' || t.type === selectedType;
-    return matchesSearch && matchesType;
+    const dateKey = toDateKey(t.date);
+    const matchesPeriod = dateKey !== null && dateKey >= selectedPeriodBounds.start && dateKey <= selectedPeriodBounds.end;
+    return matchesSearch && matchesType && matchesPeriod;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filteredTxs.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, pageCount);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const visibleTxs = filteredTxs.slice(pageStart, pageStart + PAGE_SIZE);
 
   const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
   const totalExpenses = filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
@@ -85,7 +130,10 @@ export function PfTransactions({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Buscar por descrição ou categoria..."
             className="w-full pl-9 pr-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
           />
@@ -95,7 +143,10 @@ export function PfTransactions({
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
+            onChange={(e) => {
+              setSelectedPeriod(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
             <option value="este_mes">Este Mês</option>
@@ -107,7 +158,10 @@ export function PfTransactions({
 
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
             <option value="todos">Todos os Tipos</option>
@@ -134,7 +188,7 @@ export function PfTransactions({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredTxs.map(tx => (
+              {visibleTxs.map(tx => (
                 <tr
                   key={tx.id}
                   onClick={() => setSelectedDetailTx(tx)}
@@ -173,6 +227,38 @@ export function PfTransactions({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className={'flex flex-col gap-3 border-t border-slate-200/80 bg-slate-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'}>
+          <p className={'text-xs font-semibold text-slate-500'} aria-live={'polite'}>
+            {filteredTxs.length === 0
+              ? 'Nenhum registro no período.'
+              : `${pageStart + 1}–${Math.min(pageStart + PAGE_SIZE, filteredTxs.length)} de ${filteredTxs.length} registros`}
+          </p>
+          <div className={'flex items-center gap-2'}>
+            <button
+              type={'button'}
+              onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
+              disabled={safePage === 1}
+              className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
+              aria-label={'Página anterior'}
+            >
+              <ChevronLeft className={'h-4 w-4'} />
+              Anterior
+            </button>
+            <span className={'min-w-20 text-center text-xs font-bold text-slate-600'}>
+              {safePage} de {pageCount}
+            </span>
+            <button
+              type={'button'}
+              onClick={() => setCurrentPage(Math.min(pageCount, safePage + 1))}
+              disabled={safePage === pageCount}
+              className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
+              aria-label={'Próxima página'}
+            >
+              Próxima
+              <ChevronRight className={'h-4 w-4'} />
+            </button>
+          </div>
         </div>
       </div>
 

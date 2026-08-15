@@ -7,7 +7,7 @@ export class SupabaseDebtRepository {
     try {
       const { data, error } = await supabase
         .from('debts')
-        .select('*')
+        .select('id,title,total_balance_cents,monthly_payment_cents,remaining_installments,interest_rate_pct,due_date')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -43,7 +43,7 @@ export class SupabaseDebtRepository {
           due_date: debt.dueDate || new Date().toISOString().split('T')[0],
           status: 'ativa'
         })
-        .select()
+        .select('id,title,total_balance_cents,monthly_payment_cents,remaining_installments,interest_rate_pct,due_date')
         .single();
 
       if (error) throw error;

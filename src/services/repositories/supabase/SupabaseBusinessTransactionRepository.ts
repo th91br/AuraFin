@@ -11,7 +11,7 @@ export class SupabaseBusinessTransactionRepository implements IBusinessTransacti
 
   async list(organizationId: string): Promise<Transaction[]> {
     const { data, error } = await this.table()
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,corporate_card_id,client_id,supplier_id,project_id,cost_center_id,cross_context_id,is_paid_by_pf,is_personal_expense_in_pj,notes')
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .order('transaction_date', { ascending: false });
@@ -24,7 +24,7 @@ export class SupabaseBusinessTransactionRepository implements IBusinessTransacti
     const insertPayload = mapBusinessTransactionDomainToInsert(tx, organizationId);
     const { data, error } = await this.table()
       .insert(insertPayload)
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,corporate_card_id,client_id,supplier_id,project_id,cost_center_id,cross_context_id,is_paid_by_pf,is_personal_expense_in_pj,notes')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao registrar transação PJ no Supabase.');
@@ -37,7 +37,7 @@ export class SupabaseBusinessTransactionRepository implements IBusinessTransacti
       .update(insertPayload)
       .eq('id', tx.id)
       .eq('organization_id', organizationId)
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,corporate_card_id,client_id,supplier_id,project_id,cost_center_id,cross_context_id,is_paid_by_pf,is_personal_expense_in_pj,notes')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao atualizar transação PJ no Supabase.');

@@ -7,7 +7,7 @@ export class SupabaseRecurrenceRepository {
     try {
       const { data, error } = await supabase
         .from('recurrence_rules')
-        .select('*')
+        .select('id,title,amount_cents,frequency,category,next_due_date')
         .eq('user_id', userId)
         .order('next_due_date', { ascending: true });
 
@@ -42,7 +42,7 @@ export class SupabaseRecurrenceRepository {
           next_due_date: rec.nextDueDate || new Date().toISOString().split('T')[0],
           status: 'active'
         })
-        .select()
+        .select('id,title,amount_cents,frequency,category,next_due_date')
         .single();
 
       if (error) throw error;

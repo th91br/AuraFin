@@ -7,7 +7,7 @@ export class SupabaseBudgetRepository {
     try {
       const { data, error } = await supabase
         .from('budgets')
-        .select('*')
+        .select('id,category,planned_cents')
         .eq('user_id', userId)
         .eq('period_month', periodMonth);
 
@@ -52,7 +52,7 @@ export class SupabaseBudgetRepository {
     try {
       const { data: prevBudgets, error } = await supabase
         .from('budgets')
-        .select('*')
+        .select('category,planned_cents')
         .eq('user_id', userId)
         .eq('period_month', previousMonth);
 

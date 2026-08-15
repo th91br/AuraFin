@@ -7,7 +7,7 @@ export class SupabaseGoalRepository {
     try {
       const { data, error } = await supabase
         .from('goals')
-        .select('*')
+        .select('id,title,target_amount_cents,current_amount_cents,target_date,category')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -41,7 +41,7 @@ export class SupabaseGoalRepository {
           category: goal.category || 'outros',
           status: 'em_andamento'
         })
-        .select()
+        .select('id,title,target_amount_cents,current_amount_cents,target_date,category')
         .single();
 
       if (error) throw error;

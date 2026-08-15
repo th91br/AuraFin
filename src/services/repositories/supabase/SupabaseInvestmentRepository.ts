@@ -7,7 +7,7 @@ export class SupabaseInvestmentRepository {
     try {
       const { data, error } = await supabase
         .from('investments')
-        .select('*')
+        .select('id,name,asset_type,institution,quantity,average_price_cents,current_price_cents,total_value_cents')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -59,7 +59,7 @@ export class SupabaseInvestmentRepository {
           current_price_cents: currPriceCents,
           total_value_cents: totalValCents
         })
-        .select()
+        .select('id,name,asset_type,institution,quantity,average_price_cents,current_price_cents,total_value_cents')
         .single();
 
       if (error) throw error;

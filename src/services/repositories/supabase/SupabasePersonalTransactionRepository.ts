@@ -11,7 +11,7 @@ export class SupabasePersonalTransactionRepository implements IPersonalTransacti
 
   async list(userId: string): Promise<Transaction[]> {
     const { data, error } = await this.table()
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,credit_card_id,cross_context_id,notes')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('transaction_date', { ascending: false });
@@ -24,7 +24,7 @@ export class SupabasePersonalTransactionRepository implements IPersonalTransacti
     const insertPayload = mapPersonalTransactionDomainToInsert(tx, userId);
     const { data, error } = await this.table()
       .insert(insertPayload)
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,credit_card_id,cross_context_id,notes')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao registrar transação PF no Supabase.');
@@ -37,7 +37,7 @@ export class SupabasePersonalTransactionRepository implements IPersonalTransacti
       .update(insertPayload)
       .eq('id', tx.id)
       .eq('user_id', userId)
-      .select('*')
+      .select('id,type,title,amount_cents,transaction_date,category,account_id,credit_card_id,cross_context_id,notes')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao atualizar transação PF no Supabase.');

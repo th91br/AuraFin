@@ -46,7 +46,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // 1. Fetch Memberships for authenticated user
       const { data: members, error: memErr } = await supabase
         .from('organization_members')
-        .select('*, organizations(*)')
+        .select('id,organization_id,user_id,role,status,created_at,updated_at,organizations(id,name,legal_name,tax_id,status,created_by,created_at,updated_at)')
         .eq('user_id', user.id)
         .eq('status', 'active');
 
@@ -73,7 +73,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           if (newOrgId) {
             const { data: refreshedMembers } = await supabase
               .from('organization_members')
-              .select('*, organizations(*)')
+              .select('id,organization_id,user_id,role,status,created_at,updated_at,organizations(id,name,legal_name,tax_id,status,created_by,created_at,updated_at)')
               .eq('user_id', user.id)
               .eq('status', 'active');
 
@@ -119,7 +119,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // Refresh member info for new org
       supabase
         .from('organization_members')
-        .select('*')
+        .select('id,organization_id,user_id,role,status,created_at,updated_at')
         .eq('organization_id', targetOrg.id)
         .eq('user_id', user?.id || '')
         .eq('status', 'active')

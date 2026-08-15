@@ -73,7 +73,7 @@ export class LegacyPjImportService {
     let alreadyImported = false;
     try {
       const { data } = await (supabase.from('legacy_import_runs') as any)
-        .select('*')
+        .select('id')
         .eq('organization_id', orgId)
         .eq('source_fingerprint', fingerprint)
         .eq('status', 'completed')

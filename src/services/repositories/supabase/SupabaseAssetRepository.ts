@@ -7,7 +7,7 @@ export class SupabaseAssetRepository {
     try {
       const { data, error } = await supabase
         .from('assets')
-        .select('*')
+        .select('id,name,category,value_cents,acquisition_date,notes')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -40,7 +40,7 @@ export class SupabaseAssetRepository {
           acquisition_date: asset.acquisitionDate || new Date().toISOString().split('T')[0],
           notes: asset.notes
         })
-        .select()
+        .select('id,name,category,value_cents,acquisition_date,notes')
         .single();
 
       if (error) throw error;

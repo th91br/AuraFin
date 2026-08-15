@@ -2233,6 +2233,7 @@ export type Database = {
         Args: { legal_name?: string; org_name: string; tax_id?: string }
         Returns: string
       }
+      current_user_organization_ids: { Args: never; Returns: string[] }
       find_orphan_storage_objects: {
         Args: never
         Returns: {

@@ -12,7 +12,7 @@ export class SupabaseEmergencyReserveRepository {
     try {
       const { data, error } = await supabase
         .from('emergency_reserves')
-        .select('*')
+        .select('current_amount_cents,target_months,monthly_expense_basis_cents')
         .eq('user_id', userId)
         .maybeSingle();
 

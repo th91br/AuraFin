@@ -11,7 +11,7 @@ export class SupabaseBusinessAccountRepository implements IBusinessAccountReposi
 
   async list(organizationId: string): Promise<Account[]> {
     const { data, error } = await this.table()
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .eq('organization_id', organizationId)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -24,7 +24,7 @@ export class SupabaseBusinessAccountRepository implements IBusinessAccountReposi
     const insertPayload = mapBusinessAccountDomainToInsert(account, organizationId);
     const { data, error } = await this.table()
       .insert(insertPayload)
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao criar conta bancária PJ no Supabase.');
@@ -37,7 +37,7 @@ export class SupabaseBusinessAccountRepository implements IBusinessAccountReposi
       .update(insertPayload)
       .eq('id', account.id)
       .eq('organization_id', organizationId)
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao atualizar conta bancária PJ no Supabase.');

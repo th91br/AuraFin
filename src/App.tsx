@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { 
   ContextMode, 
   ViewMode, 
@@ -22,72 +22,12 @@ import {
 } from './types';
 import { StorageRepository } from './services/storage/storageRepository';
 
-// Shell & Landing
-import { AuraShell } from './components/aura/AuraShell';
-import { RightRail } from './components/RightRail';
-import { LandingPage } from './components/LandingPage';
-import { PfPjReconciliation } from './components/PfPjReconciliation';
-
-// PF Component Views
-import { PfOverview } from './components/PfOverview';
-import { PfTransactions } from './components/PfTransactions';
-import { PfAccounts } from './components/PfAccounts';
-import { PfCards } from './components/PfCards';
-import { PfRecurrences } from './components/PfRecurrences';
-import { PfPlanning } from './components/PfPlanning';
-import { PfGoalsView } from './components/PfGoalsView';
-import { PfEmergencyReserveView } from './components/PfEmergencyReserveView';
-import { PfDebtsView } from './components/PfDebtsView';
-import { PfWealth } from './components/PfWealth';
-import { PfInvestmentsView } from './components/PfInvestmentsView';
-import { PfPrivacyShieldView } from './components/aura/PfPrivacyShieldView';
-import { PjPrivacyShieldView } from './components/aura/PjPrivacyShieldView';
-import { PfTaxPlanning } from './components/PfTaxPlanning';
-import { PfReportsView } from './components/PfReportsView';
-
-// PJ Component Views (Bloco 1, Bloco 2 & Bloco 4)
-import { PjOverview } from './components/PjOverview';
-import { PjCashflow } from './components/PjCashflow';
-import { PjReceivablesPayables } from './components/PjReceivablesPayables';
-import { PjBillingView } from './components/PjBillingView';
-import { PjDreView } from './components/PjDreView';
-import { PjBreakEvenView } from './components/PjBreakEvenView';
-import { PjRunwayView } from './components/PjRunwayView';
-import { PjProjectsView } from './components/PjProjectsView';
-import { PjCostCentersView } from './components/PjCostCentersView';
-import { PjTaxControlView } from './components/PjTaxControlView';
-import { PjCollections } from './components/PjCollections';
-import { PjAccountantHubView } from './components/PjAccountantHubView';
-import { PjDocumentsView } from './components/PjDocumentsView';
-import { PjManagement } from './components/PjManagement';
-import { PjCardsView } from './components/PjCardsView';
-import { PjAccounting } from './components/PjAccounting';
-import { PjReports } from './components/PjReports';
-
-// Modals
-import { TransactionModal } from './components/TransactionModal';
-import { BillingModal } from './components/BillingModal';
-import { ProjectModal } from './components/ProjectModal';
-import { AssetModal } from './components/AssetModal';
-import { EventModal } from './components/EventModal';
-import { AddCreditCardModal } from './components/AddCreditCardModal';
-import { AccountModal } from './components/aura/AccountModal';
-import { RecurrenceModal } from './components/aura/RecurrenceModal';
-import { GoalModal } from './components/aura/GoalModal';
-import { DebtModal } from './components/aura/DebtModal';
-import { InvestmentModal } from './components/aura/InvestmentModal';
-import { GlobalSearchModal } from './components/ui/GlobalSearchModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { OrganizationProvider, useOrganization } from './context/OrganizationContext';
 import { RepositoryProvider, useRepositories } from './context/RepositoryContext';
-import { AuthModal } from './components/auth/AuthModal';
-import { AuthLayout } from './components/auth/AuthLayout';
-import { SecuritySettingsModal } from './components/auth/SecuritySettingsModal';
-import { LegacyImportModal } from './components/auth/LegacyImportModal';
-import { LegacyPjImportModal } from './components/auth/LegacyPjImportModal';
-import { CrossContextModal } from './components/aura/CrossContextModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AuraLogger } from './lib/logger';
+import { createScopedRequestGuard } from './lib/scopedRequestGuard';
 import { LegacyImportService } from './services/migration/legacyImportService';
 import { LegacyPjImportService } from './services/migration/legacyPjImportService';
 
@@ -101,12 +41,78 @@ import { supabaseDebtRepo } from './services/repositories/supabase/SupabaseDebtR
 import { supabaseAssetRepo } from './services/repositories/supabase/SupabaseAssetRepository';
 import { supabaseInvestmentRepo } from './services/repositories/supabase/SupabaseInvestmentRepository';
 
+// Route and modal boundaries keep inactive product areas out of the initial path.
+const AuraShell = lazy(() => import('./components/aura/AuraShell').then(module => ({ default: module.AuraShell })));
+const LandingPage = lazy(() => import('./components/LandingPage').then(module => ({ default: module.LandingPage })));
+const PfPjReconciliation = lazy(() => import('./components/PfPjReconciliation').then(module => ({ default: module.PfPjReconciliation })));
+const PfOverview = lazy(() => import('./components/PfOverview').then(module => ({ default: module.PfOverview })));
+const PfTransactions = lazy(() => import('./components/PfTransactions').then(module => ({ default: module.PfTransactions })));
+const PfAccounts = lazy(() => import('./components/PfAccounts').then(module => ({ default: module.PfAccounts })));
+const PfCards = lazy(() => import('./components/PfCards').then(module => ({ default: module.PfCards })));
+const PfRecurrences = lazy(() => import('./components/PfRecurrences').then(module => ({ default: module.PfRecurrences })));
+const PfPlanning = lazy(() => import('./components/PfPlanning').then(module => ({ default: module.PfPlanning })));
+const PfGoalsView = lazy(() => import('./components/PfGoalsView').then(module => ({ default: module.PfGoalsView })));
+const PfEmergencyReserveView = lazy(() => import('./components/PfEmergencyReserveView').then(module => ({ default: module.PfEmergencyReserveView })));
+const PfDebtsView = lazy(() => import('./components/PfDebtsView').then(module => ({ default: module.PfDebtsView })));
+const PfWealth = lazy(() => import('./components/PfWealth').then(module => ({ default: module.PfWealth })));
+const PfInvestmentsView = lazy(() => import('./components/PfInvestmentsView').then(module => ({ default: module.PfInvestmentsView })));
+const PfTaxPlanning = lazy(() => import('./components/PfTaxPlanning').then(module => ({ default: module.PfTaxPlanning })));
+const PfReportsView = lazy(() => import('./components/PfReportsView').then(module => ({ default: module.PfReportsView })));
+const PjOverview = lazy(() => import('./components/PjOverview').then(module => ({ default: module.PjOverview })));
+const PjCashflow = lazy(() => import('./components/PjCashflow').then(module => ({ default: module.PjCashflow })));
+const PjReceivablesPayables = lazy(() => import('./components/PjReceivablesPayables').then(module => ({ default: module.PjReceivablesPayables })));
+const PjBillingView = lazy(() => import('./components/PjBillingView').then(module => ({ default: module.PjBillingView })));
+const PjDreView = lazy(() => import('./components/PjDreView').then(module => ({ default: module.PjDreView })));
+const PjBreakEvenView = lazy(() => import('./components/PjBreakEvenView').then(module => ({ default: module.PjBreakEvenView })));
+const PjRunwayView = lazy(() => import('./components/PjRunwayView').then(module => ({ default: module.PjRunwayView })));
+const PjProjectsView = lazy(() => import('./components/PjProjectsView').then(module => ({ default: module.PjProjectsView })));
+const PjCostCentersView = lazy(() => import('./components/PjCostCentersView').then(module => ({ default: module.PjCostCentersView })));
+const PjTaxControlView = lazy(() => import('./components/PjTaxControlView').then(module => ({ default: module.PjTaxControlView })));
+const PjCollections = lazy(() => import('./components/PjCollections').then(module => ({ default: module.PjCollections })));
+const PjAccountantHubView = lazy(() => import('./components/PjAccountantHubView').then(module => ({ default: module.PjAccountantHubView })));
+const PjDocumentsView = lazy(() => import('./components/PjDocumentsView').then(module => ({ default: module.PjDocumentsView })));
+const PjManagement = lazy(() => import('./components/PjManagement').then(module => ({ default: module.PjManagement })));
+const PjCardsView = lazy(() => import('./components/PjCardsView').then(module => ({ default: module.PjCardsView })));
+const PjAccounting = lazy(() => import('./components/PjAccounting').then(module => ({ default: module.PjAccounting })));
+const PjReports = lazy(() => import('./components/PjReports').then(module => ({ default: module.PjReports })));
+const TransactionModal = lazy(() => import('./components/TransactionModal').then(module => ({ default: module.TransactionModal })));
+const BillingModal = lazy(() => import('./components/BillingModal').then(module => ({ default: module.BillingModal })));
+const ProjectModal = lazy(() => import('./components/ProjectModal').then(module => ({ default: module.ProjectModal })));
+const AssetModal = lazy(() => import('./components/AssetModal').then(module => ({ default: module.AssetModal })));
+const EventModal = lazy(() => import('./components/EventModal').then(module => ({ default: module.EventModal })));
+const AddCreditCardModal = lazy(() => import('./components/AddCreditCardModal').then(module => ({ default: module.AddCreditCardModal })));
+const AccountModal = lazy(() => import('./components/aura/AccountModal').then(module => ({ default: module.AccountModal })));
+const RecurrenceModal = lazy(() => import('./components/aura/RecurrenceModal').then(module => ({ default: module.RecurrenceModal })));
+const GoalModal = lazy(() => import('./components/aura/GoalModal').then(module => ({ default: module.GoalModal })));
+const DebtModal = lazy(() => import('./components/aura/DebtModal').then(module => ({ default: module.DebtModal })));
+const InvestmentModal = lazy(() => import('./components/aura/InvestmentModal').then(module => ({ default: module.InvestmentModal })));
+const GlobalSearchModal = lazy(() => import('./components/ui/GlobalSearchModal').then(module => ({ default: module.GlobalSearchModal })));
+const AuthModal = lazy(() => import('./components/auth/AuthModal').then(module => ({ default: module.AuthModal })));
+const AuthLayout = lazy(() => import('./components/auth/AuthLayout').then(module => ({ default: module.AuthLayout })));
+const SecuritySettingsModal = lazy(() => import('./components/auth/SecuritySettingsModal').then(module => ({ default: module.SecuritySettingsModal })));
+const LegacyImportModal = lazy(() => import('./components/auth/LegacyImportModal').then(module => ({ default: module.LegacyImportModal })));
+const LegacyPjImportModal = lazy(() => import('./components/auth/LegacyPjImportModal').then(module => ({ default: module.LegacyPjImportModal })));
+const CrossContextModal = lazy(() => import('./components/aura/CrossContextModal').then(module => ({ default: module.CrossContextModal })));
+
+function AppLoadingFallback() {
+  return (
+    <div className={'min-h-screen bg-slate-50 flex items-center justify-center px-6'} role={'status'} aria-live={'polite'}>
+      <div className={'flex items-center gap-3 text-sm font-semibold text-slate-700'}>
+        <span className={'h-2.5 w-2.5 rounded-full bg-indigo-600 animate-pulse'} aria-hidden={true} />
+        Carregando AuraFin...
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <OrganizationProvider>
         <RepositoryProvider>
-          <AppContent />
+          <Suspense fallback={<AppLoadingFallback />}>
+            <AppContent />
+          </Suspense>
         </RepositoryProvider>
       </OrganizationProvider>
     </AuthProvider>
@@ -123,6 +129,10 @@ function AppContent() {
     businessAccountRepository, 
     businessTransactionRepository 
   } = useRepositories();
+  const currentUserIdRef = useRef<string | null>(user?.id ?? null);
+  const currentOrganizationIdRef = useRef<string | null>(activeOrganization?.id ?? null);
+  currentUserIdRef.current = user?.id ?? null;
+  currentOrganizationIdRef.current = activeOrganization?.id ?? null;
 
   const [viewMode, setViewMode] = useState<ViewMode>('app');
   const [mode, setMode] = useState<ContextMode>('PF');
@@ -193,97 +203,127 @@ function AppContent() {
   // Legacy PF Import Assistant Check (disabled by default in Production)
   useEffect(() => {
     const isLegacyImportEnabled = (import.meta as any).env?.VITE_ENABLE_LEGACY_IMPORT === 'true';
-    if (isLegacyImportEnabled && isAuthenticated && user) {
-      LegacyImportService.previewImport(user.id).then(res => {
-        if (res.hasLegacyData && !res.alreadyImported) {
-          setIsLegacyImportModalOpen(true);
-        }
-      }).catch(e => AuraLogger.warn('[App] Erro ao checar legado PF', { module: 'legacy_import', error: e?.message }));
-    }
+    if (!isLegacyImportEnabled || !isAuthenticated || !user) return;
+
+    const guard = createScopedRequestGuard(user.id);
+    LegacyImportService.previewImport(user.id).then(res => {
+      if (guard.isActive(user.id) && res.hasLegacyData && !res.alreadyImported) {
+        setIsLegacyImportModalOpen(true);
+      }
+    }).catch(e => {
+      if (guard.isActive(user.id)) {
+        AuraLogger.warn('[App] Erro ao checar legado PF', { module: 'legacy_import', error: e?.message });
+      }
+    });
+
+    return () => guard.cancel();
   }, [isAuthenticated, user]);
 
   // Legacy PJ Import Assistant Check (disabled by default in Production)
   useEffect(() => {
     const isLegacyImportEnabled = (import.meta as any).env?.VITE_ENABLE_LEGACY_IMPORT === 'true';
-    if (isLegacyImportEnabled && isAuthenticated && activeOrganization) {
-      LegacyPjImportService.previewImport(activeOrganization.id).then(res => {
-        if (res.hasLegacyData && !res.alreadyImported) {
-          setIsLegacyPjImportModalOpen(true);
-        }
-      }).catch(e => AuraLogger.warn('[App] Erro ao checar legado PJ', { module: 'legacy_import_pj', error: e?.message }));
-    }
+    if (!isLegacyImportEnabled || !isAuthenticated || !activeOrganization) return;
+
+    const guard = createScopedRequestGuard(activeOrganization.id);
+    LegacyPjImportService.previewImport(activeOrganization.id).then(res => {
+      if (guard.isActive(activeOrganization.id) && res.hasLegacyData && !res.alreadyImported) {
+        setIsLegacyPjImportModalOpen(true);
+      }
+    }).catch(e => {
+      if (guard.isActive(activeOrganization.id)) {
+        AuraLogger.warn('[App] Erro ao checar legado PJ', { module: 'legacy_import_pj', error: e?.message });
+      }
+    });
+
+    return () => guard.cancel();
   }, [isAuthenticated, activeOrganization]);
 
   // Sincronização completa de todos os módulos PF com Supabase
   useEffect(() => {
     if (isAuthenticated && user) {
+      const guard = createScopedRequestGuard(user.id);
+
       // 1. Contas PF
       personalAccountRepository.list(user.id).then(supAccounts => {
-        setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
+        if (guard.isActive(user.id)) setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PF', { error: err?.message }));
 
       // 2. Transações PF
       personalTransactionRepository.list(user.id).then(supTxs => {
-        setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+        if (guard.isActive(user.id)) setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PF', { error: err?.message }));
 
       // 3. Cartões PF
       supabaseCreditCardRepo.list(user.id).then(supCards => {
-        setCreditCards(prev => [...supCards, ...prev.filter(c => c.context === 'PJ')]);
+        if (guard.isActive(user.id)) setCreditCards(prev => [...supCards, ...prev.filter(c => c.context === 'PJ')]);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar cartões PF', { error: err?.message }));
 
       // 4. Recorrências PF
       supabaseRecurrenceRepo.list(user.id).then(supRecs => {
-        setRecurrences(supRecs);
+        if (guard.isActive(user.id)) setRecurrences(supRecs);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar recorrências PF', { error: err?.message }));
 
       // 5. Orçamentos PF
       const currentMonth = new Date().toISOString().slice(0, 7);
       supabaseBudgetRepo.list(user.id, currentMonth).then(supBudgets => {
-        setBudgetItems(supBudgets);
+        if (guard.isActive(user.id)) setBudgetItems(supBudgets);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar orçamentos PF', { error: err?.message }));
 
       // 6. Metas PF
       supabaseGoalRepo.list(user.id).then(supGoals => {
-        setGoals(supGoals);
+        if (guard.isActive(user.id)) setGoals(supGoals);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar metas PF', { error: err?.message }));
 
       // 7. Reserva de Emergência PF
       supabaseEmergencyReserveRepo.get(user.id).then(resData => {
-        setEmergencyReserveData(resData);
+        if (guard.isActive(user.id)) setEmergencyReserveData(resData);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar reserva PF', { error: err?.message }));
 
       // 8. Dívidas PF
       supabaseDebtRepo.list(user.id).then(supDebts => {
-        setDebts(supDebts);
+        if (guard.isActive(user.id)) setDebts(supDebts);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar dívidas PF', { error: err?.message }));
 
       // 9. Bens & Patrimônio PF
       supabaseAssetRepo.list(user.id).then(supAssets => {
-        setAssets(supAssets);
+        if (guard.isActive(user.id)) setAssets(supAssets);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar bens PF', { error: err?.message }));
 
       // 10. Investimentos PF
       supabaseInvestmentRepo.list(user.id).then(supInvs => {
-        setInvestments(supInvs);
+        if (guard.isActive(user.id)) setInvestments(supInvs);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar investimentos PF', { error: err?.message }));
+
+      return () => guard.cancel();
     }
   }, [isAuthenticated, user, personalAccountRepository, personalTransactionRepository]);
 
   // Synchronize PJ Accounts & Transactions when module is in Supabase mode
   useEffect(() => {
     if (config.businessAccounts === 'supabase' && activeOrganization) {
-      businessAccountRepository.list(activeOrganization.id).then(supAccounts => {
-        setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
+      const organizationId = activeOrganization.id;
+      const guard = createScopedRequestGuard(organizationId);
+
+      businessAccountRepository.list(organizationId).then(supAccounts => {
+        if (guard.isActive(organizationId)) {
+          setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
+        }
       }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PJ do Supabase', { module: 'accounts_pj', error: err?.message }));
+      return () => guard.cancel();
     }
   }, [config.businessAccounts, activeOrganization, businessAccountRepository]);
 
   useEffect(() => {
     if (config.businessTransactions === 'supabase' && activeOrganization) {
-      businessTransactionRepository.list(activeOrganization.id).then(supTxs => {
-        setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+      const organizationId = activeOrganization.id;
+      const guard = createScopedRequestGuard(organizationId);
+
+      businessTransactionRepository.list(organizationId).then(supTxs => {
+        if (guard.isActive(organizationId)) {
+          setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+        }
       }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PJ do Supabase', { module: 'transactions_pj', error: err?.message }));
+      return () => guard.cancel();
     }
   }, [config.businessTransactions, activeOrganization, businessTransactionRepository]);
 
@@ -680,7 +720,11 @@ function AppContent() {
     setInvestments(prev => prev.filter(i => i.id !== invId));
   };
 
-  if (!isAuthenticated && !isAuthLoading && viewMode !== 'landing') {
+  if (isAuthLoading) {
+    return <AppLoadingFallback />;
+  }
+
+  if (!isAuthenticated && viewMode !== 'landing') {
     return <AuthLayout />;
   }
 
@@ -1063,14 +1107,17 @@ function AppContent() {
       )}
 
       {/* Modais */}
-      <TransactionModal
+      {isTransactionModalOpen && (
+        <TransactionModal
         isOpen={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
         onSave={handleSaveTransaction}
-        editingTransaction={editingTransaction}
-      />
+          editingTransaction={editingTransaction}
+        />
+      )}
 
-      <BillingModal
+      {isBillingModalOpen && (
+        <BillingModal
         isOpen={isBillingModalOpen}
         onClose={() => setIsBillingModalOpen(false)}
         onSave={(data) => {
@@ -1085,10 +1132,12 @@ function AppContent() {
             category: 'receita_servico',
           };
           setTransactions(prev => [newTx, ...prev]);
-        }}
-      />
+          }}
+        />
+      )}
 
-      <ProjectModal
+      {isProjectModalOpen && (
+        <ProjectModal
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
         onSave={(data) => {
@@ -1102,10 +1151,12 @@ function AppContent() {
             deadline: data.deadline,
           };
           setProjects(prev => [newProj, ...prev]);
-        }}
-      />
+          }}
+        />
+      )}
 
-      <AssetModal
+      {isAssetModalOpen && (
+        <AssetModal
         isOpen={isAssetModalOpen}
         onClose={() => setIsAssetModalOpen(false)}
         onSave={(data) => {
@@ -1117,16 +1168,20 @@ function AppContent() {
             notes: data.notes,
           };
           setAssets(prev => [newAsset, ...prev]);
-        }}
-      />
+          }}
+        />
+      )}
 
-      <AddCreditCardModal
+      {isAddCardModalOpen && (
+        <AddCreditCardModal
         isOpen={isAddCardModalOpen}
         onClose={() => setIsAddCardModalOpen(false)}
-        onSave={handleSaveCreditCard}
-      />
+          onSave={handleSaveCreditCard}
+        />
+      )}
 
-      <EventModal
+      {isEventModalOpen && (
+        <EventModal
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
         onSave={(data) => {
@@ -1142,10 +1197,12 @@ function AppContent() {
           };
           setEvents(prev => [newEv, ...prev]);
         }}
-        editingEvent={editingEvent}
-      />
+          editingEvent={editingEvent}
+        />
+      )}
 
-      <GlobalSearchModal
+      {isGlobalSearchOpen && (
+        <GlobalSearchModal
         isOpen={isGlobalSearchOpen}
         onClose={() => setIsGlobalSearchOpen(false)}
         transactions={transactions}
@@ -1155,89 +1212,149 @@ function AppContent() {
           setMode(t.context);
           setEditingTransaction(t);
           setIsTransactionModalOpen(true);
-        }}
-      />
+          }}
+        />
+      )}
 
-      <AuthModal
+      {isAuthModalOpen && (
+        <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      )}
 
-      <LegacyImportModal
+      {isLegacyImportModalOpen && (
+        <LegacyImportModal
         isOpen={isLegacyImportModalOpen}
         onClose={() => setIsLegacyImportModalOpen(false)}
         onSuccess={() => {
           if (user) {
-            personalAccountRepository.list(user.id).then(supAccounts => setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]));
-            personalTransactionRepository.list(user.id).then(supTxs => setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]));
+            const userId = user.id;
+            const guard = createScopedRequestGuard(userId);
+            personalAccountRepository.list(userId).then(supAccounts => {
+              if (guard.isActive(userId) && currentUserIdRef.current === userId) {
+                setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
+              }
+            });
+            personalTransactionRepository.list(userId).then(supTxs => {
+              if (guard.isActive(userId) && currentUserIdRef.current === userId) {
+                setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+              }
+            });
           }
-        }}
-      />
+          }}
+        />
+      )}
 
-      <LegacyPjImportModal
+      {isLegacyPjImportModalOpen && (
+        <LegacyPjImportModal
         isOpen={isLegacyPjImportModalOpen}
         onClose={() => setIsLegacyPjImportModalOpen(false)}
         onSuccess={() => {
           if (activeOrganization) {
-            businessAccountRepository.list(activeOrganization.id).then(supAccounts => setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]));
-            businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
+            const organizationId = activeOrganization.id;
+            const guard = createScopedRequestGuard(organizationId);
+            businessAccountRepository.list(organizationId).then(supAccounts => {
+              if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
+                setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
+              }
+            });
+            businessTransactionRepository.list(organizationId).then(supTxs => {
+              if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
+                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+              }
+            });
           }
-        }}
-      />
+          }}
+        />
+      )}
 
-      <CrossContextModal
+      {isCrossContextModalOpen && (
+        <CrossContextModal
         isOpen={isCrossContextModalOpen}
         onClose={() => setIsCrossContextModalOpen(false)}
         pfAccounts={accounts.filter(a => a.context === 'PF')}
         pjAccounts={accounts.filter(a => a.context === 'PJ')}
         onSuccess={() => {
           if (user) {
-            personalAccountRepository.list(user.id).then(supAccounts => setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]));
-            personalTransactionRepository.list(user.id).then(supTxs => setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]));
+            const userId = user.id;
+            const guard = createScopedRequestGuard(userId);
+            personalAccountRepository.list(userId).then(supAccounts => {
+              if (guard.isActive(userId) && currentUserIdRef.current === userId) {
+                setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
+              }
+            });
+            personalTransactionRepository.list(userId).then(supTxs => {
+              if (guard.isActive(userId) && currentUserIdRef.current === userId) {
+                setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+              }
+            });
           }
           if (activeOrganization) {
-            businessAccountRepository.list(activeOrganization.id).then(supAccounts => setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]));
-            businessTransactionRepository.list(activeOrganization.id).then(supTxs => setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]));
+            const organizationId = activeOrganization.id;
+            const guard = createScopedRequestGuard(organizationId);
+            businessAccountRepository.list(organizationId).then(supAccounts => {
+              if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
+                setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
+              }
+            });
+            businessTransactionRepository.list(organizationId).then(supTxs => {
+              if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
+                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+              }
+            });
           }
-        }}
-      />
+          }}
+        />
+      )}
 
-      <SecuritySettingsModal
+      {isSecuritySettingsOpen && (
+        <SecuritySettingsModal
         isOpen={isSecuritySettingsOpen}
-        onClose={() => setIsSecuritySettingsOpen(false)}
-      />
+          onClose={() => setIsSecuritySettingsOpen(false)}
+        />
+      )}
 
-      <AccountModal
+      {isAccountModalOpen && (
+        <AccountModal
         isOpen={isAccountModalOpen}
         onClose={() => setIsAccountModalOpen(false)}
-        onSave={handleSaveAccount}
-      />
+          onSave={handleSaveAccount}
+        />
+      )}
 
-      <RecurrenceModal
+      {isRecurrenceModalOpen && (
+        <RecurrenceModal
         isOpen={isRecurrenceModalOpen}
         onClose={() => setIsRecurrenceModalOpen(false)}
-        onSave={handleSaveRecurrence}
-      />
+          onSave={handleSaveRecurrence}
+        />
+      )}
 
-      <GoalModal
+      {isGoalModalOpen && (
+        <GoalModal
         isOpen={isGoalModalOpen}
         onClose={() => setIsGoalModalOpen(false)}
-        onSave={handleSaveGoal}
-      />
+          onSave={handleSaveGoal}
+        />
+      )}
 
-      <DebtModal
+      {isDebtModalOpen && (
+        <DebtModal
         isOpen={isDebtModalOpen}
         onClose={() => setIsDebtModalOpen(false)}
-        onSave={handleSaveDebt}
-      />
+          onSave={handleSaveDebt}
+        />
+      )}
 
-      <InvestmentModal
+      {isInvestmentModalOpen && (
+        <InvestmentModal
         isOpen={isInvestmentModalOpen}
         onClose={() => setIsInvestmentModalOpen(false)}
-        onSave={handleSaveInvestment}
-      />
+          onSave={handleSaveInvestment}
+        />
+      )}
 
     </AuraShell>
   );
 }
-

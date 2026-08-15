@@ -39,7 +39,7 @@ export class DocumentStorageService {
    * Realiza o upload do arquivo físico no Supabase Storage e salva o metadado no PostgreSQL
    */
   public static async uploadDocument(options: DocumentUploadOptions): Promise<DocumentMetadata> {
-    const { file, context, userId, organizationId, category, notes, linkToType, linkToId } = options;
+    const { file, context, userId, organizationId, linkToType, linkToId } = options;
 
     if (!file) {
       throw new Error('Nenhum arquivo foi selecionado.');
@@ -84,14 +84,12 @@ export class DocumentStorageService {
           id: docId,
           user_id: context === 'PF' ? userId : null,
           organization_id: context === 'PJ' ? organizationId : null,
-          name: file.name,
+          file_name: file.name,
           file_path: path,
           file_size_bytes: file.size,
           mime_type: file.type,
-          category: category || 'Outros',
-          notes: notes || null,
         })
-        .select('*')
+        .select('id,file_name,file_path,file_size_bytes,mime_type,user_id,organization_id,created_at')
         .single();
 
       if (dbErr) {
@@ -111,7 +109,7 @@ export class DocumentStorageService {
 
       return {
         id: docData.id,
-        filename: docData.name,
+        filename: docData.file_name,
         filePath: docData.file_path,
         fileSizeBytes: docData.file_size_bytes,
         mimeType: docData.mime_type,

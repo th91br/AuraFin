@@ -7,7 +7,7 @@ export class SupabaseCreditCardRepository {
     try {
       const { data, error } = await supabase
         .from('personal_credit_cards')
-        .select('*')
+        .select('id,name,institution,limit_total_cents,limit_used_cents,current_invoice_cents,closing_day,due_day,brand,last_four_digits,is_primary,status')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -53,7 +53,7 @@ export class SupabaseCreditCardRepository {
           is_primary: !!card.isPrimary,
           status: 'active'
         })
-        .select()
+        .select('id,name,institution,limit_total_cents,limit_used_cents,current_invoice_cents,closing_day,due_day,brand,last_four_digits,is_primary,status')
         .single();
 
       if (error) throw error;
