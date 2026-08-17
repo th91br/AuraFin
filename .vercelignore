@@ -9,7 +9,8 @@
 .github/
 .opencode/
 docs/
-supabase/
+# Supabase CLI metadata only. Keep runtime adapters under src/**/supabase.
+/supabase/
 tests/
 scripts/audit/
 scripts/backup/
