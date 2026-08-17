@@ -26,6 +26,8 @@ export function PfGoalsView({
   const totalTarget = goals.reduce((acc, g) => acc + (g.targetAmount || 0), 0);
   const remainingTotal = Math.max(0, totalTarget - totalAccumulated);
 
+  if (goals.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Metas Financeiras</h1><p className="text-xs text-slate-500 mt-1">Objetivos reais do usuário autenticado.</p></div><button onClick={onAddGoal} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Nova meta</button></div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><Target className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -55,7 +57,7 @@ export function PfGoalsView({
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard title="Metas Ativas" value={goals.length} prefix="" subtitle="Objetivos em andamento" />
-        <MetricCard title="Total Acumulado" value={totalAccumulated} isPrivacyMode={isPrivacyMode} subtitle="Guardado para metas" trend="up" trendValue="+100%" />
+        <MetricCard title="Total Acumulado" value={totalAccumulated} isPrivacyMode={isPrivacyMode} subtitle="Guardado para metas" />
         <MetricCard title="Total Alvo Necessário" value={totalTarget} isPrivacyMode={isPrivacyMode} subtitle="Soma de todos os objetivos" />
         <MetricCard title="Falta Conquistar" value={remainingTotal} isPrivacyMode={isPrivacyMode} subtitle="Para atingir 100% dos planos" />
       </div>

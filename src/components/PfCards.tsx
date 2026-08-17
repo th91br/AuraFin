@@ -33,6 +33,28 @@ export function PfCards({
     ? transactions.filter(t => t.context === 'PF' && (t.creditCardId === selectedCard.id || t.cardId === selectedCard.id))
     : [];
 
+  if (pfCards.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">Gestão de Crédito</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">Cartões de Crédito &amp; Faturas</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Cartões reais do usuário autenticado.</p>
+          </div>
+          <button onClick={onAddCard} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs shadow-xs">
+            <Plus className="w-4 h-4" />
+            <span>Adicionar Cartão</span>
+          </button>
+        </div>
+        <div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+          <CreditCard className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+          <p className="text-slate-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -62,8 +84,8 @@ export function PfCards({
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard title="Limite Total" value={totalLimit} isPrivacyMode={isPrivacyMode} subtitle="Soma de todos os cartões" />
-        <MetricCard title="Limite Utilizado" value={totalUsed} isPrivacyMode={isPrivacyMode} subtitle="Faturas e limites em uso" trend="down" trendValue="-100%" />
-        <MetricCard title="Limite Disponível" value={totalAvailable} isPrivacyMode={isPrivacyMode} subtitle="Livre para novas compras" trend="up" trendValue="+100%" />
+        <MetricCard title="Limite Utilizado" value={totalUsed} isPrivacyMode={isPrivacyMode} subtitle="Faturas e limites em uso" />
+        <MetricCard title="Limite Disponível" value={totalAvailable} isPrivacyMode={isPrivacyMode} subtitle="Livre para novas compras" />
         <MetricCard title="Faturas Consolidadas" value={totalInvoices} isPrivacyMode={isPrivacyMode} subtitle="Vencimento no mês" />
       </div>
 
@@ -87,9 +109,10 @@ export function PfCards({
                 >
                   <VisualPaymentCard
                     cardName={card.name}
-                    cardNumberMasked={`•••• •••• •••• ${card.lastFourDigits || '1234'}`}
+                    cardNumberMasked={`•••• •••• •••• ${card.lastFourDigits || '—'}`}
                     balance={Math.max(0, (card.limitTotal || 0) - (card.limitUsed || 0))}
-                    dueDate={`${card.dueDay || 28}/28`}
+                    dueDate={card.dueDay ? String(card.dueDay) : '—'}
+                    brand={card.brand}
                     isPrivacyMode={isPrivacyMode}
                   />
 
@@ -116,7 +139,7 @@ export function PfCards({
                 <div>
                   <h3 className="font-bold text-base text-slate-950">{selectedCard.name}</h3>
                   <p className="text-xs text-slate-500">
-                    {selectedCard.institution} • Fechamento Dia {selectedCard.closingDay || 20} • Vencimento Dia {selectedCard.dueDay || 28}
+                    {selectedCard.institution} • Fechamento {selectedCard.closingDay ? `Dia ${selectedCard.closingDay}` : 'não informado'} • Vencimento {selectedCard.dueDay ? `Dia ${selectedCard.dueDay}` : 'não informado'}
                   </p>
                 </div>
 
@@ -165,7 +188,7 @@ export function PfCards({
                     <p className="text-2xl font-black font-mono text-slate-950">
                       <PrivacyText value={selectedCard.currentInvoice || selectedCard.limitUsed || 0} isPrivacyMode={isPrivacyMode} />
                     </p>
-                    <span className="text-[11px] text-indigo-700 font-semibold">Fechamento Dia {selectedCard.closingDay || 20}</span>
+                    <span className="text-[11px] text-indigo-700 font-semibold">Fechamento {selectedCard.closingDay ? `Dia ${selectedCard.closingDay}` : 'não informado'}</span>
                   </div>
 
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
@@ -184,7 +207,7 @@ export function PfCards({
                       <PrivacyText value={selectedCard.limitUsed || 0} isPrivacyMode={isPrivacyMode} />
                     </p>
                     <span className="text-[11px] text-slate-500 font-semibold">
-                      Vencimento no dia {selectedCard.dueDay || 28}
+                      Vencimento {selectedCard.dueDay ? `no dia ${selectedCard.dueDay}` : 'não informado'}
                     </span>
                   </div>
                 </div>

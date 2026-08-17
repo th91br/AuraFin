@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Transaction } from '../types';
+import { Transaction, TransactionAnalytics } from '../types';
 import { MetricCard } from './aura/AuraCards';
 import { HelpCircle, ChevronDown, ChevronRight, TrendingUp, DollarSign, Calendar, Filter, FileText } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
@@ -7,23 +7,30 @@ import { PrivacyText } from './ui/PrivacyText';
 interface Props {
   transactions: Transaction[];
   isPrivacyMode?: boolean;
+  analytics?: TransactionAnalytics;
 }
 
-export function PjDreView({ transactions = [], isPrivacyMode = false }: Props) {
+export function PjDreView({ transactions = [], isPrivacyMode = false, analytics }: Props) {
   const [period, setPeriod] = useState<'mes' | 'trimestre' | 'ano'>('mes');
   const [expandedSection, setExpandedSection] = useState<string | null>('despesas');
 
   const pjTxs = transactions.filter(t => t.context === 'PJ');
 
-  const grossRevenue = 37000;
-  const taxesDirect = 1110;
+  const categoryCents = (category: string) => Number(analytics?.by_category.find(item => item.category === category)?.expenses_cents || 0);
+  const hasData = Boolean(analytics && analytics.transaction_count > 0);
+  const grossRevenue = Number(analytics?.total_receipts_cents || 0) / 100;
+  const taxesDirect = Number(analytics?.tax_cents || 0) / 100;
   const netRevenue = grossRevenue - taxesDirect;
-  const directCosts = 4500;
+  const directCosts = categoryCents('custo_direto') / 100;
   const grossMargin = netRevenue - directCosts;
-  const opExpenses = 4560;
-  const prolabore = 8500;
+  const opExpenses = Math.max(0, Number(analytics?.operating_expenses_cents || 0) / 100 - directCosts);
+  const prolabore = Number(analytics?.prolabore_cents || 0) / 100;
   const netOpResult = grossMargin - opExpenses - prolabore;
   const opMarginPct = Math.round((netOpResult / (grossRevenue || 1)) * 100);
+
+  if (!hasData) {
+    return <div className="space-y-8 text-slate-100"><div className="border-b border-white/10 pb-4"><h1 className="text-2xl font-black text-white">DRE Gerencial</h1><p className="text-xs text-slate-400 mt-1">Nenhum dado disponível para o período selecionado.</p></div><div className="p-16 text-center bg-[#0F172A] rounded-2xl border border-dashed border-white/10 text-slate-400">Nenhum dado disponível</div></div>;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
@@ -58,9 +65,9 @@ export function PjDreView({ transactions = [], isPrivacyMode = false }: Props) {
 
       {/* Top 4 DRE KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Receita Bruta" value={grossRevenue} isPrivacyMode={isPrivacyMode} subtitle="Faturamento total emitido" trend="up" trendValue="+18.4%" />
+        <MetricCard title="Receita Bruta" value={grossRevenue} isPrivacyMode={isPrivacyMode} subtitle="Faturamento total emitido" />
         <MetricCard title="Receita Líquida" value={netRevenue} isPrivacyMode={isPrivacyMode} subtitle="Após impostos diretos" />
-        <MetricCard title="Resultado Operacional" value={netOpResult} isPrivacyMode={isPrivacyMode} subtitle="Lucro líquido gerencial" trend="up" trendValue="+12%" />
+        <MetricCard title="Resultado Operacional" value={netOpResult} isPrivacyMode={isPrivacyMode} subtitle="Lucro líquido gerencial" />
         <MetricCard title="Margem Operacional" value={opMarginPct} isPrivacyMode={isPrivacyMode} prefix="" subtitle={`Operacional: ${opMarginPct}%`} />
       </div>
 
@@ -133,9 +140,7 @@ export function PjDreView({ transactions = [], isPrivacyMode = false }: Props) {
 
             {expandedSection === 'despesas' && (
               <div className="pl-10 pr-4 py-2 space-y-1.5 text-[11px] text-slate-400 border-l border-white/10 ml-6">
-                <div className="flex justify-between"><span>Softwares & Ferramentas SaaS:</span><span className="font-bold text-slate-200">R$ 850,00</span></div>
-                <div className="flex justify-between"><span>Marketing & Infraestrutura:</span><span className="font-bold text-slate-200">R$ 2.260,00</span></div>
-                <div className="flex justify-between"><span>Contabilidade & Serviços Profissionais:</span><span className="font-bold text-slate-200">R$ 1.450,00</span></div>
+                <div className="flex justify-between"><span>Detalhamento por categoria</span><span className="font-bold text-slate-200">{analytics?.by_category.filter(item => item.expenses_cents > 0).length || 0} categoria(s)</span></div>
               </div>
             )}
           </div>

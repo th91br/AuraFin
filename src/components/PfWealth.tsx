@@ -50,6 +50,8 @@ export function PfWealth({
   const investPct = ((investimentosTotal / denom) * 100).toFixed(1);
   const outrosPct = ((outrosTotal / denom) * 100).toFixed(1);
 
+  if (assets.length === 0 && pfAccounts.length === 0 && debts.length === 0 && pfCards.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Patrimônio Líquido Real</h1><p className="text-xs text-slate-500 mt-1">Bens e disponibilidades reais do usuário autenticado.</p></div>{onAddAsset && <button onClick={onAddAsset} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Adicionar ativo</button>}</div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><Landmark className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -80,8 +82,8 @@ export function PfWealth({
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens, imóveis e saldos" trend="up" trendValue="+100%" />
-        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Dívidas e faturas" trend="down" trendValue="-100%" />
+        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens, imóveis e saldos" />
+        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Dívidas e faturas" />
         <MetricCard title="Patrimônio Líquido" value={netWorth} isPrivacyMode={isPrivacyMode} subtitle="Posição líquida real" />
         <MetricCard title="Total de Bens" value={assets.length + pfAccounts.length} prefix="" subtitle="Ativos e contas ativas" />
       </div>

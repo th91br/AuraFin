@@ -15,15 +15,14 @@ export function FinancialSummary({ mode, transactions, assets = [], onAdd, onAdd
   const isPJ = mode === 'PJ';
   const filteredTxs = transactions.filter(t => t.context === mode);
   
-  const baseBalance = isPJ ? 35000 : 7052.45;
   const currentBalance = filteredTxs.reduce((acc, t) => {
-    return acc + (t.type === 'income' ? t.amount : -t.amount);
-  }, baseBalance);
+    return acc + (t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0);
+  }, 0);
 
   const projectedIncome = filteredTxs
     .filter(t => t.type === 'income')
     .reduce((acc, t) => acc + t.amount, 0);
-  const baseIncoming = isPJ ? (projectedIncome > 0 ? projectedIncome : 18500) : 4500;
+  const baseIncoming = projectedIncome;
   
   const totalAssets = assets.reduce((acc, asset) => acc + asset.value, 0);
 

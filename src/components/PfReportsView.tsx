@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Transaction, Account, Asset, Debt } from '../types';
+import { Transaction, Account, Asset, Debt, TransactionAnalytics, TransactionQueryFilters } from '../types';
 import { MetricCard } from './aura/AuraCards';
 import { BarChart3, Download, TrendingUp, TrendingDown, ArrowUpRight, FileSpreadsheet } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
@@ -11,6 +11,8 @@ interface Props {
   debts?: Debt[];
   isPrivacyMode?: boolean;
   onNavigateTab?: (tab: string) => void;
+  analytics?: TransactionAnalytics;
+  onExportCsv?: (filters: Pick<TransactionQueryFilters, 'startDate' | 'endDateExclusive'>) => Promise<string>;
 }
 
 export function PfReportsView({
@@ -20,6 +22,8 @@ export function PfReportsView({
   debts = [],
   isPrivacyMode = false,
   onNavigateTab,
+  analytics,
+  onExportCsv,
 }: Props) {
   const [period, setPeriod] = useState<'este_mes' | 'mes_anterior' | '3m' | '6m' | 'ano_atual'>('este_mes');
 
@@ -52,16 +56,20 @@ export function PfReportsView({
     return true;
   });
 
-  const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpenses = filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const totalIncome = analytics ? Number(analytics.total_receipts_cents || 0) / 100 : filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = analytics ? Number(analytics.total_expenses_cents || 0) / 100 : filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const netSavings = totalIncome - totalExpenses;
   const savingsRatePct = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0.0';
 
   // Category breakdown calculation
   const categoryTotals: Record<string, number> = {};
-  filteredTxs.filter(t => t.type === 'expense').forEach(t => {
-    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-  });
+  if (analytics) {
+    analytics.by_category.forEach(item => { categoryTotals[item.category] = Number(item.expenses_cents || 0) / 100; });
+  } else {
+    filteredTxs.filter(t => t.type === 'expense').forEach(t => {
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+    });
+  }
 
   const sortedCategories = Object.entries(categoryTotals)
     .map(([cat, amt]) => ({
@@ -75,9 +83,24 @@ export function PfReportsView({
   const totalAssetsVal = assets.reduce((acc, a) => acc + a.value, 0) + accounts.reduce((acc, a) => acc + a.balance, 0);
   const totalDebtsVal = debts.reduce((acc, d) => acc + d.totalBalance, 0);
   const netWorthVal = totalAssetsVal - totalDebtsVal;
+  const hasData = Boolean(analytics && analytics.transaction_count > 0) || filteredTxs.length > 0 || assets.length > 0 || debts.length > 0;
 
   // Real CSV Export
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (onExportCsv) {
+      const startDate = period === 'este_mes' ? `${currentYearMonth}-01` : period === 'mes_anterior' ? `${prevYearMonth}-01` : period === '3m' ? threeMonthsStr : period === '6m' ? sixMonthsStr : `${currentYearStr}-01-01`;
+      const end = period === 'mes_anterior' ? new Date(`${currentYearMonth}-01T00:00:00`) : new Date(`${Number(currentYearStr) + 1}-01-01T00:00:00`);
+      const csvContent = await onExportCsv({ startDate, endDateExclusive: end.toISOString().slice(0, 10) });
+      if (!csvContent || csvContent.split('\n').length <= 1) { alert('Nenhum dado encontrado para o período selecionado.'); return; }
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `AuraFin_Relatorio_PF_${period}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
     if (filteredTxs.length === 0) {
       alert('Nenhum dado encontrado para o período selecionado.');
       return;
@@ -102,6 +125,10 @@ export function PfReportsView({
     link.click();
     document.body.removeChild(link);
   };
+
+  if (!hasData) {
+    return <div className="space-y-8"><div><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Relatórios PF</h1><p className="text-slate-500 mt-1">Nenhum dado disponível para o período selecionado.</p></div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500">Nenhum dado disponível</div></div>;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -145,8 +172,8 @@ export function PfReportsView({
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" trend="up" trendValue="+100%" />
-        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" trend="down" trendValue="-100%" />
+        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" />
+        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" />
         <MetricCard title="Resultado Líquido" value={netSavings} isPrivacyMode={isPrivacyMode} subtitle="Superávit do período" />
         <MetricCard title="Taxa de Poupança" value={Number(savingsRatePct)} prefix="" subtitle={`${savingsRatePct}% da renda poupada`} />
       </div>

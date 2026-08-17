@@ -20,8 +20,8 @@ export function ForgotPasswordForm({ onBackToLogin }: Props) {
     setIsSubmitting(true);
 
     try {
-      await requestPasswordReset(email);
-      setIsSubmitted(true);
+      const accepted = await requestPasswordReset(email);
+      if (accepted) setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }

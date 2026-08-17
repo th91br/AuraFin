@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Transaction } from '../types';
+import { Transaction, TransactionQueryFilters } from '../types';
 import { MetricCard } from './aura/AuraCards';
 import { FileText, ShieldAlert, Download, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
@@ -8,13 +8,29 @@ interface Props {
   transactions?: Transaction[];
   assets?: any[];
   isPrivacyMode?: boolean;
+  onExportCsv?: (filters: Pick<TransactionQueryFilters, 'startDate' | 'endDateExclusive'>) => Promise<string>;
 }
 
-export function PfTaxPlanning({ transactions = [], isPrivacyMode = false }: Props) {
+export function PfTaxPlanning({ transactions = [], isPrivacyMode = false, onExportCsv }: Props) {
   const currentYear = new Date().getFullYear().toString();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const pfTxs = transactions.filter(t => t.context === 'PF');
+
+  if (pfTxs.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div className="border-b border-slate-200/60 pb-4">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">Organizador Fiscal</span>
+          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">Inteligência IRPF</h1>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Registre despesas reais para organizar a declaração.</p>
+        </div>
+        <div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+          <p className="text-slate-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
 
   // Filter real tax deductible expenses
   const taxRecords = pfTxs.filter(t => {
@@ -32,7 +48,19 @@ export function PfTaxPlanning({ transactions = [], isPrivacyMode = false }: Prop
   const educationDeductions = taxRecords.filter(r => r.category === 'educacao' || r.taxDeductionCategory === 'educacao').reduce((acc, r) => acc + r.amount, 0);
 
   // Real CSV Export File Generation
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (onExportCsv) {
+      const csvContent = await onExportCsv({ startDate: `${selectedYear}-01-01`, endDateExclusive: `${Number(selectedYear) + 1}-01-01` });
+      if (!csvContent || csvContent.split('\n').length <= 1) { alert('Nenhum registro dedutível encontrado para o ano selecionado.'); return; }
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `AuraFin_IRPF_${selectedYear}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
     if (taxRecords.length === 0) {
       alert('Nenhum registro dedutível encontrado para o ano selecionado.');
       return;

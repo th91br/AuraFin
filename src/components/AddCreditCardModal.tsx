@@ -15,14 +15,13 @@ export function AddCreditCardModal({ isOpen, onClose, onSave }: Props) {
 
   // Form State
   const [cardType, setCardType] = useState<'credito' | 'debito'>('credito');
-  const [name, setName] = useState('BTG Pactual Corporate');
-  const [institution, setInstitution] = useState('BTG Pactual');
-  const [brand, setBrand] = useState('Mastercard');
-  const [lastFourDigits, setLastFourDigits] = useState('8842');
-  const [limitTotal, setLimitTotal] = useState(25000);
-  const [closingDay, setClosingDay] = useState(15);
-  const [dueDay, setDueDay] = useState(23);
-  const [bestPurchaseDay, setBestPurchaseDay] = useState(21);
+  const [name, setName] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [brand, setBrand] = useState('');
+  const [lastFourDigits, setLastFourDigits] = useState('');
+  const [limitTotal, setLimitTotal] = useState(0);
+  const [closingDay, setClosingDay] = useState(0);
+  const [dueDay, setDueDay] = useState(0);
   const [isPrimary, setIsPrimary] = useState(false);
 
   if (!isOpen) return null;
@@ -65,9 +64,10 @@ export function AddCreditCardModal({ isOpen, onClose, onSave }: Props) {
 
           <VisualPaymentCard
             cardName={name || 'Nome do Cartão'}
-            cardNumberMasked={`•••• •••• •••• ${lastFourDigits || '0000'}`}
-            balance={cardType === 'credito' ? limitTotal : 45000}
-            dueDate={cardType === 'credito' ? `${dueDay}/28` : 'Débito em Conta'}
+            cardNumberMasked={`•••• •••• •••• ${lastFourDigits || '—'}`}
+            balance={limitTotal}
+            dueDate={cardType === 'credito' ? (dueDay > 0 ? `${dueDay}` : '—') : 'Débito em Conta'}
+            brand={brand}
           />
 
           <div className="space-y-2 text-[11px] text-slate-400">
@@ -153,7 +153,9 @@ export function AddCreditCardModal({ isOpen, onClose, onSave }: Props) {
                       value={brand}
                       onChange={(e) => setBrand(e.target.value)}
                       className={`${inputClass} bg-white text-slate-950`}
+                      required
                     >
+                      <option value="" className="bg-white text-slate-950">Selecione a bandeira</option>
                       <option value="Visa" className="bg-white text-slate-950">Visa</option>
                       <option value="Mastercard" className="bg-white text-slate-950">Mastercard</option>
                       <option value="Elo" className="bg-white text-slate-950">Elo</option>

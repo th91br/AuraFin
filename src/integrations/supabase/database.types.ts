@@ -2234,6 +2234,54 @@ export type Database = {
         Returns: string
       }
       current_user_organization_ids: { Args: never; Returns: string[] }
+      assert_transaction_organization_access: { Args: { p_organization_id: string }; Returns: boolean }
+      list_personal_transactions_page: {
+        Args: {
+          p_category?: string
+          p_cursor_date?: string
+          p_cursor_id?: string
+          p_end_date_exclusive?: string
+          p_page_size?: number
+          p_search?: string
+          p_start_date?: string
+          p_transaction_type?: string
+        }
+        Returns: Json
+      }
+      list_business_transactions_page: {
+        Args: {
+          p_category?: string
+          p_cursor_date?: string
+          p_cursor_id?: string
+          p_end_date_exclusive?: string
+          p_organization_id: string
+          p_page_size?: number
+          p_search?: string
+          p_start_date?: string
+          p_transaction_type?: string
+        }
+        Returns: Json
+      }
+      get_personal_transaction_analytics: {
+        Args: { p_category?: string; p_end_date_exclusive?: string; p_search?: string; p_start_date?: string }
+        Returns: Json
+      }
+      get_business_transaction_analytics: {
+        Args: { p_category?: string; p_end_date_exclusive?: string; p_organization_id: string; p_search?: string; p_start_date?: string }
+        Returns: Json
+      }
+      export_personal_transactions_csv: {
+        Args: { p_category?: string; p_end_date_exclusive?: string; p_search?: string; p_start_date?: string }
+        Returns: string
+      }
+      export_business_transactions_csv: {
+        Args: { p_category?: string; p_end_date_exclusive?: string; p_organization_id: string; p_search?: string; p_start_date?: string }
+        Returns: string
+      }
+      export_business_transactions_json: {
+        Args: { p_category?: string; p_end_date_exclusive?: string; p_organization_id: string; p_search?: string; p_start_date?: string }
+        Returns: Json
+      }
       find_orphan_storage_objects: {
         Args: never
         Returns: {

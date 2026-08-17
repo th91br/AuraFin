@@ -30,14 +30,18 @@ export class SupabaseGoalRepository {
 
   async create(goal: Partial<Goal>, userId: string): Promise<Goal | null> {
     try {
+      const title = goal.title?.trim();
+      if (!title || typeof goal.targetAmount !== 'number' || goal.targetAmount <= 0 || !goal.targetDate) {
+        throw new Error('Dados incompletos da meta: informe título, valor-alvo positivo e data-alvo.');
+      }
       const { data, error } = await supabase
         .from('goals')
         .insert({
           user_id: userId,
-          title: goal.title,
-          target_amount_cents: Math.round((goal.targetAmount || 1000) * 100),
-          current_amount_cents: Math.round((goal.currentAmount || 0) * 100),
-          target_date: goal.targetDate || new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
+          title,
+          target_amount_cents: Math.round(goal.targetAmount * 100),
+          current_amount_cents: Math.round((goal.currentAmount ?? 0) * 100),
+          target_date: goal.targetDate,
           category: goal.category || 'outros',
           status: 'em_andamento'
         })

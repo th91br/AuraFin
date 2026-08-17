@@ -22,6 +22,7 @@ export function SignupForm({ onSwitchToLogin, onSignupSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || isLoading) return;
     setLocalError(null);
     clearError();
 
@@ -42,8 +43,8 @@ export function SignupForm({ onSwitchToLogin, onSignupSuccess }: Props) {
 
     setIsSubmitting(true);
     try {
-      const { requiresEmailConfirmation } = await signUpWithEmail(email, password, fullName);
-      if (requiresEmailConfirmation) {
+      const result = await signUpWithEmail(email, password, fullName);
+      if (result.success && result.requiresEmailConfirmation) {
         onSignupSuccess(email);
       }
     } finally {
@@ -110,7 +111,7 @@ export function SignupForm({ onSwitchToLogin, onSignupSuccess }: Props) {
             type={showPassword ? 'text' : 'password'}
             required
             autoComplete="new-password"
-            placeholder="Mínimo 12 caracteres"
+            placeholder="Mínimo 8 caracteres"
             value={password}
             onChange={(e) => { setLocalError(null); clearError(); setPassword(e.target.value); }}
             className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 pr-10 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono"

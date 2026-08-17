@@ -38,12 +38,31 @@ export function PfEmergencyReserveView({
 
   // Real average monthly expenses from transactions
   const pfExpenseTxs = transactions.filter(t => t.context === 'PF' && t.type === 'expense');
+  const hasSourceData = pfAccounts.length > 0 || pfExpenseTxs.length > 0 || (reserveAmount ?? 0) > 0 || (monthlyExpenseSetting ?? 0) > 0;
+
+  if (!hasSourceData) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded">Proteção Patrimonial &amp; Segurança</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">Reserva de Emergência</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Configure a reserva após registrar contas ou despesas reais.</p>
+          </div>
+        </div>
+        <div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+          <p className="text-slate-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
+
   const totalSpentAll = pfExpenseTxs.reduce((acc, t) => acc + t.amount, 0);
   const calculatedMonthlyExpense = totalSpentAll > 0 ? Math.round(totalSpentAll / Math.max(1, 1)) : 0;
 
   const effectiveMonthlyLivingCost = monthlyExpenseSetting !== undefined && monthlyExpenseSetting > 0
     ? monthlyExpenseSetting
-    : calculatedMonthlyExpense > 0 ? calculatedMonthlyExpense : 3500;
+    : calculatedMonthlyExpense;
 
   const [inputMonthlyCost, setInputMonthlyCost] = useState(effectiveMonthlyLivingCost.toString());
   const [isSaving, setIsSaving] = useState(false);
@@ -104,7 +123,7 @@ export function PfEmergencyReserveView({
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Reserva Guardada Real" value={currentReserve} isPrivacyMode={isPrivacyMode} subtitle="Contas de alta liquidez" trend="up" trendValue="+100%" />
+        <MetricCard title="Reserva Guardada Real" value={currentReserve} isPrivacyMode={isPrivacyMode} subtitle="Contas de alta liquidez" />
         <MetricCard title="Meta de Cobertura" value={idealReserve} isPrivacyMode={isPrivacyMode} subtitle={`Meta para ${monthsTarget} Meses`} />
         <MetricCard title="Meses Cobertos" value={Number(monthsCovered)} prefix="" subtitle="Tranquilidade financeira" />
         <MetricCard title="Falta Guardar" value={remaining} isPrivacyMode={isPrivacyMode} subtitle="Para 100% da proteção" />

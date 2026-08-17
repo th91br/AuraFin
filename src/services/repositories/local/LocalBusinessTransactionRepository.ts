@@ -1,10 +1,33 @@
-import { Transaction } from '../../../types';
+import { Transaction, TransactionAnalytics, TransactionPage, TransactionQueryFilters } from '../../../types';
 import { StorageRepository } from '../../storage/storageRepository';
 import { IBusinessTransactionRepository } from '../interfaces';
+import { buildLocalAnalytics, buildLocalCsv, buildLocalPage } from './transactionRepositoryHelpers';
 
 export class LocalBusinessTransactionRepository implements IBusinessTransactionRepository {
   async list(_organizationId: string): Promise<Transaction[]> {
     return StorageRepository.getTransactions().filter(t => t.context === 'PJ');
+  }
+
+  async listPage(_organizationId: string, filters: TransactionQueryFilters = {}): Promise<TransactionPage> {
+    return buildLocalPage(StorageRepository.getTransactions().filter(t => t.context === 'PJ'), filters);
+  }
+
+  async analytics(_organizationId: string, filters: Pick<TransactionQueryFilters, 'category' | 'search' | 'startDate' | 'endDateExclusive'> = {}): Promise<TransactionAnalytics> {
+    return buildLocalAnalytics(StorageRepository.getTransactions().filter(t => t.context === 'PJ'), filters);
+  }
+
+  async exportCsv(_organizationId: string, filters: Pick<TransactionQueryFilters, 'category' | 'search' | 'startDate' | 'endDateExclusive'> = {}): Promise<string> {
+    return buildLocalCsv(StorageRepository.getTransactions().filter(t => t.context === 'PJ'), filters);
+  }
+
+  async exportJson(_organizationId: string, filters: Pick<TransactionQueryFilters, 'category' | 'search' | 'startDate' | 'endDateExclusive'> = {}): Promise<unknown> {
+    return StorageRepository.getTransactions().filter(t => t.context === 'PJ').filter(tx => {
+      if (filters.search && !`${tx.title} ${tx.notes || ''}`.toLocaleLowerCase().includes(filters.search.toLocaleLowerCase())) return false;
+      if (filters.category && tx.category !== filters.category) return false;
+      if (filters.startDate && tx.date < filters.startDate) return false;
+      if (filters.endDateExclusive && tx.date >= filters.endDateExclusive) return false;
+      return true;
+    });
   }
 
   async create(tx: Partial<Transaction>, _organizationId: string): Promise<Transaction> {

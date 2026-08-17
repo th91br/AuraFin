@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Transaction, CalendarEvent, Asset, BudgetItem, Goal, CreditCard, Account } from '../types';
+import { Transaction, CalendarEvent, Asset, BudgetItem, Goal, CreditCard, Account, TransactionAnalytics } from '../types';
 import { MetricCard, DonutChartCard, GoalCard, ActivityRow, VisualPaymentCard } from './aura/AuraCards';
 import { Plus, Sparkles, ChevronLeft, ChevronRight, CreditCard as CreditCardIcon, ArrowUpRight, Target, Landmark, ArrowRight } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
@@ -12,6 +12,7 @@ interface Props {
   budgetItems?: BudgetItem[];
   goals?: Goal[];
   creditCards?: CreditCard[];
+  analytics?: TransactionAnalytics;
   isPrivacyMode?: boolean;
   onAddTransaction: () => void;
   onAddAccount?: () => void;
@@ -32,6 +33,7 @@ export function PfOverview({
   accounts = [],
   goals = [],
   creditCards = [],
+  analytics,
   isPrivacyMode = false,
   onAddTransaction,
   onAddAccount,
@@ -47,10 +49,10 @@ export function PfOverview({
 
   // Real Totals
   const totalAccountBalance = pfAccounts.reduce((acc, a) => acc + a.balance, 0);
-  const totalIncome = pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalSpent = pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const totalIncome = analytics ? Number(analytics.total_receipts_cents || 0) / 100 : pfTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalSpent = analytics ? Number(analytics.total_expenses_cents || 0) / 100 : pfTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const currentNetResult = totalIncome - totalSpent;
-  const proLaboreReceived = pfTxs
+  const proLaboreReceived = analytics ? Number(analytics.prolabore_cents || 0) / 100 : pfTxs
     .filter(t => t.category === 'salario_prolabore' || t.category === 'distribuicao_lucro' || t.title?.toLowerCase().includes('pró-labore') || t.title?.toLowerCase().includes('pro-labore'))
     .reduce((acc, t) => acc + t.amount, 0);
 
@@ -66,10 +68,17 @@ export function PfOverview({
     outros: { label: 'Outras Despesas', color: '#64748B', amount: 0 },
   };
 
-  pfTxs.filter(t => t.type === 'expense').forEach(t => {
-    const key = categoryMap[t.category] ? t.category : 'outros';
-    categoryMap[key].amount += t.amount;
-  });
+  if (analytics) {
+    analytics.by_category.forEach(category => {
+      const key = categoryMap[category.category] ? category.category : 'outros';
+      categoryMap[key].amount += Number(category.expenses_cents || 0) / 100;
+    });
+  } else {
+    pfTxs.filter(t => t.type === 'expense').forEach(t => {
+      const key = categoryMap[t.category] ? t.category : 'outros';
+      categoryMap[key].amount += t.amount;
+    });
+  }
 
   const budgetCategories = Object.values(categoryMap).filter(c => c.amount > 0);
 
@@ -91,6 +100,9 @@ export function PfOverview({
       .reduce((sum, t) => sum + t.amount, 0);
     return { day: dayLabel, date: dateStr, amount: daySpent };
   });
+
+  const hasData = Boolean(analytics?.transaction_count || pfTxs.length || pfAccounts.length || goals.length || pfCards.length);
+  if (!hasData) return <div className="min-h-[420px] flex flex-col items-center justify-center gap-4 text-center"><Landmark className="w-10 h-10 text-slate-400" /><h1 className="text-2xl font-black text-slate-950">Visão Geral PF</h1><p className="text-sm text-slate-500">Nenhum dado disponível</p><button onClick={onAddTransaction} className="px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-bold">Cadastrar primeira movimentação</button></div>;
 
   const maxWeeklyDay = Math.max(...last7Days.map(d => d.amount), 1);
   const totalWeeklySpent = last7Days.reduce((acc, d) => acc + d.amount, 0);
@@ -136,9 +148,9 @@ export function PfOverview({
 
       {/* Top 5 Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <MetricCard title="Saldo Consolidado" value={totalAccountBalance || currentNetResult} isPrivacyMode={isPrivacyMode} subtitle="Contas e carteiras ativas" />
-        <MetricCard title="Entradas do Mês" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" trend="up" trendValue="+100%" />
-        <MetricCard title="Saídas do Mês" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" trend="down" trendValue="-100%" />
+        <MetricCard title="Saldo Consolidado" value={totalAccountBalance} isPrivacyMode={isPrivacyMode} subtitle="Contas e carteiras ativas" />
+        <MetricCard title="Entradas do Mês" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" />
+        <MetricCard title="Saídas do Mês" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" />
         <MetricCard title="Resultado Líquido" value={currentNetResult} isPrivacyMode={isPrivacyMode} subtitle="Superávit do período" />
         <MetricCard title="Pró-labore Recebido" value={proLaboreReceived} isPrivacyMode={isPrivacyMode} subtitle="Transferências da PJ" />
       </div>
@@ -306,15 +318,16 @@ export function PfOverview({
               <div className="space-y-4">
                 <VisualPaymentCard
                   cardName={activeCard.name}
-                  cardNumberMasked={`•••• •••• •••• ${activeCard.lastFourDigits || '4554'}`}
+                  cardNumberMasked={`•••• •••• •••• ${activeCard.lastFourDigits || '—'}`}
                   balance={availableLimit}
-                  dueDate={`${activeCard.dueDay || 28}/28`}
+                  dueDate={activeCard.dueDay ? String(activeCard.dueDay) : '—'}
+                  brand={activeCard.brand}
                   isPrivacyMode={isPrivacyMode}
                 />
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-2 font-mono">
                   <div className="flex justify-between text-slate-700 font-sans font-semibold">
-                    <span>Fatura Atual ({activeCard.closingDay || 20}/28):</span>
+                    <span>Fatura Atual{activeCard.closingDay ? ` (${activeCard.closingDay})` : ''}:</span>
                     <span className="font-mono font-bold text-slate-950">
                       <PrivacyText value={activeCard.currentInvoice || activeCard.limitUsed} isPrivacyMode={isPrivacyMode} />
                     </span>

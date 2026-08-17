@@ -37,19 +37,29 @@ export class SupabaseCreditCardRepository {
 
   async create(card: Partial<CreditCard>, userId: string): Promise<CreditCard | null> {
     try {
+      const name = card.name?.trim();
+      const institution = card.institution?.trim();
+      const brand = card.brand?.trim();
+      const lastFourDigits = card.lastFourDigits?.trim();
+      const closingDay = card.closingDay;
+      const dueDay = card.dueDay;
+      const hasValidDays = typeof closingDay === 'number' && typeof dueDay === 'number' && Number.isInteger(closingDay) && Number.isInteger(dueDay) && closingDay >= 1 && closingDay <= 31 && dueDay >= 1 && dueDay <= 31;
+      if (!name || !institution || !brand || !/^\d{4}$/.test(lastFourDigits || '') || !hasValidDays) {
+        throw new Error('Dados incompletos do cartão: informe nome, instituição, bandeira, últimos quatro dígitos e datas válidas.');
+      }
       const { data, error } = await supabase
         .from('personal_credit_cards')
         .insert({
           user_id: userId,
-          name: card.name,
-          institution: card.institution || 'Banco',
-          brand: card.brand || 'Mastercard',
-          last_four_digits: card.lastFourDigits || '1234',
-          limit_total_cents: Math.round((card.limitTotal || 0) * 100),
-          limit_used_cents: Math.round((card.limitUsed || 0) * 100),
-          current_invoice_cents: Math.round((card.currentInvoice || 0) * 100),
-          closing_day: card.closingDay || 20,
-          due_day: card.dueDay || 28,
+          name,
+          institution,
+          brand,
+          last_four_digits: lastFourDigits,
+          limit_total_cents: Math.round((card.limitTotal ?? 0) * 100),
+          limit_used_cents: Math.round((card.limitUsed ?? 0) * 100),
+          current_invoice_cents: Math.round((card.currentInvoice ?? 0) * 100),
+          closing_day: closingDay,
+          due_day: dueDay,
           is_primary: !!card.isPrimary,
           status: 'active'
         })

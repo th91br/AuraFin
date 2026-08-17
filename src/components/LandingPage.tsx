@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { faqItems } from '../data';
+import { faqItems } from '../content/faq';
 import { 
   ShieldCheck, 
   ArrowRight, 
@@ -158,25 +158,25 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
                         <h3 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">Seu Momento & Orçamento Pessoal</h3>
                       </div>
                       <span className="text-xs font-bold px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg tabular-nums">
-                        Disponível: R$ 7.052,45
+                        Disponível: —
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                         <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Patrimônio Líquido</p>
-                        <h4 className="text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">R$ 611.700,00</h4>
-                        <p className="text-xs text-emerald-700 mt-1 font-medium">Imóvel + Veículo FIPE + Renda Fixa</p>
+                        <h4 className="text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-emerald-700 mt-1 font-medium">Os dados reais aparecem após autenticação.</p>
                       </div>
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                         <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Reserva de Emergência</p>
-                        <h4 className="text-2xl font-extrabold text-indigo-950 mt-1 tabular-nums">95% Concluída</h4>
-                        <p className="text-xs text-slate-500 mt-1">6 meses de custos cobertos</p>
+                        <h4 className="text-2xl font-extrabold text-indigo-950 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-slate-500 mt-1">Configure sua reserva após entrar.</p>
                       </div>
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                         <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Pré-IRPF Dedutível</p>
-                        <h4 className="text-2xl font-extrabold text-emerald-800 mt-1 tabular-nums">R$ 2.830,00</h4>
-                        <p className="text-xs text-slate-500 mt-1">Saúde & Educação registradas</p>
+                        <h4 className="text-2xl font-extrabold text-emerald-800 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-slate-500 mt-1">Registre despesas dedutíveis após entrar.</p>
                       </div>
                     </div>
                   </div>
@@ -188,25 +188,25 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
                         <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Dashboard Gerencial Executivo</h3>
                       </div>
                       <span className="text-xs font-bold px-3 py-1.5 bg-slate-900 text-slate-200 border border-white/[0.1] rounded-lg tabular-nums">
-                        Caixa Operacional: R$ 35.000,00
+                        Caixa Operacional: —
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono-numbers">
                       <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
                         <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">DRE Líquido (Mês)</p>
-                        <h4 className="text-2xl font-extrabold text-emerald-400 mt-1 tabular-nums">R$ 13.358,00</h4>
-                        <p className="text-xs text-slate-400 mt-1 font-medium font-sans">Margem Líquida de 72%</p>
+                        <h4 className="text-2xl font-extrabold text-emerald-400 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-slate-400 mt-1 font-medium font-sans">Indicadores reais após autenticação.</p>
                       </div>
                       <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
                         <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Ponto de Equilíbrio</p>
-                        <h4 className="text-2xl font-extrabold text-slate-100 mt-1 tabular-nums">123% Atingido</h4>
-                        <p className="text-xs text-slate-400 mt-1 font-sans">Custos fixos cobertos</p>
+                        <h4 className="text-2xl font-extrabold text-slate-100 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-slate-400 mt-1 font-sans">Cálculo real após autenticação.</p>
                       </div>
                       <div className="bg-slate-900/90 p-5 rounded-2xl border border-white/[0.08]">
                         <p className="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Aporte Sócio Pendente</p>
-                        <h4 className="text-2xl font-extrabold text-white mt-1 tabular-nums">R$ 280,00</h4>
-                        <p className="text-xs text-amber-400 mt-1 font-bold font-sans">Reembolso 1 clique pronto</p>
+                        <h4 className="text-2xl font-extrabold text-white mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <p className="text-xs text-amber-400 mt-1 font-bold font-sans">Pendências reais após autenticação.</p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +347,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
                 </div>
                 <div className="flex justify-between text-white font-bold text-sm tabular-nums">
                   <span className="font-sans">Licença Software Pessoal</span>
-                  <span>- R$ 280,00</span>
+                  <span>—</span>
                 </div>
               </div>
 
@@ -364,7 +364,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
                 </div>
                 <div className="flex justify-between text-white font-bold text-sm tabular-nums">
                   <span className="font-sans">Pró-labore (Ajuste de Conta)</span>
-                  <span>+ R$ 280,00</span>
+                  <span>—</span>
                 </div>
               </div>
             </div>
@@ -372,16 +372,16 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Security & Local-First Section */}
+      {/* Security & Supabase Section */}
       <section id="seguranca" className="py-24 border-b border-white/[0.06] bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
           <div className="space-y-3.5 max-w-3xl mx-auto">
             <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Privacidade & Controle</span>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-              Arquitetura 100% Local-First e Segura.
+              Arquitetura Supabase segura e isolada por usuário.
             </h2>
             <p className="text-slate-400 text-base sm:text-lg">
-              Seus dados financeiros não ficam expostos em servidores desnecessários. Processamento seguro no seu navegador.
+              Seus dados financeiros ficam no Supabase com RLS e isolamento por usuário/organização; o navegador recebe somente o necessário para a tela atual.
             </p>
           </div>
 
@@ -390,7 +390,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
               <Lock className="w-6 h-6 text-indigo-400 mb-1" />
               <h3 className="text-base font-bold text-white">Zero Vazamento de Dados</h3>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Toda a persistência roda via armazenamento seguro local no seu dispositivo com total soberania dos dados.
+                Toda a persistência financeira usa Supabase, autenticação e políticas RLS; o modo demo local é exclusivo para desenvolvimento explícito.
               </p>
             </div>
 
@@ -463,14 +463,13 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
             onClick={onEnterApp}
             className="tactile-button px-8 py-4 bg-white hover:bg-slate-100 text-slate-950 font-black text-base rounded-xl shadow-lg inline-flex items-center space-x-2.5"
           >
-            <span>Entrar na Plataforma Demonstrativa</span>
+            <span>Acessar a plataforma</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <p className="text-xs text-slate-500">100% Gratuito • Processamento Local • Seguro</p>
+          <p className="text-xs text-slate-500">Acesso seguro • Dados isolados • Supabase</p>
         </div>
       </section>
 
     </div>
   );
 }
-

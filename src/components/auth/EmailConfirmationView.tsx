@@ -26,9 +26,11 @@ export function EmailConfirmationView({ email, onBackToLogin }: Props) {
     setResendSuccess(false);
 
     try {
-      await resendConfirmationEmail(email);
-      setResendSuccess(true);
-      setCooldown(60);
+      const resent = await resendConfirmationEmail(email);
+      if (resent) {
+        setResendSuccess(true);
+        setCooldown(60);
+      }
     } catch {
       // Handled in AuthContext
     }

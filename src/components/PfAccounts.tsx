@@ -32,6 +32,8 @@ export function PfAccounts({
     ? transactions.filter(t => t.context === 'PF' && (t.accountId === selectedAccount.id || t.title.toLowerCase().includes(selectedAccount.institution.toLowerCase())))
     : [];
 
+  if (pfAccounts.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Contas &amp; Carteiras</h1><p className="text-xs text-slate-500 mt-1">Contas reais do usuário autenticado.</p></div><button onClick={onAddAccount} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Adicionar conta</button></div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><Landmark className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -75,8 +77,6 @@ export function PfAccounts({
           value={totalBalance}
           isPrivacyMode={isPrivacyMode}
           subtitle="Soma total das contas ativas em tempo real"
-          trend="up"
-          trendValue="+100%"
         />
 
         <MetricCard

@@ -36,6 +36,8 @@ export function PfRecurrences({
   const sortedByDue = [...pfRecurrences].sort((a, b) => (a.nextDueDate || '').localeCompare(b.nextDueDate || ''));
   const nextItem = sortedByDue[0];
 
+  if (pfRecurrences.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Recorrências &amp; Assinaturas</h1><p className="text-xs text-slate-500 mt-1">Compromissos reais do usuário autenticado.</p></div><button onClick={onAddRecurrence} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Nova recorrência</button></div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><Calendar className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -65,8 +67,8 @@ export function PfRecurrences({
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard title="Recorrências Ativas" value={pfRecurrences.length} prefix="" subtitle="Contas e assinaturas ativas" />
-        <MetricCard title="Despesas Recorrentes" value={totalExpensesMonthly} isPrivacyMode={isPrivacyMode} subtitle="Comprometido por mês" trend="down" trendValue="-100%" />
-        <MetricCard title="Receitas Recorrentes" value={totalIncomeMonthly} isPrivacyMode={isPrivacyMode} subtitle="Entradas mensais fixas" trend="up" trendValue="+100%" />
+        <MetricCard title="Despesas Recorrentes" value={totalExpensesMonthly} isPrivacyMode={isPrivacyMode} subtitle="Comprometido por mês" />
+        <MetricCard title="Receitas Recorrentes" value={totalIncomeMonthly} isPrivacyMode={isPrivacyMode} subtitle="Entradas mensais fixas" />
         <MetricCard title="Próximo Vencimento" value={nextItem?.amount || 0} isPrivacyMode={isPrivacyMode} subtitle={nextItem ? `${nextItem.title} em ${nextItem.nextDueDate}` : 'Sem contas agendadas'} />
       </div>
 

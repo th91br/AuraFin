@@ -41,6 +41,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // User boundary: clear the previous user's tenant selection before any
+    // membership request can resolve for the new authenticated session.
+    setOrganizations([]);
+    setActiveOrganization(null);
+    setActiveMember(null);
     setIsLoading(true);
     try {
       // 1. Fetch Memberships for authenticated user
@@ -56,7 +61,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      let validOrgs: Organization[] = (members || [])
+      let activeMembers = members || [];
+      let validOrgs: Organization[] = activeMembers
         .map(m => m.organizations as Organization)
         .filter(Boolean);
 
@@ -64,20 +70,29 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       if (validOrgs.length === 0) {
         const defaultName = (user.user_metadata?.full_name || 'Minha Empresa') + ' Gestão';
         try {
-          const { data: newOrgId } = await (supabase.rpc as any)('create_organization_with_owner', {
+          const { data: newOrgId, error: provisionError } = await (supabase.rpc as any)('create_organization_with_owner', {
             org_name: defaultName,
             legal_name: defaultName,
             tax_id: ''
           });
 
-          if (newOrgId) {
-            const { data: refreshedMembers } = await supabase
+          if (provisionError) {
+            console.warn('[OrganizationProvider] Falha no onboarding da organização:', provisionError.message);
+          }
+
+          if (newOrgId && !provisionError) {
+            const { data: refreshedMembers, error: refreshError } = await supabase
               .from('organization_members')
               .select('id,organization_id,user_id,role,status,created_at,updated_at,organizations(id,name,legal_name,tax_id,status,created_by,created_at,updated_at)')
               .eq('user_id', user.id)
               .eq('status', 'active');
 
-            validOrgs = (refreshedMembers || [])
+            if (refreshError) {
+              console.warn('[OrganizationProvider] Falha ao recarregar membership do onboarding:', refreshError.message);
+            }
+
+            activeMembers = refreshedMembers || [];
+            validOrgs = activeMembers
               .map(m => m.organizations as Organization)
               .filter(Boolean);
           }
@@ -93,7 +108,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       let selectedOrg = validOrgs.find(o => o.id === savedPrefId) || validOrgs[0] || null;
 
       if (selectedOrg) {
-        const memberInfo = (members || []).find(m => m.organization_id === selectedOrg.id) || null;
+        const memberInfo = activeMembers.find(m => m.organization_id === selectedOrg.id) || null;
         setActiveOrganization(selectedOrg);
         setActiveMember(memberInfo as OrganizationMember | null);
       } else {

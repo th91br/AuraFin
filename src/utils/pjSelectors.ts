@@ -38,13 +38,13 @@ export function getPjExpensesTotal(transactions: Transaction[] = []): number {
 export function getPjDRESummary(transactions: Transaction[] = []) {
   const pjTxs = transactions.filter(t => t.context === 'PJ');
 
-  const grossRevenue = pjTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0) || 37000;
-  const taxesDirect = Math.round(grossRevenue * 0.03) || 1110;
+  const grossRevenue = pjTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const taxesDirect = 0;
   const netRevenue = grossRevenue - taxesDirect;
-  const directCosts = 4500;
+  const directCosts = pjTxs.filter(t => t.type === 'expense' && t.category === 'custo_direto').reduce((acc, t) => acc + t.amount, 0);
   const grossMargin = netRevenue - directCosts;
-  const opExpenses = 4560;
-  const prolabore = 8500;
+  const opExpenses = pjTxs.filter(t => t.type === 'expense' && t.category !== 'custo_direto' && t.category !== 'prolabore_pago').reduce((acc, t) => acc + t.amount, 0);
+  const prolabore = pjTxs.filter(t => t.type === 'expense' && t.category === 'prolabore_pago').reduce((acc, t) => acc + t.amount, 0);
   const netOpResult = grossMargin - opExpenses - prolabore;
   const opMarginPct = grossRevenue > 0 ? Math.round((netOpResult / grossRevenue) * 100) : 0;
 

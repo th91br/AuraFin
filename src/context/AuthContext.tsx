@@ -1,54 +1,22 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { Database } from '../integrations/supabase/database.types';
 import { AuraLogger } from '../lib/logger';
+import {
+  AUTH_PASSWORD_REQUIREMENTS_MESSAGE,
+  validatePasswordStrength,
+} from '../lib/authPolicy';
+import {
+  AuthErrorLike,
+  getAuthErrorCode,
+  mapAuthError,
+  sanitizeAuthErrorMessage,
+} from '../lib/authErrors';
+
+export { validatePasswordStrength } from '../lib/authPolicy';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
-
-export interface PasswordStrengthResult {
-  isValid: boolean;
-  score: number; // 0 to 4
-  message: string;
-  hasMinLength: boolean;
-  hasUpper: boolean;
-  hasLower: boolean;
-  hasNumber: boolean;
-  hasSpecial: boolean;
-}
-
-export function validatePasswordStrength(password: string): PasswordStrengthResult {
-  const hasMinLength = password.length >= 8;
-  const has12Plus = password.length >= 12;
-  const hasUpper = /[A-Z]/.test(password);
-  const hasLower = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const hasSpecial = /[^A-Za-z0-9]/.test(password);
-
-  let score = 0;
-  if (hasMinLength) score++;
-  if (hasUpper && hasLower) score++;
-  if (hasNumber) score++;
-  if (hasSpecial || has12Plus) score++;
-
-  let message = 'Senha fraca';
-  if (score === 2) message = 'Senha razoável';
-  if (score === 3) message = 'Senha boa';
-  if (score === 4) message = 'Senha excelente e forte';
-
-  // Valid password requires at least 8 chars, mixed case, and at least 1 number or special char
-  const isValid = hasMinLength && (hasUpper && hasLower && hasNumber);
-  return {
-    isValid,
-    score,
-    message,
-    hasMinLength,
-    hasUpper,
-    hasLower,
-    hasNumber,
-    hasSpecial,
-  };
-}
 
 interface MfaEnrollmentResponse {
   id: string;
@@ -65,18 +33,19 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   isLoading: boolean;
   error: string | null;
   isPasswordRecoveryMode: boolean;
   aal: 'aal1' | 'aal2';
   mfaFactors: any[];
   isMfaEnrolled: boolean;
-  signInWithEmail: (email: string, pass: string) => Promise<{ requiresMfa: boolean }>;
-  signUpWithEmail: (email: string, pass: string, fullName: string) => Promise<{ requiresEmailConfirmation: boolean }>;
+  signInWithEmail: (email: string, pass: string) => Promise<{ success: boolean; requiresMfa: boolean }>;
+  signUpWithEmail: (email: string, pass: string, fullName: string) => Promise<{ success: boolean; requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
-  resendConfirmationEmail: (email: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
+  resendConfirmationEmail: (email: string) => Promise<boolean>;
   enrollMfa: () => Promise<MfaEnrollmentResponse>;
   verifyMfaEnrollment: (factorId: string, code: string) => Promise<void>;
   unenrollMfa: (factorId: string) => Promise<void>;
@@ -87,15 +56,47 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function createCorrelationId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `auth-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function authFailureContext(operation: string, correlationId: string, startedAt: number, authError: AuthErrorLike) {
+  return {
+    module: 'auth',
+    event: `${operation}_failed`,
+    correlation_id: correlationId,
+    duration_ms: Math.round(performance.now() - startedAt),
+    error_code: getAuthErrorCode(authError),
+    error_status: authError.status ?? null,
+    error_name: authError.name ?? null,
+    error_message: sanitizeAuthErrorMessage(authError),
+    status: 'failure' as const,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isPasswordRecoveryMode, setIsPasswordRecoveryMode] = useState<boolean>(false);
   const [aal, setAal] = useState<'aal1' | 'aal2'>('aal1');
   const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+  const authUserScopeRef = useRef<string | null>(null);
+  const hydrationSequenceRef = useRef(0);
+
+  const exitPasswordRecoveryMode = () => {
+    setIsPasswordRecoveryMode(false);
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.hash = '';
+    cleanUrl.searchParams.delete('code');
+    cleanUrl.searchParams.delete('error');
+    cleanUrl.searchParams.delete('error_code');
+    cleanUrl.searchParams.delete('error_description');
+    window.history.replaceState({}, document.title, `${cleanUrl.pathname}${cleanUrl.search}`);
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -105,25 +106,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
+      if (authUserScopeRef.current !== userId) return;
+
       if (profErr) {
-        AuraLogger.warn('[AuthProvider] Erro ao buscar perfil', { module: 'auth', event: 'fetch_profile_failed', error: profErr.message });
+        setProfile(null);
+        AuraLogger.warn('[AuthProvider] Erro ao buscar perfil', {
+          module: 'auth',
+          event: 'fetch_profile_failed',
+          error_code: profErr.code,
+          error_message: sanitizeAuthErrorMessage(profErr),
+          status: 'failure',
+        });
+      } else if (!data) {
+        setProfile(null);
+        AuraLogger.warn('[AuthProvider] Perfil autenticado não encontrado', {
+          module: 'auth',
+          event: 'profile_missing',
+          status: 'failure',
+        });
       } else {
         setProfile(data);
       }
     } catch (e: any) {
-      AuraLogger.warn('[AuthProvider] Exceção ao buscar perfil', { module: 'auth', event: 'fetch_profile_exception', error: e?.message });
+      if (authUserScopeRef.current !== userId) return;
+      setProfile(null);
+      AuraLogger.warn('[AuthProvider] Exceção ao buscar perfil', {
+        module: 'auth',
+        event: 'fetch_profile_exception',
+        error_code: getAuthErrorCode(e),
+        error_message: sanitizeAuthErrorMessage(e),
+        status: 'failure',
+      });
     }
   };
 
-  const checkMfaStatus = async () => {
+  const checkMfaStatus = async (userId?: string) => {
     try {
       const { data, error: mfaErr } = await supabase.auth.mfa.listFactors();
+      if (userId && authUserScopeRef.current !== userId) return;
       if (!mfaErr && data) {
         const verifiedFactors = data.totp.filter(f => f.status === 'verified');
         setMfaFactors(verifiedFactors);
       }
       
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (userId && authUserScopeRef.current !== userId) return;
       if (aalData) {
         setAal(aalData.currentLevel as 'aal1' | 'aal2');
       }
@@ -132,57 +159,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const scheduleSessionHydration = (userId: string, event: string, isMounted: () => boolean) => {
+    const sequence = ++hydrationSequenceRef.current;
+    window.setTimeout(() => {
+      if (!isMounted() || authUserScopeRef.current !== userId || hydrationSequenceRef.current !== sequence) return;
+
+      void Promise.all([fetchProfile(userId), checkMfaStatus(userId)]).then(() => {
+        if (!isMounted() || authUserScopeRef.current !== userId || hydrationSequenceRef.current !== sequence) return;
+        AuraLogger.info('[AuthProvider] Contexto autenticado carregado', {
+          module: 'auth',
+          event: 'session_hydrated',
+          auth_event: event,
+          status: 'success',
+        });
+      });
+    }, 0);
+  };
+
   useEffect(() => {
     let mounted = true;
 
-    // Check for password recovery hash in URL
-    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+    const recoveryType = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type');
+    if (recoveryType === 'recovery') {
       setIsPasswordRecoveryMode(true);
     }
 
-    // Initial Session Check
-    supabase.auth.getSession().then(({ data: { session: initSession }, error: initErr }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!mounted) return;
-      if (initErr) {
-        setError(initErr.message);
-      }
-      setSession(initSession);
-      setUser(initSession?.user ?? null);
-      if (initSession?.user) {
-        fetchProfile(initSession.user.id);
-        checkMfaStatus();
-      }
-      setIsLoading(false);
-    });
 
-    // Auth State Change Subscription
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      if (!mounted) return;
-      
+      const nextUserId = currentSession?.user.id ?? null;
+      const userChanged = authUserScopeRef.current !== nextUserId;
+      authUserScopeRef.current = nextUserId;
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+
+      if (userChanged) {
+        hydrationSequenceRef.current += 1;
+        setProfile(null);
+        setMfaFactors([]);
+        setAal('aal1');
+      }
 
       if (event === 'PASSWORD_RECOVERY') {
         setIsPasswordRecoveryMode(true);
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
-        if (currentSession?.user) {
-          await fetchProfile(currentSession.user.id);
-          await checkMfaStatus();
-        }
+      if (
+        currentSession?.user
+        && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY')
+      ) {
+        scheduleSessionHydration(currentSession.user.id, event, () => mounted);
       }
 
       if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setSession(null);
-        setProfile(null);
-        setMfaFactors([]);
-        setAal('aal1');
         setIsPasswordRecoveryMode(false);
       }
 
-      setIsLoading(false);
+      setIsInitializing(false);
     });
 
     return () => {
@@ -191,99 +224,100 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signInWithEmail = async (email: string, pass: string): Promise<{ requiresMfa: boolean }> => {
+  const signInWithEmail = async (email: string, pass: string): Promise<{ success: boolean; requiresMfa: boolean }> => {
     setError(null);
     setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data, error: err } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password: pass,
       });
 
-      if (err) {
-        const msg = err.message || '';
-        if (msg.includes('Invalid login credentials') || msg.includes('invalid_grant') || msg.includes('invalid_credentials')) {
-          setError('E-mail ou senha incorretos.');
-        } else if (msg.includes('Email not confirmed')) {
-          setError('Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.');
-        } else if (msg.includes('rate limit') || err.status === 429) {
-          setError('Muitas tentativas de acesso. Aguarde alguns instantes e tente novamente.');
-        } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
-          setError('Não foi possível conectar ao servidor Supabase. Verifique sua conexão.');
-        } else {
-          setError(err.message || 'Falha ao autenticar. Verifique suas credenciais.');
-        }
-        return { requiresMfa: false };
+      if (authError) {
+        setError(mapAuthError(authError, 'login'));
+        AuraLogger.warn('[AuthProvider] Falha no login', authFailureContext('sign_in', correlationId, startedAt, authError));
+        return { success: false, requiresMfa: false };
       }
 
-      // Check if user requires MFA challenge
-      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      const requiresMfa = aalData?.nextLevel === 'aal2' && aalData?.currentLevel !== 'aal2';
+      AuraLogger.info('[AuthProvider] Login concluído', {
+        module: 'auth',
+        event: 'sign_in_succeeded',
+        correlation_id: correlationId,
+        duration_ms: Math.round(performance.now() - startedAt),
+        status: 'success',
+      });
 
-      return { requiresMfa: !!requiresMfa };
-    } catch (e: any) {
-      setError(e?.message?.includes('fetch') 
-        ? 'Não foi possível conectar ao servidor Supabase. Verifique sua conexão.' 
-        : 'Erro de conexão ao realizar login. Tente novamente.');
-      return { requiresMfa: false };
+      // AAL1 is sufficient for normal login. Sensitive operations request AAL2
+      // through their own MFA challenge and remain protected by database policy.
+      return { success: true, requiresMfa: false };
+    } catch (caughtError: any) {
+      setError(mapAuthError(caughtError, 'login'));
+      AuraLogger.warn('[AuthProvider] Exceção no login', authFailureContext('sign_in', correlationId, startedAt, caughtError));
+      return { success: false, requiresMfa: false };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signUpWithEmail = async (email: string, pass: string, fullName: string) => {
+  const signUpWithEmail = async (email: string, pass: string, fullName: string): Promise<{ success: boolean; requiresEmailConfirmation: boolean }> => {
     setError(null);
     setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
     try {
       const strength = validatePasswordStrength(pass);
       if (!strength.isValid) {
-        setError('A senha deve conter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas e números.');
-        return { requiresEmailConfirmation: false };
+        setError(AUTH_PASSWORD_REQUIREMENTS_MESSAGE);
+        return { success: false, requiresEmailConfirmation: false };
       }
 
       const normalizedEmail = email.trim().toLowerCase();
       const cleanName = fullName.trim();
+      if (!normalizedEmail || !cleanName) {
+        setError('Informe nome completo e e-mail válidos.');
+        return { success: false, requiresEmailConfirmation: false };
+      }
 
-      const { data, error: err } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: pass,
         options: {
-          data: { 
-            full_name: cleanName,
-            organization_name: `${cleanName} Negócios`
-          },
-          emailRedirectTo: `${window.location.origin}`,
+          data: { full_name: cleanName },
+          emailRedirectTo: window.location.origin,
         },
       });
 
-      if (err) {
-        const msg = err.message || '';
-        if (msg.includes('User already registered') || msg.includes('already registered')) {
-          setError('Se este e-mail já estiver registrado, acesse sua conta ou solicite a recuperação de senha.');
-        } else if (err.status === 429 || msg.includes('rate limit')) {
-          setError('Muitas tentativas. Aguarde alguns instantes.');
-        } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
-          setError('Não foi possível conectar ao servidor Supabase. Verifique sua conexão.');
-        } else {
-          setError(err.message);
-        }
-        return { requiresEmailConfirmation: false };
+      if (authError) {
+        setError(mapAuthError(authError, 'signup'));
+        AuraLogger.warn('[AuthProvider] Falha no cadastro', authFailureContext('sign_up', correlationId, startedAt, authError));
+        return { success: false, requiresEmailConfirmation: false };
       }
 
-      // Check if user already existed (Supabase returns empty identities array when confirmations are enabled)
       if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setError('Este e-mail já possui uma conta cadastrada. Faça login ou recupere sua senha.');
-        return { requiresEmailConfirmation: false };
+        const duplicateError = { code: 'user_already_exists', status: 422, name: 'AuthApiError', message: 'Existing account' };
+        setError(mapAuthError(duplicateError, 'signup'));
+        AuraLogger.warn('[AuthProvider] Cadastro duplicado', authFailureContext('sign_up', correlationId, startedAt, duplicateError));
+        return { success: false, requiresEmailConfirmation: false };
       }
 
       const requiresEmailConfirmation = !data.session && !!data.user;
-      return { requiresEmailConfirmation };
-    } catch (e: any) {
-      setError(e?.message?.includes('fetch')
-        ? 'Não foi possível conectar ao servidor Supabase. Verifique sua conexão.'
-        : 'Erro de conexão ao criar conta.');
-      return { requiresEmailConfirmation: false };
+      const success = !!data.user;
+      AuraLogger.info('[AuthProvider] Cadastro aceito pelo Supabase', {
+        module: 'auth',
+        event: 'sign_up_succeeded',
+        correlation_id: correlationId,
+        duration_ms: Math.round(performance.now() - startedAt),
+        confirmation_required: requiresEmailConfirmation,
+        status: 'success',
+      });
+      return { success, requiresEmailConfirmation };
+    } catch (caughtError: any) {
+      setError(mapAuthError(caughtError, 'signup'));
+      AuraLogger.warn('[AuthProvider] Exceção no cadastro', authFailureContext('sign_up', correlationId, startedAt, caughtError));
+      return { success: false, requiresEmailConfirmation: false };
     } finally {
       setIsLoading(false);
     }
@@ -292,88 +326,147 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setError(null);
     setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
     try {
-      await supabase.auth.signOut();
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'global' });
+      if (signOutError) {
+        AuraLogger.warn('[AuthProvider] Revogação global de sessão falhou', authFailureContext('sign_out', correlationId, startedAt, signOutError));
+        await supabase.auth.signOut({ scope: 'local' });
+        setError('A sessão foi encerrada neste dispositivo, mas a revogação global não pôde ser confirmada.');
+      }
+
+      authUserScopeRef.current = null;
+      hydrationSequenceRef.current += 1;
       setUser(null);
       setSession(null);
       setProfile(null);
       setMfaFactors([]);
       setAal('aal1');
       localStorage.removeItem('aurafin_active_org_pref_v1');
-    } catch (e: any) {
-      AuraLogger.error('[AuthProvider] Erro ao fazer logout', { module: 'auth', event: 'sign_out_failed', error: e?.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const requestPasswordReset = async (email: string) => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const { error: err } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}`,
+      AuraLogger.info('[AuthProvider] Logout concluído', {
+        module: 'auth',
+        event: 'sign_out_succeeded',
+        correlation_id: correlationId,
+        duration_ms: Math.round(performance.now() - startedAt),
+        status: 'success',
       });
-      if (err) {
-        if (err.status === 429) {
-          setError('Muitas solicitações recentes. Aguarde alguns instantes.');
-        } else {
-          // Do not leak existence of email
-          AuraLogger.warn('[AuthProvider] Falha na solicitação de reset de senha', { module: 'auth', event: 'password_reset_request_failed', status: 'failure' });
-        }
+    } catch (caughtError: any) {
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch {
+        localStorage.removeItem('aurafin_auth_session');
       }
-    } catch (e) {
-      setError('Erro ao solicitar recuperação de senha.');
+      authUserScopeRef.current = null;
+      hydrationSequenceRef.current += 1;
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setMfaFactors([]);
+      setAal('aal1');
+      localStorage.removeItem('aurafin_active_org_pref_v1');
+      setError('A sessão local foi limpa, mas o servidor não confirmou o logout.');
+      AuraLogger.error('[AuthProvider] Erro ao fazer logout', authFailureContext('sign_out', correlationId, startedAt, caughtError));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const resendConfirmationEmail = async (email: string) => {
+  const requestPasswordReset = async (email: string): Promise<boolean> => {
     setError(null);
     setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const { error: err } = await supabase.auth.resend({
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: window.location.origin,
+      });
+      if (authError) {
+        setError(mapAuthError(authError, 'recovery'));
+        AuraLogger.warn('[AuthProvider] Falha na solicitação de reset de senha', authFailureContext('password_reset_request', correlationId, startedAt, authError));
+        return false;
+      }
+
+      AuraLogger.info('[AuthProvider] Solicitação de reset aceita', {
+        module: 'auth',
+        event: 'password_reset_request_succeeded',
+        correlation_id: correlationId,
+        duration_ms: Math.round(performance.now() - startedAt),
+        status: 'success',
+      });
+      return true;
+    } catch (caughtError: any) {
+      setError(mapAuthError(caughtError, 'recovery'));
+      AuraLogger.warn('[AuthProvider] Exceção na solicitação de reset', authFailureContext('password_reset_request', correlationId, startedAt, caughtError));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string): Promise<boolean> => {
+    setError(null);
+    setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error: authError } = await supabase.auth.resend({
         type: 'signup',
         email: normalizedEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}`,
+          emailRedirectTo: window.location.origin,
         },
       });
-      if (err) {
-        if (err.status === 429) {
-          setError('Aguarde antes de solicitar um novo e-mail de confirmação.');
-        } else {
-          setError('Falha ao reenviar e-mail de confirmação.');
-        }
+      if (authError) {
+        setError(mapAuthError(authError, 'resend'));
+        AuraLogger.warn('[AuthProvider] Falha ao reenviar confirmação', authFailureContext('confirmation_resend', correlationId, startedAt, authError));
+        return false;
       }
-    } catch (e) {
-      setError('Erro de conexão ao reenviar e-mail.');
+
+      return true;
+    } catch (caughtError: any) {
+      setError(mapAuthError(caughtError, 'resend'));
+      AuraLogger.warn('[AuthProvider] Exceção ao reenviar confirmação', authFailureContext('confirmation_resend', correlationId, startedAt, caughtError));
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updatePassword = async (newPassword: string) => {
+  const updatePassword = async (newPassword: string): Promise<boolean> => {
     setError(null);
     setIsLoading(true);
+    const correlationId = createCorrelationId();
+    const startedAt = performance.now();
     try {
       const strength = validatePasswordStrength(newPassword);
       if (!strength.isValid) {
-        setError('A nova senha deve ter no mínimo 12 caracteres e atender a todos os requisitos de segurança.');
-        return;
+        setError(AUTH_PASSWORD_REQUIREMENTS_MESSAGE);
+        return false;
       }
 
-      const { error: err } = await supabase.auth.updateUser({ password: newPassword });
-      if (err) {
-        setError(err.message);
-      } else {
-        setIsPasswordRecoveryMode(false);
+      const { error: authError } = await supabase.auth.updateUser({ password: newPassword });
+      if (authError) {
+        setError(mapAuthError(authError, 'update_password'));
+        AuraLogger.warn('[AuthProvider] Falha ao atualizar senha', authFailureContext('password_update', correlationId, startedAt, authError));
+        return false;
       }
-    } catch (e) {
-      setError('Erro ao atualizar senha.');
+
+      exitPasswordRecoveryMode();
+      AuraLogger.info('[AuthProvider] Senha atualizada', {
+        module: 'auth',
+        event: 'password_update_succeeded',
+        correlation_id: correlationId,
+        duration_ms: Math.round(performance.now() - startedAt),
+        status: 'success',
+      });
+      return true;
+    } catch (caughtError: any) {
+      setError(mapAuthError(caughtError, 'update_password'));
+      AuraLogger.warn('[AuthProvider] Exceção ao atualizar senha', authFailureContext('password_update', correlationId, startedAt, caughtError));
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -439,6 +532,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         isAuthenticated: !!session && !!user,
+        isInitializing,
         isLoading,
         error,
         isPasswordRecoveryMode,
@@ -456,7 +550,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         unenrollMfa,
         challengeAndVerifyMfa,
         clearError: () => setError(null),
-        exitPasswordRecoveryMode: () => setIsPasswordRecoveryMode(false),
+        exitPasswordRecoveryMode,
       }}
     >
       {children}

@@ -30,6 +30,8 @@ export function PfInvestmentsView({
     ? `${totalProfit >= 0 ? '+' : ''}${((totalProfit / totalInvested) * 100).toFixed(2)}%`
     : '+0.00%';
 
+  if (investments.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Investimentos &amp; Alocação</h1><p className="text-xs text-slate-500 mt-1">Posições reais do usuário autenticado.</p></div>{onAddInvestment && <button onClick={onAddInvestment} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Novo investimento</button>}</div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><TrendingUp className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
@@ -61,7 +63,7 @@ export function PfInvestmentsView({
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard title="Total Aplicado" value={totalInvested} isPrivacyMode={isPrivacyMode} subtitle="Custo de aquisição" />
-        <MetricCard title="Valor Atual da Carteira" value={totalCurrent} isPrivacyMode={isPrivacyMode} subtitle="Posição atualizada" trend="up" trendValue="+100%" />
+        <MetricCard title="Valor Atual da Carteira" value={totalCurrent} isPrivacyMode={isPrivacyMode} subtitle="Posição atualizada" />
         <MetricCard title="Resultado Absoluto" value={totalProfit} isPrivacyMode={isPrivacyMode} subtitle="Lucro/Prejuízo da carteira" trend="up" trendValue={yieldPctOverall} />
         <MetricCard title="Rentabilidade Global" value={parseFloat(yieldPctOverall.replace('+', '').replace('%', '')) || 0} prefix="" subtitle="Retorno ponderado total" trend="up" trendValue={yieldPctOverall} />
       </div>
@@ -108,7 +110,7 @@ export function PfInvestmentsView({
                     <td className="py-3.5 px-4 font-sans text-slate-500">{inv.institution}</td>
                     <td className="py-3.5 px-4 text-right text-slate-700">R$ {(inv.investedValue || inv.totalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                     <td className="py-3.5 px-4 text-right font-bold text-slate-950">R$ {inv.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-emerald-600">{inv.yieldPct || '+0.0%'}</td>
+                    <td className="py-3.5 px-4 text-right font-bold text-emerald-600">{inv.yieldPct || '—'}</td>
                     <td className="py-3.5 px-4 text-center">
                       {onDeleteInvestment && (
                         <button

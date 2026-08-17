@@ -18,7 +18,10 @@ import {
   Supplier,
   CostCenter,
   InvestmentItem,
-  RecurrenceItem
+  RecurrenceItem,
+  TransactionAnalytics,
+  TransactionPageCursor,
+  TransactionQueryFilters
 } from './types';
 import { StorageRepository } from './services/storage/storageRepository';
 
@@ -28,6 +31,7 @@ import { RepositoryProvider, useRepositories } from './context/RepositoryContext
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AuraLogger } from './lib/logger';
 import { createScopedRequestGuard } from './lib/scopedRequestGuard';
+import { isExplicitDemoMode } from './lib/runtimeDataPolicy';
 import { LegacyImportService } from './services/migration/legacyImportService';
 import { LegacyPjImportService } from './services/migration/legacyPjImportService';
 
@@ -40,6 +44,12 @@ import { supabaseEmergencyReserveRepo } from './services/repositories/supabase/S
 import { supabaseDebtRepo } from './services/repositories/supabase/SupabaseDebtRepository';
 import { supabaseAssetRepo } from './services/repositories/supabase/SupabaseAssetRepository';
 import { supabaseInvestmentRepo } from './services/repositories/supabase/SupabaseInvestmentRepository';
+import {
+  supabaseBusinessDataRepo,
+  BusinessReceivable,
+  BusinessPayable,
+  BusinessInvoice,
+} from './services/repositories/supabase/SupabaseBusinessDataRepository';
 
 // Route and modal boundaries keep inactive product areas out of the initial path.
 const AuraShell = lazy(() => import('./components/aura/AuraShell').then(module => ({ default: module.AuraShell })));
@@ -120,7 +130,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { user, isAuthenticated, isInitializing: isAuthLoading, isPasswordRecoveryMode } = useAuth();
   const { activeOrganization } = useOrganization();
   const { 
     config, 
@@ -140,27 +150,59 @@ function AppContent() {
   const [pjTab, setPjTab] = useState<PJTab>('overview');
 
   // Encapsulated Storage State
-  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => StorageRepository.getPrivacyMode());
-  const [transactions, setTransactions] = useState<Transaction[]>(() => StorageRepository.getTransactions());
-  const [assets, setAssets] = useState<Asset[]>(() => StorageRepository.getAssets());
-  const [projects, setProjects] = useState<Project[]>(() => StorageRepository.getProjects());
-  const [defaulters, setDefaulters] = useState<Defaulter[]>(() => StorageRepository.getDefaulters());
-  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => StorageRepository.getBudgetItems());
-  const [events, setEvents] = useState<CalendarEvent[]>(() => StorageRepository.getEvents());
-  const [accounts, setAccounts] = useState<Account[]>(() => StorageRepository.getAccounts());
-  const [creditCards, setCreditCards] = useState<CreditCard[]>(() => StorageRepository.getCreditCards());
+  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => isExplicitDemoMode() ? StorageRepository.getPrivacyMode() : false);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    return isExplicitDemoMode() && config.personalTransactions === 'local' && config.businessTransactions === 'local'
+      ? StorageRepository.getTransactions()
+      : [];
+  });
+  const emptyAnalytics: TransactionAnalytics = {
+    transaction_count: 0,
+    total_receipts_cents: 0,
+    total_expenses_cents: 0,
+    total_transfers_cents: 0,
+    balance_cents: 0,
+    by_category: [],
+    cash_flow: [],
+  };
+  const [pfAnalytics, setPfAnalytics] = useState<TransactionAnalytics>(emptyAnalytics);
+  const [pjAnalytics, setPjAnalytics] = useState<TransactionAnalytics>(emptyAnalytics);
+  const [pfListAnalytics, setPfListAnalytics] = useState<TransactionAnalytics>(emptyAnalytics);
+  const [pjListAnalytics, setPjListAnalytics] = useState<TransactionAnalytics>(emptyAnalytics);
+  const [pfPageNumber, setPfPageNumber] = useState(1);
+  const [pjPageNumber, setPjPageNumber] = useState(1);
+  const [pfPageStart, setPfPageStart] = useState<TransactionPageCursor | null>(null);
+  const [pjPageStart, setPjPageStart] = useState<TransactionPageCursor | null>(null);
+  const [pfPageHistory, setPfPageHistory] = useState<(TransactionPageCursor | null)[]>([null]);
+  const [pjPageHistory, setPjPageHistory] = useState<(TransactionPageCursor | null)[]>([null]);
+  const [pfHasNextPage, setPfHasNextPage] = useState(false);
+  const [pjHasNextPage, setPjHasNextPage] = useState(false);
+  const [pfNextCursor, setPfNextCursor] = useState<TransactionPageCursor | null>(null);
+  const [pjNextCursor, setPjNextCursor] = useState<TransactionPageCursor | null>(null);
+  const [pfFilters, setPfFilters] = useState<TransactionQueryFilters>({ pageSize: 50 });
+  const [pjFilters, setPjFilters] = useState<TransactionQueryFilters>({ pageSize: 50 });
+  const [assets, setAssets] = useState<Asset[]>(() => isExplicitDemoMode() ? StorageRepository.getAssets() : []);
+  const [projects, setProjects] = useState<Project[]>(() => isExplicitDemoMode() ? StorageRepository.getProjects() : []);
+  const [defaulters, setDefaulters] = useState<Defaulter[]>(() => isExplicitDemoMode() ? StorageRepository.getDefaulters() : []);
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => isExplicitDemoMode() ? StorageRepository.getBudgetItems() : []);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => isExplicitDemoMode() ? StorageRepository.getEvents() : []);
+  const [accounts, setAccounts] = useState<Account[]>(() => isExplicitDemoMode() ? StorageRepository.getAccounts() : []);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>(() => isExplicitDemoMode() ? StorageRepository.getCreditCards() : []);
   const [recurrences, setRecurrences] = useState<RecurrenceItem[]>([]);
-  const [goals, setGoals] = useState<Goal[]>(() => StorageRepository.getGoals());
-  const [debts, setDebts] = useState<Debt[]>(() => StorageRepository.getDebts());
+  const [goals, setGoals] = useState<Goal[]>(() => isExplicitDemoMode() ? StorageRepository.getGoals() : []);
+  const [debts, setDebts] = useState<Debt[]>(() => isExplicitDemoMode() ? StorageRepository.getDebts() : []);
   const [investments, setInvestments] = useState<InvestmentItem[]>([]);
   const [emergencyReserveData, setEmergencyReserveData] = useState<{ currentAmount: number; targetMonths: number; monthlyExpenseBasis: number }>({
     currentAmount: 0,
     targetMonths: 6,
     monthlyExpenseBasis: 0
   });
-  const [customers, setCustomers] = useState<Customer[]>(() => StorageRepository.getCustomers());
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => StorageRepository.getSuppliers());
-  const [costCenters, setCostCenters] = useState<CostCenter[]>(() => StorageRepository.getCostCenters());
+  const [customers, setCustomers] = useState<Customer[]>(() => isExplicitDemoMode() ? StorageRepository.getCustomers() : []);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() => isExplicitDemoMode() ? StorageRepository.getSuppliers() : []);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>(() => isExplicitDemoMode() ? StorageRepository.getCostCenters() : []);
+  const [receivables, setReceivables] = useState<BusinessReceivable[]>([]);
+  const [payables, setPayables] = useState<BusinessPayable[]>([]);
+  const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
 
   // Modals
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -197,8 +239,139 @@ function AppContent() {
       setCustomers([]);
       setSuppliers([]);
       setCostCenters([]);
+      setReceivables([]);
+      setPayables([]);
+      setInvoices([]);
+      setEvents([]);
     }
   }, [isAuthenticated]);
+
+  const loadPersonalTransactionPage = async (
+    cursor: TransactionPageCursor | null,
+    pageNumber: number,
+    filters: TransactionQueryFilters = pfFilters,
+  ) => {
+    if (!user || config.personalTransactions !== 'supabase') return;
+    const scopeUserId = user.id;
+    const guard = createScopedRequestGuard(scopeUserId);
+    try {
+      const pageFilters = { ...filters, cursor, pageSize: Math.min(Math.max(filters.pageSize ?? 50, 1), 100) };
+      const [page, listAnalytics] = await Promise.all([
+        personalTransactionRepository.listPage(scopeUserId, pageFilters),
+        personalTransactionRepository.analytics(scopeUserId, pageFilters),
+      ]);
+      if (!guard.isActive(scopeUserId) || currentUserIdRef.current !== scopeUserId) return;
+      setTransactions(prev => [...prev.filter(t => t.context === 'PJ'), ...page.rows]);
+      setPfPageNumber(pageNumber);
+      setPfPageStart(cursor);
+      setPfNextCursor(page.nextCursor);
+      setPfHasNextPage(page.hasMore);
+      setPfListAnalytics(listAnalytics);
+    } catch (error: any) {
+      AuraLogger.error('[App] Erro ao paginar/agregar transações PF', { module: 'transactions_pf_page', error: error?.message });
+    } finally {
+      guard.cancel();
+    }
+  };
+
+  const loadBusinessTransactionPage = async (
+    organizationId: string,
+    cursor: TransactionPageCursor | null,
+    pageNumber: number,
+    filters: TransactionQueryFilters = pjFilters,
+  ) => {
+    if (config.businessTransactions !== 'supabase') return;
+    const guard = createScopedRequestGuard(organizationId);
+    try {
+      const pageFilters = { ...filters, cursor, pageSize: Math.min(Math.max(filters.pageSize ?? 50, 1), 100) };
+      const [page, listAnalytics] = await Promise.all([
+        businessTransactionRepository.listPage(organizationId, pageFilters),
+        businessTransactionRepository.analytics(organizationId, pageFilters),
+      ]);
+      if (!guard.isActive(organizationId) || currentOrganizationIdRef.current !== organizationId) return;
+      setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...page.rows]);
+      setPjPageNumber(pageNumber);
+      setPjPageStart(cursor);
+      setPjNextCursor(page.nextCursor);
+      setPjHasNextPage(page.hasMore);
+      setPjListAnalytics(listAnalytics);
+    } catch (error: any) {
+      AuraLogger.error('[App] Erro ao paginar/agregar transações PJ', { module: 'transactions_pj_page', error: error?.message });
+    } finally {
+      guard.cancel();
+    }
+  };
+
+  const refreshPersonalTransactionAnalytics = async () => {
+    if (!user || config.personalTransactions !== 'supabase') return;
+    const scopeUserId = user.id;
+    const guard = createScopedRequestGuard(scopeUserId);
+    try {
+      const analytics = await personalTransactionRepository.analytics(scopeUserId);
+      if (guard.isActive(scopeUserId) && currentUserIdRef.current === scopeUserId) setPfAnalytics(analytics);
+    } catch (error: any) {
+      AuraLogger.error('[App] Erro ao atualizar agregados PF', { module: 'transactions_pf_analytics', error: error?.message });
+    } finally {
+      guard.cancel();
+    }
+  };
+
+  const refreshBusinessTransactionAnalytics = async (organizationId: string) => {
+    if (config.businessTransactions !== 'supabase') return;
+    const guard = createScopedRequestGuard(organizationId);
+    try {
+      const analytics = await businessTransactionRepository.analytics(organizationId);
+      if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) setPjAnalytics(analytics);
+    } catch (error: any) {
+      AuraLogger.error('[App] Erro ao atualizar agregados PJ', { module: 'transactions_pj_analytics', error: error?.message });
+    } finally {
+      guard.cancel();
+    }
+  };
+
+  const handlePfQueryChange = (filters: TransactionQueryFilters) => {
+    setPfFilters(filters);
+    setPfPageHistory([null]);
+    void loadPersonalTransactionPage(null, 1, filters);
+  };
+
+  const handlePjQueryChange = (filters: TransactionQueryFilters) => {
+    setPjFilters(filters);
+    setPjPageHistory([null]);
+    if (activeOrganization) void loadBusinessTransactionPage(activeOrganization.id, null, 1, filters);
+  };
+
+  const handlePfNextPage = () => {
+    if (pfNextCursor && pfHasNextPage) {
+      setPfPageHistory(prev => [...prev, pfNextCursor]);
+      void loadPersonalTransactionPage(pfNextCursor, pfPageNumber + 1, pfFilters);
+    }
+  };
+
+  const handlePfPreviousPage = () => {
+    if (pfPageHistory.length > 1) {
+      const previousHistory = pfPageHistory.slice(0, -1);
+      const previousCursor = previousHistory[previousHistory.length - 1] || null;
+      setPfPageHistory(previousHistory);
+      void loadPersonalTransactionPage(previousCursor, Math.max(1, pfPageNumber - 1), pfFilters);
+    }
+  };
+
+  const handlePjNextPage = () => {
+    if (activeOrganization && pjNextCursor && pjHasNextPage) {
+      setPjPageHistory(prev => [...prev, pjNextCursor]);
+      void loadBusinessTransactionPage(activeOrganization.id, pjNextCursor, pjPageNumber + 1, pjFilters);
+    }
+  };
+
+  const handlePjPreviousPage = () => {
+    if (activeOrganization && pjPageHistory.length > 1) {
+      const previousHistory = pjPageHistory.slice(0, -1);
+      const previousCursor = previousHistory[previousHistory.length - 1] || null;
+      setPjPageHistory(previousHistory);
+      void loadBusinessTransactionPage(activeOrganization.id, previousCursor, Math.max(1, pjPageNumber - 1), pjFilters);
+    }
+  };
 
   // Legacy PF Import Assistant Check (disabled by default in Production)
   useEffect(() => {
@@ -243,14 +416,27 @@ function AppContent() {
     if (isAuthenticated && user) {
       const guard = createScopedRequestGuard(user.id);
 
+      // User boundary: do not render the previous user's PF state while the
+      // next authenticated scope is being fetched.
+      setTransactions(prev => prev.filter(t => t.context === 'PJ'));
+      setAccounts(prev => prev.filter(a => a.context === 'PJ'));
+      setCreditCards(prev => prev.filter(c => c.context === 'PJ'));
+      setRecurrences([]);
+      setBudgetItems([]);
+      setGoals([]);
+      setDebts([]);
+      setAssets([]);
+      setInvestments([]);
+      setEmergencyReserveData({ currentAmount: 0, targetMonths: 6, monthlyExpenseBasis: 0 });
+
       // 1. Contas PF
       personalAccountRepository.list(user.id).then(supAccounts => {
         if (guard.isActive(user.id)) setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PF', { error: err?.message }));
 
       // 2. Transações PF
-      personalTransactionRepository.list(user.id).then(supTxs => {
-        if (guard.isActive(user.id)) setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+      personalTransactionRepository.listPage(user.id, { pageSize: 50 }).then(page => {
+        if (guard.isActive(user.id)) setTransactions(prev => [...page.rows, ...prev.filter(t => t.context === 'PJ')]);
       }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PF', { error: err?.message }));
 
       // 3. Cartões PF
@@ -304,46 +490,123 @@ function AppContent() {
       const organizationId = activeOrganization.id;
       const guard = createScopedRequestGuard(organizationId);
 
+      // Clear all tenant-scoped collections before loading the new tenant.
+      setCustomers([]);
+      setSuppliers([]);
+      setProjects([]);
+      setDefaulters([]);
+      setCostCenters([]);
+      setReceivables([]);
+      setPayables([]);
+      setInvoices([]);
+      setCreditCards(prev => prev.filter(card => card.context === 'PF'));
+
       businessAccountRepository.list(organizationId).then(supAccounts => {
         if (guard.isActive(organizationId)) {
           setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
         }
       }).catch(err => AuraLogger.error('[App] Erro ao carregar contas PJ do Supabase', { module: 'accounts_pj', error: err?.message }));
+
+      Promise.all([
+        supabaseBusinessDataRepo.listClients(organizationId),
+        supabaseBusinessDataRepo.listSuppliers(organizationId),
+        supabaseBusinessDataRepo.listProjects(organizationId),
+        supabaseBusinessDataRepo.listCostCenters(organizationId),
+        supabaseBusinessDataRepo.listDefaulters(organizationId),
+        supabaseBusinessDataRepo.listReceivables(organizationId),
+        supabaseBusinessDataRepo.listPayables(organizationId),
+        supabaseBusinessDataRepo.listInvoices(organizationId),
+        supabaseBusinessDataRepo.listCorporateCards(organizationId),
+      ]).then(([nextCustomers, nextSuppliers, nextProjects, nextCostCenters, nextDefaulters, nextReceivables, nextPayables, nextInvoices, nextCards]) => {
+        if (!guard.isActive(organizationId) || currentOrganizationIdRef.current !== organizationId) return;
+        setCustomers(nextCustomers);
+        setSuppliers(nextSuppliers);
+        setProjects(nextProjects);
+        setCostCenters(nextCostCenters);
+        setDefaulters(nextDefaulters);
+        setReceivables(nextReceivables);
+        setPayables(nextPayables);
+        setInvoices(nextInvoices);
+        setCreditCards(prev => [...prev.filter(card => card.context === 'PF'), ...nextCards]);
+      }).catch(err => AuraLogger.error('[App] Erro ao carregar entidades PJ do Supabase', { module: 'pj_entities', error: err?.message }));
       return () => guard.cancel();
     }
   }, [config.businessAccounts, activeOrganization, businessAccountRepository]);
 
   useEffect(() => {
+    // Tenant boundary: remove the previous organization's rows and aggregates
+    // before any new request can resolve. This prevents Org A data from being
+    // rendered while Org B is loading (or when the active org is cleared).
+    setTransactions(prev => prev.filter(t => t.context === 'PF'));
+    setPjAnalytics(emptyAnalytics);
+    setPjListAnalytics(emptyAnalytics);
+    setPjPageNumber(1);
+    setPjPageStart(null);
+    setPjPageHistory([null]);
+    setPjHasNextPage(false);
+    setPjNextCursor(null);
+
     if (config.businessTransactions === 'supabase' && activeOrganization) {
       const organizationId = activeOrganization.id;
       const guard = createScopedRequestGuard(organizationId);
 
-      businessTransactionRepository.list(organizationId).then(supTxs => {
+      businessTransactionRepository.listPage(organizationId, { pageSize: 50 }).then(page => {
         if (guard.isActive(organizationId)) {
-          setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+          setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...page.rows]);
         }
       }).catch(err => AuraLogger.error('[App] Erro ao carregar transações PJ do Supabase', { module: 'transactions_pj', error: err?.message }));
       return () => guard.cancel();
     }
   }, [config.businessTransactions, activeOrganization, businessTransactionRepository]);
 
+  // Transaction pages/aggregates have an explicit lifecycle separate from the
+  // legacy entity sync above, preventing a full-history fetch on auth restore
+  // or organization changes.
+  useEffect(() => {
+    if (!isAuthenticated || !user || config.personalTransactions !== 'supabase') return;
+    const now = new Date();
+    const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const endDateExclusive = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
+    const initialFilters: TransactionQueryFilters = { pageSize: 50, startDate, endDateExclusive };
+    setPfFilters(initialFilters);
+    setPfPageHistory([null]);
+    void loadPersonalTransactionPage(null, 1, initialFilters);
+    void refreshPersonalTransactionAnalytics();
+  }, [isAuthenticated, user, config.personalTransactions, personalTransactionRepository]);
+
+  useEffect(() => {
+    if (config.businessTransactions !== 'supabase' || !activeOrganization) return;
+    const initialFilters: TransactionQueryFilters = { pageSize: 50 };
+    setPjFilters(initialFilters);
+    setPjPageHistory([null]);
+    void loadBusinessTransactionPage(activeOrganization.id, null, 1, initialFilters);
+    void refreshBusinessTransactionAnalytics(activeOrganization.id);
+  }, [config.businessTransactions, activeOrganization, businessTransactionRepository]);
+
   // Persistence Effects for local modules
-  useEffect(() => { 
-    if (config.personalTransactions === 'local' || config.businessTransactions === 'local') {
+  useEffect(() => {
+    if (isExplicitDemoMode() && (config.personalTransactions === 'local' || config.businessTransactions === 'local')) {
       StorageRepository.saveTransactions(transactions); 
     }
   }, [transactions, config.personalTransactions, config.businessTransactions]);
-  useEffect(() => { StorageRepository.saveAssets(assets); }, [assets]);
-  useEffect(() => { StorageRepository.saveProjects(projects); }, [projects]);
-  useEffect(() => { StorageRepository.saveDefaulters(defaulters); }, [defaulters]);
-  useEffect(() => { StorageRepository.setPrivacyMode(isPrivacyMode); }, [isPrivacyMode]);
+  useEffect(() => { if (isExplicitDemoMode()) StorageRepository.saveAssets(assets); }, [assets]);
+  useEffect(() => { if (isExplicitDemoMode()) StorageRepository.saveProjects(projects); }, [projects]);
+  useEffect(() => { if (isExplicitDemoMode()) StorageRepository.saveDefaulters(defaulters); }, [defaulters]);
+  useEffect(() => { if (isExplicitDemoMode()) StorageRepository.setPrivacyMode(isPrivacyMode); }, [isPrivacyMode]);
 
   // Calculations for Cross-Reimbursements
   const pendingReimbursements = transactions.filter(t => t.context === 'PJ' && t.isPaidByPF && !t.reimbursed);
-  const pendingReimbursementAmount = pendingReimbursements.reduce((acc, t) => acc + t.amount, 0);
+  const pendingReimbursementAmount = config.businessTransactions === 'supabase'
+    ? Number(pjAnalytics.paid_by_pf_cents || 0) / 100
+    : pendingReimbursements.reduce((acc, t) => acc + t.amount, 0);
 
   // Reembolsar Sócio em 1-clique
   const handleReimburseSocio = () => {
+    if (!isExplicitDemoMode()) {
+      alert('O reembolso deve ser processado pelo RPC seguro do Supabase antes de ser habilitado nesta tela.');
+      return;
+    }
     if (pendingReimbursementAmount <= 0) {
       alert('Nenhum valor pendente de reembolso ao sócio.');
       return;
@@ -392,14 +655,16 @@ function AppContent() {
   };
 
   const handleResetDemo = () => {
+    if (!isExplicitDemoMode()) return;
     if (window.confirm('Deseja restaurar os dados originais de demonstração do AuraFin?')) {
-      StorageRepository.resetToDemo();
-      setTransactions(StorageRepository.getTransactions());
-      setAssets(StorageRepository.getAssets());
-      setProjects(StorageRepository.getProjects());
-      setDefaulters(StorageRepository.getDefaulters());
-      setIsPrivacyMode(false);
-      alert('Dados restaurados com sucesso!');
+      void StorageRepository.resetToDemo().then(() => {
+        setTransactions(StorageRepository.getTransactions());
+        setAssets(StorageRepository.getAssets());
+        setProjects(StorageRepository.getProjects());
+        setDefaulters(StorageRepository.getDefaulters());
+        setIsPrivacyMode(false);
+        alert('Dados restaurados com sucesso!');
+      });
     }
   };
 
@@ -428,6 +693,11 @@ function AppContent() {
         alert(`Erro ao salvar transação: ${e.message || 'Falha na operação'}`);
         return;
       }
+    }
+
+    if (!isExplicitDemoMode()) {
+      alert('O cadastro de transações requer uma sessão autenticada do Supabase.');
+      return;
     }
 
     if (editingTransaction) {
@@ -459,10 +729,14 @@ function AppContent() {
       const saved = await personalAccountRepository.create(accData, user.id);
       setAccounts(prev => [...prev.filter(a => a.id !== saved.id), saved]);
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de contas requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newAcc: Account = {
         id: `acc_${Date.now()}`,
         name: accData.name || 'Nova Conta',
-        institution: accData.institution || 'Banco',
+        institution: accData.institution || '',
         type: accData.type || 'corrente',
         balance: accData.balance || 0,
         context: 'PF'
@@ -474,29 +748,40 @@ function AppContent() {
   const handleDeleteAccount = async (accId: string) => {
     if (user) {
       await personalAccountRepository.archive(accId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de contas requer uma sessão autenticada do Supabase.');
+      return;
     }
     setAccounts(prev => prev.filter(a => a.id !== accId));
   };
 
   const handleSaveCreditCard = async (cardData: Partial<CreditCard>) => {
+    if (mode === 'PJ' && !isExplicitDemoMode()) {
+      alert('O cadastro de cartões corporativos deve ser persistido pelo módulo Supabase PJ antes de ser habilitado.');
+      return;
+    }
     if (user) {
       const saved = await supabaseCreditCardRepo.create(cardData, user.id);
       if (saved) {
         setCreditCards(prev => [...prev.filter(c => c.id !== saved.id), saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de cartões requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newCard: CreditCard = {
         id: cardData.id || `card_${Date.now()}`,
-        name: cardData.name || 'Novo Cartão',
-        institution: cardData.institution || 'Banco',
+        name: cardData.name || '',
+        institution: cardData.institution || '',
         type: cardData.type || 'credito',
-        brand: cardData.brand || 'Mastercard',
-        lastFourDigits: cardData.lastFourDigits || '4554',
+        brand: cardData.brand || '',
+        lastFourDigits: cardData.lastFourDigits || '',
         limitTotal: cardData.limitTotal || 0,
         limitUsed: 0,
         currentInvoice: 0,
-        closingDay: cardData.closingDay || 15,
-        dueDay: cardData.dueDay || 25,
+        closingDay: cardData.closingDay || 0,
+        dueDay: cardData.dueDay || 0,
         context: mode,
         isPrimary: cardData.isPrimary || false,
         status: 'ativo',
@@ -508,6 +793,9 @@ function AppContent() {
   const handleDeleteCreditCard = async (cardId: string) => {
     if (user) {
       await supabaseCreditCardRepo.delete(cardId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de cartões requer uma sessão autenticada do Supabase.');
+      return;
     }
     setCreditCards(prev => prev.filter(c => c.id !== cardId));
   };
@@ -519,6 +807,10 @@ function AppContent() {
         setRecurrences(prev => [...prev, saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de recorrências requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newRec: RecurrenceItem = {
         id: `rec_${Date.now()}`,
         title: recData.title || 'Nova Recorrência',
@@ -535,6 +827,9 @@ function AppContent() {
   const handleDeleteRecurrence = async (recId: string) => {
     if (user) {
       await supabaseRecurrenceRepo.delete(recId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de recorrências requer uma sessão autenticada do Supabase.');
+      return;
     }
     setRecurrences(prev => prev.filter(r => r.id !== recId));
   };
@@ -571,10 +866,14 @@ function AppContent() {
         setGoals(prev => [...prev, saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de metas requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newGoal: Goal = {
         id: `goal_${Date.now()}`,
         title: goalData.title || 'Nova Meta',
-        targetAmount: goalData.targetAmount || 1000,
+        targetAmount: goalData.targetAmount || 0,
         currentAmount: goalData.currentAmount || 0,
         targetDate: goalData.targetDate || new Date().toISOString().split('T')[0],
         category: goalData.category || 'outros'
@@ -589,6 +888,10 @@ function AppContent() {
       const reloaded = await supabaseGoalRepo.list(user.id);
       setGoals(reloaded);
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('A contribuição requer uma sessão autenticada do Supabase.');
+        return;
+      }
       setGoals(prev => prev.map(g => g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g));
     }
   };
@@ -596,6 +899,9 @@ function AppContent() {
   const handleDeleteGoal = async (goalId: string) => {
     if (user) {
       await supabaseGoalRepo.delete(goalId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de metas requer uma sessão autenticada do Supabase.');
+      return;
     }
     setGoals(prev => prev.filter(g => g.id !== goalId));
   };
@@ -622,12 +928,16 @@ function AppContent() {
         setDebts(prev => [...prev, saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de dívidas requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newDebt: Debt = {
         id: `debt_${Date.now()}`,
         title: debtData.title || 'Nova Dívida',
         totalBalance: debtData.totalBalance || 0,
         monthlyPayment: debtData.monthlyPayment || 0,
-        remainingInstallments: debtData.remainingInstallments || 1,
+        remainingInstallments: debtData.remainingInstallments || 0,
         interestRatePct: debtData.interestRatePct || 0,
         dueDate: debtData.dueDate || new Date().toISOString().split('T')[0]
       };
@@ -653,6 +963,10 @@ function AppContent() {
       }, user.id);
       setTransactions(prev => [newTx, ...prev]);
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O pagamento requer uma sessão autenticada do Supabase.');
+        return;
+      }
       setDebts(prev => prev.map(d => d.id === debtId ? {
         ...d,
         totalBalance: Math.max(0, d.totalBalance - amount),
@@ -664,6 +978,9 @@ function AppContent() {
   const handleDeleteDebt = async (debtId: string) => {
     if (user) {
       await supabaseDebtRepo.delete(debtId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de dívidas requer uma sessão autenticada do Supabase.');
+      return;
     }
     setDebts(prev => prev.filter(d => d.id !== debtId));
   };
@@ -675,6 +992,10 @@ function AppContent() {
         setAssets(prev => [...prev, saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de ativos requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newAsset: Asset = {
         id: `ast_${Date.now()}`,
         name: assetData.name || 'Novo Bem',
@@ -689,6 +1010,9 @@ function AppContent() {
   const handleDeleteAsset = async (assetId: string) => {
     if (user) {
       await supabaseAssetRepo.delete(assetId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de ativos requer uma sessão autenticada do Supabase.');
+      return;
     }
     setAssets(prev => prev.filter(a => a.id !== assetId));
   };
@@ -700,6 +1024,10 @@ function AppContent() {
         setInvestments(prev => [...prev, saved]);
       }
     } else {
+      if (!isExplicitDemoMode()) {
+        alert('O cadastro de investimentos requer uma sessão autenticada do Supabase.');
+        return;
+      }
       const newInv: InvestmentItem = {
         id: `inv_${Date.now()}`,
         name: invData.name || 'Novo Investimento',
@@ -716,12 +1044,19 @@ function AppContent() {
   const handleDeleteInvestment = async (invId: string) => {
     if (user) {
       await supabaseInvestmentRepo.delete(invId, user.id);
+    } else if (!isExplicitDemoMode()) {
+      alert('A exclusão de investimentos requer uma sessão autenticada do Supabase.');
+      return;
     }
     setInvestments(prev => prev.filter(i => i.id !== invId));
   };
 
   if (isAuthLoading) {
     return <AppLoadingFallback />;
+  }
+
+  if (isPasswordRecoveryMode) {
+    return <AuthLayout initialMode="reset-password" />;
   }
 
   if (!isAuthenticated && viewMode !== 'landing') {
@@ -755,7 +1090,7 @@ function AppContent() {
       pendingReimbursementAmount={pendingReimbursementAmount}
       defaultersCount={defaulters.length}
       onOpenSearch={() => setIsGlobalSearchOpen(true)}
-      onResetDemo={handleResetDemo}
+      onResetDemo={isExplicitDemoMode() ? handleResetDemo : undefined}
       onOpenTransactionModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
       onOpenBillingModal={() => setIsBillingModalOpen(true)}
       onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -768,6 +1103,7 @@ function AppContent() {
             <ErrorBoundary isAreaBoundary moduleName="pf_overview" fallbackTitle="Falha ao carregar visão geral PF">
               <PfOverview
                 transactions={transactions}
+                analytics={config.personalTransactions === 'supabase' ? pfAnalytics : undefined}
                 accounts={accounts}
                 events={events}
                 assets={assets}
@@ -790,6 +1126,13 @@ function AppContent() {
               accounts={accounts}
               creditCards={creditCards}
               isPrivacyMode={isPrivacyMode}
+              analytics={config.personalTransactions === 'supabase' ? pfListAnalytics : undefined}
+              pageNumber={pfPageNumber}
+              hasNextPage={config.personalTransactions === 'supabase' ? pfHasNextPage : false}
+              hasPreviousPage={config.personalTransactions === 'supabase' ? pfPageHistory.length > 1 : false}
+              onNextPage={config.personalTransactions === 'supabase' ? handlePfNextPage : undefined}
+              onPreviousPage={config.personalTransactions === 'supabase' ? handlePfPreviousPage : undefined}
+              onQueryChange={config.personalTransactions === 'supabase' ? handlePfQueryChange : undefined}
               onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
             />
           )}
@@ -894,18 +1237,21 @@ function AppContent() {
             <PfTaxPlanning
               assets={assets}
               transactions={transactions}
+              onExportCsv={(filters) => user ? personalTransactionRepository.exportCsv(user.id, filters) : Promise.resolve('')}
               isPrivacyMode={isPrivacyMode}
             />
           )}
 
           {pfTab === 'reports' && (
-            <PfReportsView
-              transactions={transactions}
+              <PfReportsView
+                transactions={transactions}
+                analytics={config.personalTransactions === 'supabase' ? pfAnalytics : undefined}
               accounts={accounts}
-              assets={assets}
-              debts={debts}
-              isPrivacyMode={isPrivacyMode}
-              onNavigateTab={(tab) => setPfTab(tab as PFTab)}
+                assets={assets}
+                debts={debts}
+                isPrivacyMode={isPrivacyMode}
+                onExportCsv={(filters) => user ? personalTransactionRepository.exportCsv(user.id, filters) : Promise.resolve('')}
+                onNavigateTab={(tab) => setPfTab(tab as PFTab)}
             />
           )}
 
@@ -926,15 +1272,22 @@ function AppContent() {
             <ErrorBoundary isAreaBoundary moduleName="pj_overview" fallbackTitle="Falha ao carregar visão geral PJ">
               <PjOverview
                 transactions={transactions}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 events={events}
                 creditCards={creditCards.filter(c => c.context === 'PJ')}
                 isPrivacyMode={isPrivacyMode}
                 onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
                 onEditTransaction={(t) => { setEditingTransaction(t); setIsTransactionModalOpen(true); }}
-                onDeleteTransaction={(id) => setTransactions(prev => prev.filter(t => t.id !== id))}
-                onAddEvent={() => { setEditingEvent(null); setIsEventModalOpen(true); }}
-                onEditEvent={(e) => { setEditingEvent(e); setIsEventModalOpen(true); }}
-                onDeleteEvent={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                onDeleteTransaction={(id) => {
+                  if (!isExplicitDemoMode()) {
+                    alert('A exclusão de transações deve ser processada pelo Supabase autenticado.');
+                    return;
+                  }
+                  setTransactions(prev => prev.filter(t => t.id !== id));
+                }}
+                onAddEvent={() => { if (isExplicitDemoMode()) { setEditingEvent(null); setIsEventModalOpen(true); } else alert('Agenda financeira ainda não possui fonte Supabase ativa.'); }}
+                onEditEvent={(e) => { if (isExplicitDemoMode()) { setEditingEvent(e); setIsEventModalOpen(true); } }}
+                onDeleteEvent={() => { if (!isExplicitDemoMode()) alert('Agenda financeira ainda não possui fonte Supabase ativa.'); }}
                 onActionClickEvent={() => setIsBillingModalOpen(true)}
                 onOpenBillingModal={() => setIsBillingModalOpen(true)}
                 onNavigateTab={(tab) => setPjTab(tab as PJTab)}
@@ -946,6 +1299,7 @@ function AppContent() {
             {pjTab === 'cashflow' && (
               <PjCashflow
                 transactions={transactions}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 isPrivacyMode={isPrivacyMode}
                 onAddTransaction={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
                 onOpenTransferModal={() => { setEditingTransaction(null); setIsTransactionModalOpen(true); }}
@@ -957,12 +1311,15 @@ function AppContent() {
                 customers={customers}
                 suppliers={suppliers}
                 costCenters={costCenters}
+                receivables={receivables}
+                payables={payables}
                 isPrivacyMode={isPrivacyMode}
               />
             )}
 
             {pjTab === 'billing' && (
               <PjBillingView
+                invoices={invoices}
                 isPrivacyMode={isPrivacyMode}
                 onAddBilling={() => setIsBillingModalOpen(true)}
               />
@@ -971,18 +1328,22 @@ function AppContent() {
             {pjTab === 'dre' && (
               <PjDreView
                 transactions={transactions}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 isPrivacyMode={isPrivacyMode}
               />
             )}
 
             {pjTab === 'breakeven' && (
               <PjBreakEvenView
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 isPrivacyMode={isPrivacyMode}
               />
             )}
 
             {pjTab === 'runway' && (
               <PjRunwayView
+                accounts={accounts}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 isPrivacyMode={isPrivacyMode}
               />
             )}
@@ -1018,10 +1379,12 @@ function AppContent() {
             )}
 
             {pjTab === 'accountant' && (
-              <PjAccountantHubView
-                transactions={transactions}
-                isPrivacyMode={isPrivacyMode}
-              />
+            <PjAccountantHubView
+              transactions={transactions}
+              isPrivacyMode={isPrivacyMode}
+              onExportCsv={() => activeOrganization ? businessTransactionRepository.exportCsv(activeOrganization.id) : Promise.resolve('')}
+              onExportJson={() => activeOrganization ? businessTransactionRepository.exportJson(activeOrganization.id) : Promise.resolve([])}
+            />
             )}
 
             {pjTab === 'documents' && (
@@ -1049,6 +1412,10 @@ function AppContent() {
                 isPrivacyMode={isPrivacyMode}
                 onAddCard={() => setIsAddCardModalOpen(true)}
                 onPayInvoice={(cardId, amount) => {
+                  if (!isExplicitDemoMode()) {
+                    alert('O pagamento de fatura deve ser persistido pelo Supabase antes de ser habilitado.');
+                    return;
+                  }
                   const newTx: Transaction = {
                     id: `tx_card_pay_${Date.now()}`,
                     context: 'PJ',
@@ -1076,6 +1443,8 @@ function AppContent() {
             {pjTab === 'accounting' && (
               <PjAccounting
                 transactions={transactions}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
+                onExportJson={() => activeOrganization ? businessTransactionRepository.exportJson(activeOrganization.id) : Promise.resolve([])}
                 onReimburse={handleReimburseSocio}
               />
             )}
@@ -1083,6 +1452,7 @@ function AppContent() {
             {pjTab === 'reports' && (
               <PjReports
                 transactions={transactions}
+                analytics={config.businessTransactions === 'supabase' ? pjAnalytics : undefined}
                 accounts={accounts}
                 customers={customers}
                 suppliers={suppliers}
@@ -1091,6 +1461,7 @@ function AppContent() {
                 defaulters={defaulters}
                 creditCards={creditCards}
                 isPrivacyMode={isPrivacyMode}
+                onExportCsv={(filters) => activeOrganization ? businessTransactionRepository.exportCsv(activeOrganization.id, filters) : Promise.resolve('')}
                 onNavigateTab={(tab) => setPjTab(tab as PJTab)}
               />
             )}
@@ -1121,6 +1492,10 @@ function AppContent() {
         isOpen={isBillingModalOpen}
         onClose={() => setIsBillingModalOpen(false)}
         onSave={(data) => {
+          if (!isExplicitDemoMode()) {
+            alert('Emissão de faturamento deve ser persistida pelo módulo Supabase antes de ser habilitada.');
+            return false;
+          }
           const newTx: Transaction = {
             id: `pj_bill_${Date.now()}`,
             context: 'PJ',
@@ -1132,6 +1507,7 @@ function AppContent() {
             category: 'receita_servico',
           };
           setTransactions(prev => [newTx, ...prev]);
+          return true;
           }}
         />
       )}
@@ -1141,6 +1517,10 @@ function AppContent() {
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
         onSave={(data) => {
+          if (!isExplicitDemoMode()) {
+            alert('Cadastro de projetos deve ser persistido pelo módulo Supabase antes de ser habilitado.');
+            return;
+          }
           const newProj: Project = {
             id: `proj_${Date.now()}`,
             name: data.name,
@@ -1180,7 +1560,7 @@ function AppContent() {
         />
       )}
 
-      {isEventModalOpen && (
+      {isEventModalOpen && isExplicitDemoMode() && (
         <EventModal
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
@@ -1236,9 +1616,9 @@ function AppContent() {
                 setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
               }
             });
-            personalTransactionRepository.list(userId).then(supTxs => {
+            personalTransactionRepository.listPage(userId, { pageSize: 50 }).then(page => {
               if (guard.isActive(userId) && currentUserIdRef.current === userId) {
-                setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+                setTransactions(prev => [...page.rows, ...prev.filter(t => t.context === 'PJ')]);
               }
             });
           }
@@ -1259,9 +1639,9 @@ function AppContent() {
                 setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
               }
             });
-            businessTransactionRepository.list(organizationId).then(supTxs => {
+            businessTransactionRepository.listPage(organizationId, { pageSize: 50 }).then(page => {
               if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
-                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...page.rows]);
               }
             });
           }
@@ -1284,9 +1664,9 @@ function AppContent() {
                 setAccounts(prev => [...supAccounts, ...prev.filter(a => a.context === 'PJ')]);
               }
             });
-            personalTransactionRepository.list(userId).then(supTxs => {
+            personalTransactionRepository.listPage(userId, { pageSize: 50 }).then(page => {
               if (guard.isActive(userId) && currentUserIdRef.current === userId) {
-                setTransactions(prev => [...supTxs, ...prev.filter(t => t.context === 'PJ')]);
+                setTransactions(prev => [...page.rows, ...prev.filter(t => t.context === 'PJ')]);
               }
             });
           }
@@ -1298,9 +1678,9 @@ function AppContent() {
                 setAccounts(prev => [...prev.filter(a => a.context === 'PF'), ...supAccounts]);
               }
             });
-            businessTransactionRepository.list(organizationId).then(supTxs => {
+            businessTransactionRepository.listPage(organizationId, { pageSize: 50 }).then(page => {
               if (guard.isActive(organizationId) && currentOrganizationIdRef.current === organizationId) {
-                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...supTxs]);
+                setTransactions(prev => [...prev.filter(t => t.context === 'PF'), ...page.rows]);
               }
             });
           }

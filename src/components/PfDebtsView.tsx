@@ -34,6 +34,8 @@ export function PfDebtsView({
   const recurringIncome = pfIncome > 0 ? pfIncome : 1;
   const incomeCommitmentRatio = ((totalMonthlyPayments / recurringIncome) * 100).toFixed(1);
 
+  if (debts.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Dívidas &amp; Financiamentos</h1><p className="text-xs text-slate-500 mt-1">Passivos reais do usuário autenticado.</p></div>{onAddDebt && <button onClick={onAddDebt} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Adicionar dívida</button>}</div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><AlertTriangle className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   const handlePay = async (debt: Debt) => {
     if (!onPayInstallment) return;
     setPayingId(debt.id);
@@ -74,7 +76,7 @@ export function PfDebtsView({
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Saldo Devedor Total" value={totalDebtBalance} isPrivacyMode={isPrivacyMode} subtitle="Compromisso total a quitar" trend="down" trendValue="-100%" />
+        <MetricCard title="Saldo Devedor Total" value={totalDebtBalance} isPrivacyMode={isPrivacyMode} subtitle="Compromisso total a quitar" />
         <MetricCard title="Parcelas Mensais" value={totalMonthlyPayments} isPrivacyMode={isPrivacyMode} subtitle="Impacto fixo por mês" />
         <MetricCard title="Comprometimento Renda" value={pfIncome > 0 ? Number(incomeCommitmentRatio) : 0} prefix="" subtitle={pfIncome > 0 ? `${incomeCommitmentRatio}% da renda mensal` : 'Sem receitas registradas'} />
         <MetricCard title="Contratos Ativos" value={debts.length} prefix="" subtitle="Financiamentos e empréstimos" />

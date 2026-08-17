@@ -90,7 +90,7 @@ export function PfPjReconciliation({ transactions, onReimburseSocio, isPrivacyMo
 
         <MetricCard
           title="Pró-labore Cruzado Mês"
-          value={prolaboreTotal || 8500}
+          value={prolaboreTotal}
           isPrivacyMode={isPrivacyMode}
           subtitle="Vínculo PF ↔ PJ confirmado"
           isPJ={isPJ}

@@ -212,16 +212,17 @@ interface VisualPaymentCardProps {
   cardNumberMasked: string;
   balance: number;
   dueDate: string;
+  brand?: string;
   isPJ?: boolean;
   isPrivacyMode?: boolean;
 }
 
-export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, isPJ = false, isPrivacyMode = false }: VisualPaymentCardProps) {
+export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, brand, isPJ = false, isPrivacyMode = false }: VisualPaymentCardProps) {
   return (
     <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-white/[0.12] text-white shadow-xl space-y-4 relative overflow-hidden glow-card">
       <div className="flex justify-between items-center">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-300">{cardName}</span>
-        <span className="text-xs font-black tracking-widest uppercase text-indigo-300">VISA</span>
+        <span className="text-xs font-black tracking-widest uppercase text-indigo-300">{brand || 'Bandeira não informada'}</span>
       </div>
 
       <div className="py-2">
@@ -233,7 +234,7 @@ export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate
 
       <div className="flex justify-between items-center text-[10px] font-mono-numbers text-slate-400 pt-1 border-t border-white/[0.08]">
         <span>VENCIMENTO: {dueDate}</span>
-        <span className="font-bold text-slate-300">AURAFIN PLATINUM</span>
+        <span className="font-bold text-slate-300">{isPJ ? 'CARTÃO PJ' : 'CARTÃO PF'}</span>
       </div>
     </div>
   );
@@ -268,4 +269,3 @@ export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = 
     </div>
   );
 }
-

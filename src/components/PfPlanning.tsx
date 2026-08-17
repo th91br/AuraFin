@@ -26,6 +26,43 @@ export function PfPlanning({
 
   const pfTxs = transactions.filter(t => t.context === 'PF' && t.date.startsWith(selectedMonth));
 
+  if (budgetItems.length === 0 && pfTxs.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">Planejamento Orçamentário</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">Meu Orçamento de Gastos</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Nenhum orçamento ou lançamento real no mês selecionado.</p>
+          </div>
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs shadow-xs">
+            <Edit2 className="w-4 h-4" />
+            <span>Ajustar Tetos</span>
+          </button>
+        </div>
+        <div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+          <p className="text-slate-500">Nenhum dado disponível</p>
+        </div>
+        <BudgetModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={async (newBudgets) => { if (onSaveBudgets) await onSaveBudgets(newBudgets); }}
+          currentBudgets={[
+            { category: 'moradia', label: 'Moradia & Contas Fixas', planned: 0 },
+            { category: 'alimentacao', label: 'Alimentacao & Mercado', planned: 0 },
+            { category: 'saude', label: 'Saude & Farmacia', planned: 0 },
+            { category: 'transporte', label: 'Transporte & Combustivel', planned: 0 },
+            { category: 'educacao', label: 'Educacao & Cursos', planned: 0 },
+            { category: 'lazer', label: 'Lazer & Viagens', planned: 0 },
+            { category: 'investimentos', label: 'Investimentos & Futuro', planned: 0 },
+            { category: 'outros', label: 'Outras Despesas', planned: 0 },
+          ]}
+          periodMonth={selectedMonth}
+        />
+      </div>
+    );
+  }
+
   // Base Category Definition
   const baseCategories = [
     { key: 'moradia', label: 'Moradia & Contas Fixas', color: '#4F46E5' },
@@ -125,8 +162,8 @@ export function PfPlanning({
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <MetricCard title="Orçamento Total" value={totalPlanned} isPrivacyMode={isPrivacyMode} subtitle="Teto planejado do mês" />
-        <MetricCard title="Gasto Acumulado" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Consumido no período" trend="down" trendValue="-100%" />
-        <MetricCard title="Saldo Disponível" value={availableBudget} isPrivacyMode={isPrivacyMode} subtitle="Livre para uso" trend="up" trendValue="+100%" />
+        <MetricCard title="Gasto Acumulado" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Consumido no período" />
+        <MetricCard title="Saldo Disponível" value={availableBudget} isPrivacyMode={isPrivacyMode} subtitle="Livre para uso" />
         <MetricCard title="% Utilizado" value={usedPercentage} prefix="" subtitle={`${usedPercentage}% do teto`} />
         <MetricCard title="Economia Estimada" value={availableBudget} isPrivacyMode={isPrivacyMode} subtitle="Potencial de poupança" />
       </div>

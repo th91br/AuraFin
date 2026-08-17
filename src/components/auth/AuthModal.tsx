@@ -31,39 +31,39 @@ export function AuthModal({ isOpen, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     clearError();
     setNoticeMessage(null);
     setIsSubmitting(true);
 
     try {
       if (isPasswordRecoveryMode) {
-        if (!newPassword || newPassword.length < 6) {
-          setNoticeMessage('A nova senha deve ter no mínimo 6 caracteres.');
-          setIsSubmitting(false);
-          return;
+        const updated = await updatePassword(newPassword);
+        if (updated) {
+          setNoticeMessage('Sua senha foi atualizada com sucesso!');
+          setTimeout(() => {
+            exitPasswordRecoveryMode();
+            onClose();
+          }, 1500);
         }
-        await updatePassword(newPassword);
-        setNoticeMessage('Sua senha foi atualizada com sucesso!');
-        setTimeout(() => {
-          exitPasswordRecoveryMode();
-          onClose();
-        }, 1500);
         return;
       }
 
       if (mode === 'login') {
-        await signInWithEmail(email, password);
-        if (!error) onClose();
+        const result = await signInWithEmail(email, password);
+        if (result.success) onClose();
       } else if (mode === 'signup') {
-        const { requiresEmailConfirmation } = await signUpWithEmail(email, password, fullName);
-        if (requiresEmailConfirmation) {
+        const result = await signUpWithEmail(email, password, fullName);
+        if (result.success && result.requiresEmailConfirmation) {
           setNoticeMessage('Cadastro realizado! Por favor, confira seu e-mail para confirmar sua conta antes de fazer login.');
-        } else {
+        } else if (result.success) {
           onClose();
         }
       } else if (mode === 'forgot') {
-        await requestPasswordReset(email);
-        setNoticeMessage('Se o e-mail estiver cadastrado, enviamos um link para redefinição de senha.');
+        const accepted = await requestPasswordReset(email);
+        if (accepted) {
+          setNoticeMessage('Se o e-mail estiver cadastrado, enviamos um link para redefinição de senha.');
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -141,7 +141,7 @@ export function AuthModal({ isOpen, onClose }: Props) {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres, com maiúsculas, minúsculas e números"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>

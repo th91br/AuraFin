@@ -48,5 +48,5 @@ A aplicação possui navegação estruturada estratégica com comutação instan
 
 - Zero botões mortos ou placeholders sem ação.
 - Feedback imediato para o usuário em todas as ações (toast/modais/notificações de estado).
-- Persistência total e instantânea de dados em LocalStorage.
+- Persistência dos dados financeiros no Supabase; LocalStorage é reservado à sessão, preferências e demo de desenvolvimento explícita.
 - Layout 100% responsivo para telas desktop, tablet e smartphones.

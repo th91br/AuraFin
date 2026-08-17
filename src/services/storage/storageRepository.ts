@@ -13,21 +13,6 @@ import {
   Supplier,
   CostCenter
 } from '../../types';
-import { 
-  initialTransactions, 
-  initialAssets, 
-  initialProjects, 
-  initialDefaulters, 
-  initialBudgetItems, 
-  initialEvents,
-  initialAccounts,
-  initialCreditCards,
-  initialGoals,
-  initialDebts,
-  initialCustomers,
-  initialSuppliers,
-  initialCostCenters
-} from '../../data';
 
 const STORAGE_KEYS = {
   SCHEMA_VERSION: 'aurafin_schema_v4',
@@ -84,7 +69,7 @@ export class StorageRepository {
 
   // --- TRANSACTIONS ---
   public static getTransactions(): Transaction[] {
-    return this.getItem<Transaction[]>(STORAGE_KEYS.TRANSACTIONS, initialTransactions);
+    return this.getItem<Transaction[]>(STORAGE_KEYS.TRANSACTIONS, []);
   }
 
   public static saveTransactions(transactions: Transaction[]): void {
@@ -93,7 +78,7 @@ export class StorageRepository {
 
   // --- ASSETS ---
   public static getAssets(): Asset[] {
-    return this.getItem<Asset[]>(STORAGE_KEYS.ASSETS, initialAssets);
+    return this.getItem<Asset[]>(STORAGE_KEYS.ASSETS, []);
   }
 
   public static saveAssets(assets: Asset[]): void {
@@ -102,7 +87,7 @@ export class StorageRepository {
 
   // --- PROJECTS ---
   public static getProjects(): Project[] {
-    return this.getItem<Project[]>(STORAGE_KEYS.PROJECTS, initialProjects);
+    return this.getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
   }
 
   public static saveProjects(projects: Project[]): void {
@@ -111,7 +96,7 @@ export class StorageRepository {
 
   // --- DEFAULTERS ---
   public static getDefaulters(): Defaulter[] {
-    return this.getItem<Defaulter[]>(STORAGE_KEYS.DEFAULTERS, initialDefaulters);
+    return this.getItem<Defaulter[]>(STORAGE_KEYS.DEFAULTERS, []);
   }
 
   public static saveDefaulters(defaulters: Defaulter[]): void {
@@ -120,7 +105,7 @@ export class StorageRepository {
 
   // --- BUDGET ITEMS ---
   public static getBudgetItems(): BudgetItem[] {
-    return this.getItem<BudgetItem[]>(STORAGE_KEYS.BUDGET_ITEMS, initialBudgetItems);
+    return this.getItem<BudgetItem[]>(STORAGE_KEYS.BUDGET_ITEMS, []);
   }
 
   public static saveBudgetItems(items: BudgetItem[]): void {
@@ -129,7 +114,7 @@ export class StorageRepository {
 
   // --- EVENTS ---
   public static getEvents(): CalendarEvent[] {
-    return this.getItem<CalendarEvent[]>(STORAGE_KEYS.EVENTS, initialEvents);
+    return this.getItem<CalendarEvent[]>(STORAGE_KEYS.EVENTS, []);
   }
 
   public static saveEvents(events: CalendarEvent[]): void {
@@ -138,7 +123,7 @@ export class StorageRepository {
 
   // --- ACCOUNTS ---
   public static getAccounts(): Account[] {
-    return this.getItem<Account[]>(STORAGE_KEYS.ACCOUNTS, initialAccounts);
+    return this.getItem<Account[]>(STORAGE_KEYS.ACCOUNTS, []);
   }
 
   public static saveAccounts(accounts: Account[]): void {
@@ -147,7 +132,7 @@ export class StorageRepository {
 
   // --- CREDIT CARDS ---
   public static getCreditCards(): CreditCard[] {
-    return this.getItem<CreditCard[]>(STORAGE_KEYS.CREDIT_CARDS, initialCreditCards);
+    return this.getItem<CreditCard[]>(STORAGE_KEYS.CREDIT_CARDS, []);
   }
 
   public static saveCreditCards(cards: CreditCard[]): void {
@@ -156,7 +141,7 @@ export class StorageRepository {
 
   // --- GOALS ---
   public static getGoals(): Goal[] {
-    return this.getItem<Goal[]>(STORAGE_KEYS.GOALS, initialGoals);
+    return this.getItem<Goal[]>(STORAGE_KEYS.GOALS, []);
   }
 
   public static saveGoals(goals: Goal[]): void {
@@ -165,7 +150,7 @@ export class StorageRepository {
 
   // --- DEBTS ---
   public static getDebts(): Debt[] {
-    return this.getItem<Debt[]>(STORAGE_KEYS.DEBTS, initialDebts);
+    return this.getItem<Debt[]>(STORAGE_KEYS.DEBTS, []);
   }
 
   public static saveDebts(debts: Debt[]): void {
@@ -174,7 +159,7 @@ export class StorageRepository {
 
   // --- CUSTOMERS ---
   public static getCustomers(): Customer[] {
-    return this.getItem<Customer[]>(STORAGE_KEYS.CUSTOMERS, initialCustomers);
+    return this.getItem<Customer[]>(STORAGE_KEYS.CUSTOMERS, []);
   }
 
   public static saveCustomers(customers: Customer[]): void {
@@ -183,7 +168,7 @@ export class StorageRepository {
 
   // --- SUPPLIERS ---
   public static getSuppliers(): Supplier[] {
-    return this.getItem<Supplier[]>(STORAGE_KEYS.SUPPLIERS, initialSuppliers);
+    return this.getItem<Supplier[]>(STORAGE_KEYS.SUPPLIERS, []);
   }
 
   public static saveSuppliers(suppliers: Supplier[]): void {
@@ -192,7 +177,7 @@ export class StorageRepository {
 
   // --- COST CENTERS ---
   public static getCostCenters(): CostCenter[] {
-    return this.getItem<CostCenter[]>(STORAGE_KEYS.COST_CENTERS, initialCostCenters);
+    return this.getItem<CostCenter[]>(STORAGE_KEYS.COST_CENTERS, []);
   }
 
   public static saveCostCenters(centers: CostCenter[]): void {
@@ -202,7 +187,22 @@ export class StorageRepository {
   /**
    * Reseta o repositório para os dados de demonstração originais
    */
-  public static resetToDemo(): void {
+  public static async resetToDemo(): Promise<void> {
+    const {
+      initialTransactions,
+      initialAssets,
+      initialProjects,
+      initialDefaulters,
+      initialBudgetItems,
+      initialEvents,
+      initialAccounts,
+      initialCreditCards,
+      initialGoals,
+      initialDebts,
+      initialCustomers,
+      initialSuppliers,
+      initialCostCenters,
+    } = await import('../../data');
     this.saveTransactions(initialTransactions);
     this.saveAssets(initialAssets);
     this.saveProjects(initialProjects);

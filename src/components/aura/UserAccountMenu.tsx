@@ -36,7 +36,7 @@ export function UserAccountMenu({ isPJ, onOpenSecuritySettings, onOpenCreateOrg 
   }, []);
 
   const fullName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
-  const email = user?.email || 'usuario@aurafin.app';
+  const email = user?.email || '—';
 
   // Initials for Avatar
   const initials = fullName

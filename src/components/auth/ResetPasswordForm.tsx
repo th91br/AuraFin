@@ -34,12 +34,14 @@ export function ResetPasswordForm({ onSuccess }: Props) {
 
     setIsSubmitting(true);
     try {
-      await updatePassword(password);
-      setIsSuccess(true);
-      setTimeout(() => {
-        exitPasswordRecoveryMode();
-        onSuccess();
-      }, 2000);
+      const updated = await updatePassword(password);
+      if (updated) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          exitPasswordRecoveryMode();
+          onSuccess();
+        }, 2000);
+      }
     } finally {
       setIsSubmitting(false);
     }

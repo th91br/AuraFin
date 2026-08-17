@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Transaction, Account, CreditCard } from '../types';
+import { Transaction, Account, CreditCard, TransactionAnalytics, TransactionQueryFilters } from '../types';
 import { MetricCard } from './aura/AuraCards';
 import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
@@ -10,6 +10,13 @@ interface Props {
   creditCards: CreditCard[];
   isPrivacyMode?: boolean;
   onAddTransaction: () => void;
+  analytics?: TransactionAnalytics;
+  pageNumber?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  onNextPage?: () => void;
+  onPreviousPage?: () => void;
+  onQueryChange?: (filters: TransactionQueryFilters) => void;
 }
 
 const PAGE_SIZE = 50;
@@ -54,6 +61,13 @@ export function PfTransactions({
   creditCards,
   isPrivacyMode = false,
   onAddTransaction,
+  analytics,
+  pageNumber = 1,
+  hasNextPage = false,
+  hasPreviousPage = false,
+  onNextPage,
+  onPreviousPage,
+  onQueryChange,
 }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('todos');
@@ -62,8 +76,22 @@ export function PfTransactions({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const isServerPaginated = Boolean(onQueryChange);
   const pfTxs = transactions.filter(t => t.context === 'PF');
   const selectedPeriodBounds = getPeriodBounds(selectedPeriod);
+
+  const emitQuery = (next: Partial<TransactionQueryFilters> = {}) => {
+    if (!onQueryChange) return;
+    const end = new Date(`${(next.endDateExclusive ? next.endDateExclusive : selectedPeriodBounds.end)}T00:00:00`);
+    if (!next.endDateExclusive) end.setDate(end.getDate() + 1);
+    onQueryChange({
+      search: next.search ?? searchTerm,
+      type: next.type !== undefined ? next.type : (selectedType === 'todos' ? null : selectedType as TransactionQueryFilters['type']),
+      startDate: next.startDate ?? selectedPeriodBounds.start,
+      endDateExclusive: localDateKey(end),
+      pageSize: PAGE_SIZE,
+    });
+  };
 
   const filteredTxs = pfTxs.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || t.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -73,14 +101,19 @@ export function PfTransactions({
     return matchesSearch && matchesType && matchesPeriod;
   });
 
-  const pageCount = Math.max(1, Math.ceil(filteredTxs.length / PAGE_SIZE));
-  const safePage = Math.min(currentPage, pageCount);
+  const pageCount = isServerPaginated ? undefined : Math.max(1, Math.ceil(filteredTxs.length / PAGE_SIZE));
+  const safePage = isServerPaginated ? pageNumber : Math.min(currentPage, pageCount || 1);
   const pageStart = (safePage - 1) * PAGE_SIZE;
-  const visibleTxs = filteredTxs.slice(pageStart, pageStart + PAGE_SIZE);
+  const visibleTxs = isServerPaginated ? pfTxs : filteredTxs.slice(pageStart, pageStart + PAGE_SIZE);
 
-  const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpenses = filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const totalIncome = isServerPaginated
+    ? Number(analytics?.total_receipts_cents || 0) / 100
+    : filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = isServerPaginated
+    ? Number(analytics?.total_expenses_cents || 0) / 100
+    : filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const netPeriodBalance = totalIncome - totalExpenses;
+  const filteredCount = isServerPaginated ? Number(analytics?.transaction_count || 0) : filteredTxs.length;
 
   const handleDeleteWithToast = (title: string) => {
     setToastMessage(`Movimentação "${title}" removida.`);
@@ -115,10 +148,10 @@ export function PfTransactions({
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas e Pró-labore" trend="up" trendValue="+12%" />
-        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e faturas" trend="down" trendValue="-3%" />
-        <MetricCard title="Saldo do Período" value={netPeriodBalance} isPrivacyMode={isPrivacyMode} subtitle="Resultado líquido" trend="up" trendValue="+8%" />
-        <MetricCard title="Total Registros" value={filteredTxs.length} prefix="" subtitle="Transações filtradas" />
+        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas e Pró-labore" />
+        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e faturas" />
+        <MetricCard title="Saldo do Período" value={netPeriodBalance} isPrivacyMode={isPrivacyMode} subtitle="Resultado líquido" />
+        <MetricCard title="Total Registros" value={filteredCount} prefix="" subtitle="Transações filtradas" />
       </div>
 
       {/* Filter Bar & Search */}
@@ -133,6 +166,7 @@ export function PfTransactions({
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
+              emitQuery({ search: e.target.value });
             }}
             placeholder="Buscar por descrição ou categoria..."
             className="w-full pl-9 pr-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
@@ -146,6 +180,10 @@ export function PfTransactions({
             onChange={(e) => {
               setSelectedPeriod(e.target.value);
               setCurrentPage(1);
+              const bounds = getPeriodBounds(e.target.value);
+              const end = new Date(`${bounds.end}T00:00:00`);
+              end.setDate(end.getDate() + 1);
+              emitQuery({ startDate: bounds.start, endDateExclusive: localDateKey(end) });
             }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
@@ -161,6 +199,7 @@ export function PfTransactions({
             onChange={(e) => {
               setSelectedType(e.target.value);
               setCurrentPage(1);
+              emitQuery({ type: e.target.value === 'todos' ? null : e.target.value as TransactionQueryFilters['type'] });
             }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
@@ -230,15 +269,15 @@ export function PfTransactions({
         </div>
         <div className={'flex flex-col gap-3 border-t border-slate-200/80 bg-slate-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'}>
           <p className={'text-xs font-semibold text-slate-500'} aria-live={'polite'}>
-            {filteredTxs.length === 0
+            {filteredCount === 0
               ? 'Nenhum registro no período.'
-              : `${pageStart + 1}–${Math.min(pageStart + PAGE_SIZE, filteredTxs.length)} de ${filteredTxs.length} registros`}
+              : `${pageStart + 1}–${isServerPaginated ? pageStart + visibleTxs.length : Math.min(pageStart + PAGE_SIZE, filteredTxs.length)} de ${filteredCount} registros`}
           </p>
           <div className={'flex items-center gap-2'}>
             <button
               type={'button'}
-              onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
-              disabled={safePage === 1}
+              onClick={() => isServerPaginated ? onPreviousPage?.() : setCurrentPage(Math.max(1, safePage - 1))}
+              disabled={isServerPaginated ? !hasPreviousPage : safePage === 1}
               className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
               aria-label={'Página anterior'}
             >
@@ -246,12 +285,12 @@ export function PfTransactions({
               Anterior
             </button>
             <span className={'min-w-20 text-center text-xs font-bold text-slate-600'}>
-              {safePage} de {pageCount}
+              {isServerPaginated ? safePage : `${safePage} de ${pageCount}`}
             </span>
             <button
               type={'button'}
-              onClick={() => setCurrentPage(Math.min(pageCount, safePage + 1))}
-              disabled={safePage === pageCount}
+              onClick={() => isServerPaginated ? onNextPage?.() : setCurrentPage(Math.min(pageCount || safePage, safePage + 1))}
+              disabled={isServerPaginated ? !hasNextPage : safePage === pageCount}
               className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
               aria-label={'Próxima página'}
             >

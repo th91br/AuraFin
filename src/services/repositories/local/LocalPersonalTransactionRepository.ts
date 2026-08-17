@@ -1,10 +1,23 @@
-import { Transaction } from '../../../types';
+import { Transaction, TransactionAnalytics, TransactionPage, TransactionQueryFilters } from '../../../types';
 import { StorageRepository } from '../../storage/storageRepository';
 import { IPersonalTransactionRepository } from '../interfaces';
+import { buildLocalAnalytics, buildLocalCsv, buildLocalPage } from './transactionRepositoryHelpers';
 
 export class LocalPersonalTransactionRepository implements IPersonalTransactionRepository {
   async list(_userId: string): Promise<Transaction[]> {
     return StorageRepository.getTransactions().filter(t => t.context === 'PF');
+  }
+
+  async listPage(_userId: string, filters: TransactionQueryFilters = {}): Promise<TransactionPage> {
+    return buildLocalPage(StorageRepository.getTransactions().filter(t => t.context === 'PF'), filters);
+  }
+
+  async analytics(_userId: string, filters: Pick<TransactionQueryFilters, 'category' | 'search' | 'startDate' | 'endDateExclusive'> = {}): Promise<TransactionAnalytics> {
+    return buildLocalAnalytics(StorageRepository.getTransactions().filter(t => t.context === 'PF'), filters);
+  }
+
+  async exportCsv(_userId: string, filters: Pick<TransactionQueryFilters, 'category' | 'search' | 'startDate' | 'endDateExclusive'> = {}): Promise<string> {
+    return buildLocalCsv(StorageRepository.getTransactions().filter(t => t.context === 'PF'), filters);
   }
 
   async create(tx: Partial<Transaction>, _userId: string): Promise<Transaction> {
