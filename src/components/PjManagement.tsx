@@ -35,10 +35,10 @@ export function PjManagement({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Clientes &amp; Fornecedores</h1>
-          <p className="text-xs text-slate-300 mt-1">Gestão de parceiros comerciais, contas faturadas e histórico de pagamentos.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Clientes &amp; Fornecedores</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Gestão de parceiros comerciais, contas faturadas e histórico de pagamentos.</p>
         </div>
         <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-white/10">
           <button
@@ -62,7 +62,7 @@ export function PjManagement({
 
       {tab === 'customers' ? (
         <section className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <MetricCard title="Clientes Ativos" value={customers.length} prefix="" subtitle="Carteira cadastrada" />
             <MetricCard title="Total Faturado" value={billed} isPrivacyMode={isPrivacyMode} subtitle="Soma dos contratos" />
             <MetricCard title="Saldos a Receber" value={pending} isPrivacyMode={isPrivacyMode} subtitle="Em aberto" />

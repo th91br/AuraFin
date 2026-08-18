@@ -56,15 +56,12 @@ export function PfWealth({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Balanço Patrimonial Pessoal
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Patrimônio Líquido Real
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Balanço consolidado: seus bens e disponibilidades descontados os passivos totais.
           </p>
         </div>
@@ -72,20 +69,20 @@ export function PfWealth({
         {onAddAsset && (
           <button
             onClick={onAddAsset}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Adicionar Ativo / Bem</span>
+            <span>Adicionar Ativo</span>
           </button>
         )}
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens, imóveis e saldos" />
-        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Dívidas e faturas" />
-        <MetricCard title="Patrimônio Líquido" value={netWorth} isPrivacyMode={isPrivacyMode} subtitle="Posição líquida real" />
-        <MetricCard title="Total de Bens" value={assets.length + pfAccounts.length} prefix="" subtitle="Ativos e contas ativas" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Patrimônio Líquido" value={netWorth} isPrivacyMode={isPrivacyMode} subtitle="Ativos menos Passivos" />
+        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens e saldos líquidos" />
+        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Dívidas e faturas abertas" />
+        <MetricCard title="Índice de Liquidez" value={totalLiabilities > 0 ? Number(((liquidAccountsValue / totalLiabilities) * 100).toFixed(1)) : 100} prefix="" subtitle={totalLiabilities > 0 ? 'Liquidez sobre passivos' : 'Sem passivos registrados'} />
       </div>
 
       {/* Main Grid: Allocation & Asset List */}

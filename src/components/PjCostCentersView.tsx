@@ -35,14 +35,14 @@ export function PjCostCentersView({ costCenters = [], isPrivacyMode = false }: P
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Centros de Custo</h1>
-          <p className="text-xs text-slate-300 mt-1">Orçamentos e alocações ativas da organização.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Centros de Custo</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Orçamentos e alocações ativas da organização.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <MetricCard title="Centros ativos" value={costCenters.length} prefix="" subtitle="Áreas gerenciadas" />
         <MetricCard title="Orçamento Total" value={budget} isPrivacyMode={isPrivacyMode} subtitle="Limite consolidado" />
       </div>

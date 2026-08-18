@@ -85,15 +85,15 @@ export function PjOverview({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-white">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Painel Executivo da Empresa</h1>
-          <p className="text-xs text-slate-300 mt-0.5">Visão consolidada de caixa, faturamento e cartões corporativos.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">Painel Executivo da Empresa</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-0.5">Visão consolidada de caixa, faturamento e cartões corporativos.</p>
         </div>
-        <button onClick={onOpenBillingModal} className="flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"><FileText className="w-4 h-4" /><span>Emitir fatura</span></button>
+        <button onClick={onOpenBillingModal} className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"><FileText className="w-4 h-4" /><span>Emitir fatura</span></button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Receitas" value={totals.receipts} isPrivacyMode={isPrivacyMode} isPJ subtitle="Faturamento registrado" />
         <MetricCard title="Despesas" value={totals.expenses} isPrivacyMode={isPrivacyMode} isPJ subtitle="Saídas operacionais" />
         <MetricCard title="Saldo de Caixa" value={totals.balance} isPrivacyMode={isPrivacyMode} isPJ subtitle="Resultado do período" />

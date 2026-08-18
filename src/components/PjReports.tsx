@@ -67,14 +67,14 @@ export function PjReports({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Relatórios Executivos PJ</h1>
-          <p className="text-xs text-slate-300 mt-1">Consolidação contábil, faturamento, despesas por categoria e exportação para auditoria.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Relatórios Executivos PJ</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Consolidação contábil, faturamento, despesas por categoria e exportação para auditoria.</p>
         </div>
         <button
           onClick={() => void exportReport()}
-          className="flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
         >
           <Download className="w-4 h-4" />
           <span>Exportar CSV</span>
@@ -91,7 +91,7 @@ export function PjReports({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <MetricCard title="Receitas Totais" value={revenue} isPrivacyMode={isPrivacyMode} subtitle="Faturamento do período" />
             <MetricCard title="Despesas Totais" value={expenses} isPrivacyMode={isPrivacyMode} subtitle="Gastos operacionais" />
             <MetricCard title="Saldo Consolidado" value={balance} isPrivacyMode={isPrivacyMode} subtitle="Resultado contábil" />

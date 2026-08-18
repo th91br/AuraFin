@@ -37,10 +37,10 @@ export function PjCollections({ defaulters = [], isPrivacyMode = false }: Props)
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Radar de Inadimplência &amp; Cobrança</h1>
-          <p className="text-xs text-slate-300 mt-1">Monitoramento de títulos em atraso, aging list e réguas de relacionamento.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Radar de Inadimplência &amp; Cobrança</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Monitoramento de títulos em atraso, aging list e réguas de relacionamento.</p>
         </div>
         <div className="flex gap-1 p-1 bg-slate-900 rounded-xl border border-white/10">
           <button
@@ -63,11 +63,13 @@ export function PjCollections({ defaulters = [], isPrivacyMode = false }: Props)
       </div>
 
       {tab === 'radar' ? (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <MetricCard title="Total Vencido" value={total} isPrivacyMode={isPrivacyMode} subtitle="Volume a recuperar" />
-            <MetricCard title="Clientes em Atraso" value={defaulters.length} prefix="" subtitle="Contratos pendentes" />
-            <MetricCard title="Atraso Médio" value={avgDays} prefix="" subtitle="Dias corridos" />
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <MetricCard title="Total em atraso" value={total} isPrivacyMode={isPrivacyMode} subtitle="Volume vencido" />
+            <MetricCard title="Clientes inadimplentes" value={defaulters.length} prefix="" subtitle="Contas pendentes" />
+            <MetricCard title="Atraso médio" value={avgDays} prefix="" subtitle="Dias de atraso" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MetricCard title="Maior Título" value={Math.max(0, ...defaulters.map((row) => row.amount))} isPrivacyMode={isPrivacyMode} subtitle="Maior concentração" />
           </div>
 
@@ -121,7 +123,7 @@ export function PjCollections({ defaulters = [], isPrivacyMode = false }: Props)
               </div>
             </div>
           )}
-        </>
+        </section>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((template, index) => (

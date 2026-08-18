@@ -32,22 +32,19 @@ export function PfGoalsView({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded">
-            Objetivos de Vida
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Metas Financeiras
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Defina objetivos, acompanhe seus aportes e saiba quanto poupar por mês.
           </p>
         </div>
 
         <button
           onClick={onAddGoal}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Meta</span>
@@ -55,7 +52,7 @@ export function PfGoalsView({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Metas Ativas" value={goals.length} prefix="" subtitle="Objetivos em andamento" />
         <MetricCard title="Total Acumulado" value={totalAccumulated} isPrivacyMode={isPrivacyMode} subtitle="Guardado para metas" />
         <MetricCard title="Total Alvo Necessário" value={totalTarget} isPrivacyMode={isPrivacyMode} subtitle="Soma de todos os objetivos" />

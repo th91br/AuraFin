@@ -35,10 +35,10 @@ export function PjReceivablesPayables({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Contas a Receber &amp; Pagar</h1>
-          <p className="text-xs text-slate-300 mt-1">Previsão financeira de títulos, faturamento e compromissos operacionais.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">Contas a Receber &amp; Pagar</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Previsão financeira de títulos, faturamento e compromissos operacionais.</p>
         </div>
         <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-white/10">
           <button
@@ -62,7 +62,7 @@ export function PjReceivablesPayables({
 
       {activeTab === 'receivables' ? (
         <section className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <MetricCard title="Total a Receber" value={pendingReceivables} isPrivacyMode={isPrivacyMode} subtitle="Saldo pendente" />
             <MetricCard title="Total Liquidado" value={receivedReceivables} isPrivacyMode={isPrivacyMode} subtitle="Entradas confirmadas" />
             <MetricCard title="Vencidos" value={overdueReceivables} isPrivacyMode={isPrivacyMode} subtitle="Em atraso" />

@@ -124,22 +124,19 @@ export function PfTransactions({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Extrato Operacional PF
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
-            Movimentações
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
+            Minhas Movimentações
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Acompanhe todas as entradas, saídas e transferências da sua vida financeira.
           </p>
         </div>
 
         <button
           onClick={onAddTransaction}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Movimentação</span>
@@ -147,7 +144,7 @@ export function PfTransactions({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas e Pró-labore" />
         <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e faturas" />
         <MetricCard title="Saldo do Período" value={netPeriodBalance} isPrivacyMode={isPrivacyMode} subtitle="Resultado líquido" />

@@ -86,7 +86,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-[1.08]">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-[1.12] sm:leading-[1.08]">
             A Plataforma Financeira Híbrida que <span className="text-cyan-300">Separa e Conecta</span> sua Vida e sua Empresa.
           </h1>
 

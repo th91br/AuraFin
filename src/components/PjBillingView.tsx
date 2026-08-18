@@ -24,15 +24,15 @@ export function PjBillingView({ invoices = [], isPrivacyMode = false, onAddBilli
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Faturamento Empresarial</h1>
-          <p className="text-xs text-slate-300 mt-1">Emissão e acompanhamento de faturas, notas de serviço e boletos.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">Faturamento Empresarial</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Emissão e acompanhamento de faturas, notas de serviço e boletos.</p>
         </div>
         {onAddBilling && (
           <button
             onClick={onAddBilling}
-            className="flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Emitir Nova Fatura</span>
@@ -40,7 +40,7 @@ export function PjBillingView({ invoices = [], isPrivacyMode = false, onAddBilli
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Total Faturado" value={totalBilled} isPrivacyMode={isPrivacyMode} subtitle="Volume emitido" />
         <MetricCard title="Recebido" value={totalPaid} isPrivacyMode={isPrivacyMode} subtitle="Status liquidado" />
         <MetricCard title="Em Aberto" value={totalOpen} isPrivacyMode={isPrivacyMode} subtitle="Status pendente" />

@@ -29,12 +29,12 @@ export function PjCashflow({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Caixa Operacional Empresarial</h1>
-          <p className="text-xs text-slate-300 mt-1">Acompanhamento contínuo de entradas, saídas e saldo líquido operacional.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Caixa Operacional Empresarial</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Acompanhamento contínuo de entradas, saídas e saldo líquido operacional.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {onOpenTransferModal && (
             <button
               onClick={onOpenTransferModal}
@@ -68,7 +68,7 @@ export function PjCashflow({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <MetricCard title="Saldo em Caixa" value={balance} isPrivacyMode={isPrivacyMode} subtitle="Posição líquida" />
             <MetricCard title="Entradas" value={income} isPrivacyMode={isPrivacyMode} subtitle="Faturamento creditado" />
             <MetricCard title="Saídas" value={expenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas debitadas" />

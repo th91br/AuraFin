@@ -25,23 +25,23 @@ export function PjProjectsView({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Projetos &amp; Contratos</h1>
-          <p className="text-xs text-slate-300 mt-1">Acompanhamento de margens, faturamento contratado e entregas por cliente.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Projetos &amp; Contratos</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Acompanhamento de margens, faturamento contratado e entregas por cliente.</p>
         </div>
         {onAddProject && (
           <button
             onClick={onAddProject}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Novo projeto</span>
+            <span>Novo Projeto</span>
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Projetos Ativos" value={projects.length} prefix="" subtitle="Contratos gerenciados" />
         <MetricCard title="Total Contratado" value={contracted} isPrivacyMode={isPrivacyMode} subtitle="Receita prevista" />
         <MetricCard title="Total Recebido" value={received} isPrivacyMode={isPrivacyMode} subtitle="Faturamento liquidado" />

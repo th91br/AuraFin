@@ -134,20 +134,17 @@ export function PfReportsView({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Central Analítica PF
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Relatórios Financeiros & Inteligência
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Analise receitas, despesas, taxa de economia e evolução patrimonial calculadas em tempo real.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as any)}
@@ -171,7 +168,7 @@ export function PfReportsView({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" />
         <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" />
         <MetricCard title="Resultado Líquido" value={netSavings} isPrivacyMode={isPrivacyMode} subtitle="Superávit do período" />

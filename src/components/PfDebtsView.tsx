@@ -50,15 +50,12 @@ export function PfDebtsView({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-rose-50 text-rose-900 border border-rose-200 rounded">
-            Gestão de Passivos & Compromissos
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Dívidas & Financiamentos
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Acompanhe saldos devedores, parcelas mensais, taxas de juros e planos de quitação.
           </p>
         </div>
@@ -66,7 +63,7 @@ export function PfDebtsView({
         {onAddDebt && (
           <button
             onClick={onAddDebt}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Adicionar Dívida</span>
@@ -75,10 +72,10 @@ export function PfDebtsView({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Saldo Devedor Total" value={totalDebtBalance} isPrivacyMode={isPrivacyMode} subtitle="Compromisso total a quitar" />
-        <MetricCard title="Parcelas Mensais" value={totalMonthlyPayments} isPrivacyMode={isPrivacyMode} subtitle="Impacto fixo por mês" />
-        <MetricCard title="Comprometimento Renda" value={pfIncome > 0 ? Number(incomeCommitmentRatio) : 0} prefix="" subtitle={pfIncome > 0 ? `${incomeCommitmentRatio}% da renda mensal` : 'Sem receitas registradas'} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Saldo Devedor Total" value={totalDebtBalance} isPrivacyMode={isPrivacyMode} subtitle="Soma de todos os contratos" />
+        <MetricCard title="Parcelas no Mês" value={totalMonthlyPayments} isPrivacyMode={isPrivacyMode} subtitle="Compromisso mensal fixo" />
+        <MetricCard title="Comprometimento da Renda" value={Number(incomeCommitmentRatio)} prefix="" subtitle="Impacto no orçamento mensal" />
         <MetricCard title="Contratos Ativos" value={debts.length} prefix="" subtitle="Financiamentos e empréstimos" />
       </div>
 

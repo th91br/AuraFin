@@ -124,20 +124,17 @@ export function PfPlanning({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Planejamento Orçamentário
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Meu Orçamento de Gastos
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Defina tetos por categoria e acompanhe seus gastos em tempo real.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {onCopyPreviousMonth && (
             <button
               onClick={handleCopyMonth}
@@ -160,7 +157,7 @@ export function PfPlanning({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard title="Orçamento Total" value={totalPlanned} isPrivacyMode={isPrivacyMode} subtitle="Teto planejado do mês" />
         <MetricCard title="Gasto Acumulado" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Consumido no período" />
         <MetricCard title="Saldo Disponível" value={availableBudget} isPrivacyMode={isPrivacyMode} subtitle="Livre para uso" />

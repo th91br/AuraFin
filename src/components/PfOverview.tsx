@@ -112,33 +112,30 @@ export function PfOverview({
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-900">
       
       {/* 1. Header do Dashboard */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Visão Geral PF — AuraFin
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Minhas Finanças Pessoais
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Acompanhe seu saldo consolidado, fluxo mensal, cartões e objetivos em tempo real.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 shrink-0">
           {onAddAccount && (
             <button
               onClick={onAddAccount}
               className="flex items-center space-x-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-all text-xs border border-slate-200"
             >
               <Landmark className="w-4 h-4 text-indigo-600" />
-              <span>Nova Conta</span>
+              <span className="hidden sm:inline">Nova Conta</span>
             </button>
           )}
 
           <button
             onClick={onAddTransaction}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Lançamento</span>
@@ -147,7 +144,7 @@ export function PfOverview({
       </div>
 
       {/* Top 5 Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard title="Saldo Consolidado" value={totalAccountBalance} isPrivacyMode={isPrivacyMode} subtitle="Contas e carteiras ativas" />
         <MetricCard title="Entradas do Mês" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas registradas" />
         <MetricCard title="Saídas do Mês" value={totalSpent} isPrivacyMode={isPrivacyMode} subtitle="Despesas e pagamentos" />

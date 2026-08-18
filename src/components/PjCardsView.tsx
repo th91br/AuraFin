@@ -25,15 +25,15 @@ export function PjCardsView({ creditCards = [], isPrivacyMode = false, onAddCard
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Cartões Empresariais</h1>
-          <p className="text-xs text-slate-300 mt-1">Gestão de limites de crédito corporativo, faturas e cartões de débito.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">Cartões Empresariais</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Gestão de limites de crédito corporativo, faturas e cartões de débito.</p>
         </div>
         {onAddCard && (
           <button
             onClick={onAddCard}
-            className="flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Cartão</span>
@@ -41,7 +41,7 @@ export function PjCardsView({ creditCards = [], isPrivacyMode = false, onAddCard
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard title="Cartões Ativos" value={cards.length} prefix="" subtitle="Registros da empresa" />
         <MetricCard title="Limite Total" value={totalLimit} isPrivacyMode={isPrivacyMode} subtitle="Crédito global" />
         <MetricCard title="Limite Utilizado" value={totalUsed} isPrivacyMode={isPrivacyMode} subtitle="Gastos correntes" />

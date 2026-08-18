@@ -69,18 +69,18 @@ export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 text-white rounded-3xl p-8 max-w-lg w-full border border-slate-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-slate-900 text-white rounded-3xl p-5 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-800 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
         
         {/* Header Modal */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
-            <h3 className="text-xl font-bold text-white">
+            <h3 className="text-lg sm:text-xl font-bold text-white">
               {editingTransaction ? 'Editar Lançamento' : 'Novo Lançamento Financeiro'}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">Registre de forma simples e rápida.</p>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-lg">
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>

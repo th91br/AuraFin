@@ -42,9 +42,9 @@ export function PjDreView({ transactions = [], isPrivacyMode = false, analytics 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center space-x-2">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center space-x-2">
             <span>DRE Gerencial</span>
             <div className="group relative cursor-pointer">
               <HelpCircle className="w-4 h-4 text-slate-400 hover:text-cyan-400" />
@@ -53,7 +53,7 @@ export function PjDreView({ transactions = [], isPrivacyMode = false, analytics 
               </div>
             </div>
           </h1>
-          <p className="text-xs text-slate-300 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5">
             Demonstrativo de faturamento, margens brutas, custos operacionais e resultado líquido.
           </p>
         </div>
@@ -66,12 +66,12 @@ export function PjDreView({ transactions = [], isPrivacyMode = false, analytics 
         </div>
       </div>
 
-      {/* Top 4 DRE KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Receita Bruta" value={grossRevenue} isPrivacyMode={isPrivacyMode} subtitle="Faturamento total emitido" />
-        <MetricCard title="Receita Líquida" value={netRevenue} isPrivacyMode={isPrivacyMode} subtitle="Após impostos diretos" />
-        <MetricCard title="Resultado Operacional" value={netOpResult} isPrivacyMode={isPrivacyMode} subtitle="Lucro líquido gerencial" />
-        <MetricCard title="Margem Operacional" value={opMarginPct} isPrivacyMode={isPrivacyMode} prefix="" subtitle={`Margem: ${opMarginPct}%`} />
+      {/* Top 4 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Receita Bruta Total" value={grossRevenue} isPrivacyMode={isPrivacyMode} isPJ subtitle="Total faturado no período" />
+        <MetricCard title="Margem Bruta" value={grossMargin} isPrivacyMode={isPrivacyMode} isPJ subtitle="Receita Líquida - Custos Diretos" />
+        <MetricCard title="Resultado Operacional" value={netOpResult} isPrivacyMode={isPrivacyMode} isPJ subtitle="Lucro antes de IRPJ/CSLL" />
+        <MetricCard title="Margem Operacional" value={opMarginPct} prefix="" isPrivacyMode={isPrivacyMode} isPJ subtitle="Eficiência do negócio" />
       </div>
 
       {/* Estrutura da DRE (Statement) */}

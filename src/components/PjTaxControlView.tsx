@@ -8,18 +8,18 @@ interface Props {
 export function PjTaxControlView({ onAddTaxRecord }: Props) {
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Controle Gerencial de Impostos</h1>
-          <p className="text-xs text-slate-300 mt-1">Previsão e acompanhamento de guias tributárias (DAS, ISS, IRPJ, CSLL).</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Controle Gerencial de Impostos</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Previsão e acompanhamento de guias tributárias (DAS, ISS, IRPJ, CSLL).</p>
         </div>
         {onAddTaxRecord && (
           <button
             onClick={onAddTaxRecord}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Registrar imposto</span>
+            <span>Registrar Imposto</span>
           </button>
         )}
       </div>
