@@ -141,21 +141,27 @@ export function CrossContextModal({ isOpen, onClose, reconciliation, pfAccounts,
           <button
             type="button"
             onClick={() => setMode('reimbursement')}
-            className={`flex-1 py-2 rounded-xl transition-all ${mode === 'reimbursement' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 py-2 rounded-xl transition-all ${
+              mode === 'reimbursement' ? 'bg-cyan-600 text-white shadow-md' : 'text-white/70 hover:text-white'
+            }`}
           >
             Reembolso
           </button>
           <button
             type="button"
             onClick={() => setMode('pro_labore')}
-            className={`flex-1 py-2 rounded-xl transition-all ${mode === 'pro_labore' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 py-2 rounded-xl transition-all ${
+              mode === 'pro_labore' ? 'bg-cyan-600 text-white shadow-md' : 'text-white/70 hover:text-white'
+            }`}
           >
             Pró-Labore
           </button>
           <button
             type="button"
             onClick={() => setMode('profit_distribution')}
-            className={`flex-1 py-2 rounded-xl transition-all ${mode === 'profit_distribution' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 py-2 rounded-xl transition-all ${
+              mode === 'profit_distribution' ? 'bg-cyan-600 text-white shadow-md' : 'text-white/70 hover:text-white'
+            }`}
           >
             Lucros
           </button>

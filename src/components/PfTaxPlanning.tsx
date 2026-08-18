@@ -164,9 +164,13 @@ export function PfTaxPlanning({ transactions = [], isPrivacyMode = false, onExpo
                 </div>
 
                 <div className="flex items-center space-x-6">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    rec.attachmentUrl ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-200 text-slate-700'
-                  }`}>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      rec.attachmentUrl
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : 'bg-slate-100 text-slate-700 border border-slate-300'
+                    }`}
+                  >
                     {rec.attachmentUrl ? 'Comprovante Anexado' : 'Sem Anexo'}
                   </span>
                   <span className="font-mono font-bold text-slate-950 text-sm">

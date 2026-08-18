@@ -158,7 +158,9 @@ export function SecuritySettingsModal({ isOpen, onClose }: Props) {
           <button
             type="button"
             onClick={() => setActiveTab('mfa')}
-            className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center space-x-2 ${activeTab === 'mfa' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center space-x-2 ${
+              activeTab === 'mfa' ? 'bg-cyan-600 text-white shadow-md' : 'text-white/70 hover:text-white'
+            }`}
           >
             <QrCode className="w-4 h-4" />
             <span>Autenticação em 2 Etapas (MFA)</span>
@@ -166,7 +168,9 @@ export function SecuritySettingsModal({ isOpen, onClose }: Props) {
           <button
             type="button"
             onClick={() => setActiveTab('password')}
-            className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center space-x-2 ${activeTab === 'password' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center space-x-2 ${
+              activeTab === 'password' ? 'bg-cyan-600 text-white shadow-md' : 'text-white/70 hover:text-white'
+            }`}
           >
             <Lock className="w-4 h-4" />
             <span>Alterar Senha</span>

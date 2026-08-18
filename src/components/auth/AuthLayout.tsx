@@ -26,13 +26,13 @@ export function AuthLayout({ initialMode = 'login' }: Props) {
   }, [isPasswordRecoveryMode]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between font-sans">
       
       {/* Top Brand Bar */}
       <header className="px-6 py-5 border-b border-slate-900 flex items-center justify-between max-w-7xl mx-auto w-full">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <Sparkles className="w-4 h-4 text-slate-950" />
+          <div className="w-8 h-8 rounded-xl bg-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div className="flex items-baseline space-x-1.5">
             <span className="font-extrabold tracking-tight text-base text-white">AuraFin</span>
@@ -62,7 +62,7 @@ export function AuthLayout({ initialMode = 'login' }: Props) {
             </div>
 
             <h1 className="text-3xl xl:text-4xl font-black tracking-tight text-white leading-tight">
-              Gestão financeira de alta precisão para <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-300">Pessoa Física</span> e <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-400">Pessoa Jurídica</span>.
+              Gestão financeira de alta precisão para <span className="text-cyan-400">Pessoa Física</span> e <span className="text-slate-300">Pessoa Jurídica</span>.
             </h1>
 
             <p className="text-xs xl:text-sm text-slate-400 leading-relaxed max-w-md">

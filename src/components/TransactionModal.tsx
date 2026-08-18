@@ -89,16 +89,18 @@ export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }
           
           {/* STEP 1: CONTEXTO (PF vs PJ) */}
           <div className="space-y-1.5">
-            <label className="block font-bold uppercase tracking-wider text-slate-400">1. Esta movimentação pertence a quem?</label>
+            <label className="block font-bold uppercase tracking-wider text-slate-300 text-xs">1. Esta movimentação pertence a quem?</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => { setContext('PF'); setCategory('outros'); }}
                 className={`flex items-center justify-center space-x-2 py-3 rounded-xl font-bold border transition-all ${
-                  context === 'PF' ? 'bg-indigo-950/80 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                  context === 'PF'
+                    ? 'bg-indigo-900/60 border-indigo-400 text-white'
+                    : 'bg-slate-900 border-slate-700 text-white/70 hover:border-slate-500 hover:text-white'
                 }`}
               >
-                <User className="w-4 h-4 text-indigo-400" />
+                <User className="w-4 h-4 text-indigo-300" />
                 <span>Pessoa Física (PF)</span>
               </button>
 
@@ -106,10 +108,12 @@ export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }
                 type="button"
                 onClick={() => { setContext('PJ'); setCategory('outros'); }}
                 className={`flex items-center justify-center space-x-2 py-3 rounded-xl font-bold border transition-all ${
-                  context === 'PJ' ? 'bg-slate-800 border-sky-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                  context === 'PJ'
+                    ? 'bg-cyan-900/60 border-cyan-400 text-white'
+                    : 'bg-slate-900 border-slate-700 text-white/70 hover:border-slate-500 hover:text-white'
                 }`}
               >
-                <Building2 className="w-4 h-4 text-sky-400" />
+                <Building2 className="w-4 h-4 text-cyan-300" />
                 <span>Pessoa Jurídica (PJ)</span>
               </button>
             </div>
@@ -117,13 +121,15 @@ export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }
 
           {/* STEP 2: TIPO (ENTRADA vs SAÍDA) */}
           <div className="space-y-1.5">
-            <label className="block font-bold uppercase tracking-wider text-slate-400">2. Qual o tipo do fluxo?</label>
+            <label className="block font-bold uppercase tracking-wider text-slate-300 text-xs">2. Qual o tipo do fluxo?</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setType('income')}
                 className={`py-2.5 rounded-xl font-bold border transition-all ${
-                  type === 'income' ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'
+                  type === 'income'
+                    ? 'bg-emerald-900/60 border-emerald-400 text-emerald-200'
+                    : 'bg-slate-900 border-slate-700 text-white/70 hover:border-slate-500 hover:text-white'
                 }`}
               >
                 + Entrada (Receita)
@@ -132,7 +138,9 @@ export function TransactionModal({ isOpen, onClose, onSave, editingTransaction }
                 type="button"
                 onClick={() => setType('expense')}
                 className={`py-2.5 rounded-xl font-bold border transition-all ${
-                  type === 'expense' ? 'bg-rose-950/80 border-rose-500 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400'
+                  type === 'expense'
+                    ? 'bg-rose-900/60 border-rose-400 text-rose-200'
+                    : 'bg-slate-900 border-slate-700 text-white/70 hover:border-slate-500 hover:text-white'
                 }`}
               >
                 - Saída (Despesa)

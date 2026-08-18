@@ -50,7 +50,7 @@ export function PfBudget({ transactions, budgetItems, onAddTransaction }: Props)
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Realizado / Executado</p>
-          <h3 className="text-3xl font-extrabold text-indigo-900 mt-2">
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-2">
             R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </h3>
           <div className="flex items-center space-x-2 mt-2">

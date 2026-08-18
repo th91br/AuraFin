@@ -66,9 +66,13 @@ export function FinancialSummary({ mode, transactions, assets = [], onAdd, onAdd
           isPJ ? 'border-slate-800 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900 shadow-sm'
         }`}>
           <div className="flex justify-between items-start mb-6">
-            <div className={`p-3 rounded-xl ${
-              isPJ ? 'bg-slate-800 text-slate-200 border border-slate-700' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-            }`}>
+            <div
+              className={`p-3 rounded-xl ${
+                isPJ
+                  ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                  : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
+              }`}
+            >
               <Wallet className="w-6 h-6" />
             </div>
           </div>

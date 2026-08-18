@@ -3,25 +3,194 @@ import { Project, Customer, Supplier, CostCenter } from '../types';
 import { MetricCard } from './aura/AuraCards';
 import { Plus, Users, Truck } from 'lucide-react';
 
-interface Props { projects?: Project[]; customers?: Customer[]; suppliers?: Supplier[]; costCenters?: CostCenter[]; isPrivacyMode?: boolean; onAddProject?: () => void; onAddCustomer?: () => void; onAddSupplier?: () => void; }
+interface Props {
+  projects?: Project[];
+  customers?: Customer[];
+  suppliers?: Supplier[];
+  costCenters?: CostCenter[];
+  isPrivacyMode?: boolean;
+  onAddProject?: () => void;
+  onAddCustomer?: () => void;
+  onAddSupplier?: () => void;
+}
+
 const money = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function PjManagement({ customers = [], suppliers = [], isPrivacyMode = false, onAddCustomer, onAddSupplier }: Props) {
+export function PjManagement({
+  customers = [],
+  suppliers = [],
+  isPrivacyMode = false,
+  onAddCustomer,
+  onAddSupplier,
+}: Props) {
   const [tab, setTab] = useState<'customers' | 'suppliers'>('customers');
   const [selected, setSelected] = useState<Customer | null>(null);
+
   const billed = customers.reduce((sum, row) => sum + row.totalBilled, 0);
   const pending = customers.reduce((sum, row) => sum + row.totalPending, 0);
   const spent = suppliers.reduce((sum, row) => sum + row.totalSpent, 0);
-  if ((tab === 'customers' && customers.length === 0) || (tab === 'suppliers' && suppliers.length === 0)) {
-    const showingCustomers = tab === 'customers';
-    const addEntity = showingCustomers ? onAddCustomer : onAddSupplier;
-    return <div className="space-y-8 animate-in fade-in duration-200 text-slate-100"><div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4"><div><h1 className="text-2xl font-black text-white">Clientes &amp; Fornecedores</h1><p className="text-xs text-slate-400 mt-1">Cadastros da organização ativa.</p></div><div className="flex gap-1 p-1 bg-slate-900 rounded-xl border border-white/10"><button onClick={() => setTab('customers')} className={`px-4 py-2 rounded-lg text-xs font-bold ${showingCustomers ? 'bg-cyan-600 text-white' : 'text-slate-400'}`}>Clientes</button><button onClick={() => setTab('suppliers')} className={`px-4 py-2 rounded-lg text-xs font-bold ${!showingCustomers ? 'bg-cyan-600 text-white' : 'text-slate-400'}`}>Fornecedores</button></div></div><div className="p-16 text-center bg-[#0F172A] rounded-2xl border border-dashed border-white/10"><Users className="w-10 h-10 text-slate-600 mx-auto mb-3" /><p className="text-slate-400">Nenhum dado disponível</p><button onClick={() => addEntity ? addEntity() : alert('O cadastro ainda não possui uma fonte Supabase ativa.')} className="mt-4 px-4 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold">{showingCustomers ? 'Adicionar cliente' : 'Adicionar fornecedor'}</button></div></div>;
-  }
-  return <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4"><div><h1 className="text-2xl font-black text-white">Clientes &amp; Fornecedores</h1><p className="text-xs text-slate-400 mt-1">Cadastros reais da organização ativa.</p></div><div className="flex gap-1 p-1 bg-slate-900 rounded-xl border border-white/10"><button onClick={() => setTab('customers')} className={`px-4 py-2 rounded-lg text-xs font-bold ${tab === 'customers' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`}>Clientes ({customers.length})</button><button onClick={() => setTab('suppliers')} className={`px-4 py-2 rounded-lg text-xs font-bold ${tab === 'suppliers' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`}>Fornecedores ({suppliers.length})</button></div></div>
-    {tab === 'customers' ? <section className="space-y-6"><div className="grid grid-cols-2 md:grid-cols-3 gap-4"><MetricCard title="Clientes" value={customers.length} prefix="" subtitle="Registros reais" /><MetricCard title="Faturamento" value={billed} isPrivacyMode={isPrivacyMode} subtitle="Valor informado" /><MetricCard title="Em Aberto" value={pending} isPrivacyMode={isPrivacyMode} subtitle="Saldo informado" /></div><DataTable empty={!customers.length} headers={['Cliente', 'Documento', 'Contato', 'Faturado', 'Em aberto', 'Perfil']}><>{customers.map(row => <tr key={row.id} className="border-b border-white/5"><td className="py-3 px-4 font-bold">{row.name}</td><td className="py-3 px-4 text-slate-400">{row.documentCnpjCpf || '—'}</td><td className="py-3 px-4 text-slate-400">{row.contactEmail || '—'}</td><td className="py-3 px-4 text-right">{money(row.totalBilled)}</td><td className="py-3 px-4 text-right">{money(row.totalPending)}</td><td className="py-3 px-4 text-center"><button onClick={() => setSelected(row)} className="px-2 py-1 bg-slate-800 rounded text-cyan-300 text-[11px]">Ver</button></td></tr>)}</></DataTable><button onClick={onAddCustomer} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 rounded-xl text-xs font-bold"><Plus className="w-4 h-4" />Novo cliente</button></section> : <section className="space-y-6"><div className="grid grid-cols-2 md:grid-cols-2 gap-4"><MetricCard title="Fornecedores" value={suppliers.length} prefix="" subtitle="Registros reais" /><MetricCard title="Gasto informado" value={spent} isPrivacyMode={isPrivacyMode} subtitle="Dados do Supabase" /></div><DataTable empty={!suppliers.length} headers={['Fornecedor', 'Categoria', 'CNPJ', 'E-mail', 'Total gasto']}><>{suppliers.map(row => <tr key={row.id} className="border-b border-white/5"><td className="py-3 px-4 font-bold">{row.name}</td><td className="py-3 px-4 text-slate-400">{row.category || '—'}</td><td className="py-3 px-4 text-slate-400">{row.documentCnpj || '—'}</td><td className="py-3 px-4 text-slate-400">{row.contactEmail || '—'}</td><td className="py-3 px-4 text-right">{money(row.totalSpent)}</td></tr>)}</></DataTable><button onClick={onAddSupplier} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 rounded-xl text-xs font-bold"><Plus className="w-4 h-4" />Novo fornecedor</button></section>}
-    {selected && <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80"><div className="bg-[#0F172A] border border-white/10 rounded-2xl p-6 max-w-lg w-full space-y-4"><div className="flex justify-between"><h2 className="font-bold text-white">{selected.name}</h2><button onClick={() => setSelected(null)} className="text-slate-400">Fechar</button></div><div className="grid grid-cols-2 gap-3 text-xs"><div>Faturado<strong className="block text-white">{money(selected.totalBilled)}</strong></div><div>Recebido<strong className="block text-emerald-400">{money(selected.totalReceived)}</strong></div><div className="col-span-2">Pendente<strong className="block text-amber-400">{money(selected.totalPending)}</strong></div></div></div></div>}
-  </div>;
+
+  const showingCustomers = tab === 'customers';
+  const addEntity = showingCustomers ? onAddCustomer : onAddSupplier;
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-white">Clientes &amp; Fornecedores</h1>
+          <p className="text-xs text-slate-300 mt-1">Gestão de parceiros comerciais, contas faturadas e histórico de pagamentos.</p>
+        </div>
+        <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-white/10">
+          <button
+            onClick={() => setTab('customers')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              showingCustomers ? 'bg-cyan-600 text-white shadow-xs' : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Clientes ({customers.length})
+          </button>
+          <button
+            onClick={() => setTab('suppliers')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              !showingCustomers ? 'bg-cyan-600 text-white shadow-xs' : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Fornecedores ({suppliers.length})
+          </button>
+        </div>
+      </div>
+
+      {tab === 'customers' ? (
+        <section className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <MetricCard title="Clientes Ativos" value={customers.length} prefix="" subtitle="Carteira cadastrada" />
+            <MetricCard title="Total Faturado" value={billed} isPrivacyMode={isPrivacyMode} subtitle="Soma dos contratos" />
+            <MetricCard title="Saldos a Receber" value={pending} isPrivacyMode={isPrivacyMode} subtitle="Em aberto" />
+          </div>
+
+          <DataTable
+            empty={customers.length === 0}
+            emptyMessage="Nenhum cliente cadastrado ainda. Adicione clientes para acompanhar contratos e recebíveis."
+            headers={['Cliente', 'Documento', 'Contato', 'Faturado', 'Em aberto', 'Ações']}
+          >
+            {customers.map((row) => (
+              <tr key={row.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td className="py-3 px-4 font-bold text-white">{row.name}</td>
+                <td className="py-3 px-4 text-slate-300 font-mono">{row.documentCnpjCpf || '—'}</td>
+                <td className="py-3 px-4 text-slate-300">{row.contactEmail || '—'}</td>
+                <td className="py-3 px-4 text-right font-mono text-white">{money(row.totalBilled)}</td>
+                <td className="py-3 px-4 text-right font-mono text-amber-400">{money(row.totalPending)}</td>
+                <td className="py-3 px-4 text-center">
+                  <button
+                    onClick={() => setSelected(row)}
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-cyan-300 text-[11px] font-bold transition-colors"
+                  >
+                    Detalhes
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+
+          {onAddCustomer && (
+            <button
+              onClick={onAddCustomer}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Novo cliente</span>
+            </button>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+            <MetricCard title="Fornecedores Ativos" value={suppliers.length} prefix="" subtitle="Parceiros cadastrados" />
+            <MetricCard title="Volume de Compras" value={spent} isPrivacyMode={isPrivacyMode} subtitle="Total pago a fornecedores" />
+          </div>
+
+          <DataTable
+            empty={suppliers.length === 0}
+            emptyMessage="Nenhum fornecedor cadastrado ainda. Registre seus fornecedores para controle de contas a pagar."
+            headers={['Fornecedor', 'Categoria', 'CNPJ', 'E-mail', 'Total gasto']}
+          >
+            {suppliers.map((row) => (
+              <tr key={row.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td className="py-3 px-4 font-bold text-white">{row.name}</td>
+                <td className="py-3 px-4 text-slate-300">{row.category || '—'}</td>
+                <td className="py-3 px-4 text-slate-300 font-mono">{row.documentCnpj || '—'}</td>
+                <td className="py-3 px-4 text-slate-300">{row.contactEmail || '—'}</td>
+                <td className="py-3 px-4 text-right font-mono text-white">{money(row.totalSpent)}</td>
+              </tr>
+            ))}
+          </DataTable>
+
+          {onAddSupplier && (
+            <button
+              onClick={onAddSupplier}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Novo fornecedor</span>
+            </button>
+          )}
+        </section>
+      )}
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-xl">
+            <div className="flex justify-between items-center pb-2 border-b border-white/10">
+              <h2 className="font-bold text-white text-base">{selected.name}</h2>
+              <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white text-xs font-bold">Fechar</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-slate-950/60 rounded-xl border border-white/5">
+                <span className="text-slate-400 block text-[11px]">Total Faturado</span>
+                <strong className="block text-white font-mono text-sm mt-0.5">{money(selected.totalBilled)}</strong>
+              </div>
+              <div className="p-3 bg-slate-950/60 rounded-xl border border-white/5">
+                <span className="text-slate-400 block text-[11px]">Total Recebido</span>
+                <strong className="block text-emerald-400 font-mono text-sm mt-0.5">{money(selected.totalReceived)}</strong>
+              </div>
+              <div className="col-span-2 p-3 bg-slate-950/60 rounded-xl border border-white/5">
+                <span className="text-slate-400 block text-[11px]">Saldo Pendente</span>
+                <strong className="block text-amber-400 font-mono text-sm mt-0.5">{money(selected.totalPending)}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-function DataTable({ headers, empty, children }: { headers: string[]; empty: boolean; children: ReactNode }) { return <div className="bg-[#0F172A] rounded-2xl border border-white/5 overflow-hidden"><div className="p-4 border-b border-white/5 flex justify-end"><span className="text-xs text-slate-500">Fonte: Supabase</span></div>{empty ? <div className="py-16 text-center text-slate-400">Nenhum dado disponível</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="bg-slate-900 text-slate-400 uppercase text-[10px]">{headers.map(header => <th key={header} className="py-3 px-4">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>}</div>; }
+function DataTable({ headers, empty, emptyMessage, children }: { headers: string[]; empty: boolean; emptyMessage?: string; children: ReactNode }) {
+  if (empty) {
+    return (
+      <div className="bg-slate-900/80 rounded-2xl border border-dashed border-white/10 p-12 text-center text-slate-300">
+        <Users className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+        <p className="text-xs">{emptyMessage || 'Nenhum registro encontrado.'}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-900/90 rounded-2xl border border-white/10 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="bg-slate-950 text-slate-300 uppercase text-[10px] tracking-wider border-b border-white/10">
+              {headers.map((header) => (
+                <th key={header} className="py-3 px-4">{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {children}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

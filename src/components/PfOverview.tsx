@@ -157,14 +157,14 @@ export function PfOverview({
 
       {/* 2. Onboarding / Insight Banner */}
       {pfTxs.length === 0 && pfAccounts.length === 0 ? (
-        <div className="p-6 rounded-3xl bg-indigo-50/80 border border-indigo-200/80 text-indigo-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 text-slate-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-indigo-950">Bem-vindo ao seu painel financeiro pessoal!</h3>
-              <p className="text-xs text-indigo-700 mt-0.5">Comece cadastrando suas contas bancárias ou criando seu primeiro lançamento para ver gráficos e métricas automáticas.</p>
+              <h3 className="font-bold text-sm text-slate-950">Painel Financeiro Pessoal</h3>
+              <p className="text-xs text-slate-600 mt-0.5">Cadastre suas contas bancárias ou crie seu primeiro lançamento para ver relatórios e análises automáticas.</p>
             </div>
           </div>
 
@@ -186,14 +186,13 @@ export function PfOverview({
           </div>
         </div>
       ) : (
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 flex items-center justify-between text-xs font-semibold">
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-slate-800 flex items-center justify-between text-xs font-medium">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
-              <span className="font-extrabold uppercase text-[10px] text-indigo-700 tracking-wider block">Inteligência AuraFin</span>
-              <p>{pfTxs.length} lançamento(s) e {pfAccounts.length} conta(s) sincronizados com sucesso.</p>
+              <p className="text-slate-700">{pfTxs.length} lançamento(s) e {pfAccounts.length} conta(s) sincronizados com sucesso.</p>
             </div>
           </div>
         </div>

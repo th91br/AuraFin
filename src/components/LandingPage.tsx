@@ -36,7 +36,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/20 selection:text-indigo-200">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
       
       {/* Top Navbar */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.08]">
@@ -87,7 +87,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
 
           {/* Main Headline */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-[1.08]">
-            A Plataforma Financeira Híbrida que <span className="bg-gradient-to-r from-indigo-300 via-sky-200 to-indigo-400 bg-clip-text text-transparent">Separa e Conecta</span> sua Vida e sua Empresa.
+            A Plataforma Financeira Híbrida que <span className="text-cyan-300">Separa e Conecta</span> sua Vida e sua Empresa.
           </h1>
 
           {/* Subheadline */}
@@ -170,7 +170,7 @@ export function LandingPage({ onEnterApp, onSelectMode }: LandingPageProps) {
                       </div>
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
                         <p className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Reserva de Emergência</p>
-                        <h4 className="text-2xl font-extrabold text-indigo-950 mt-1 tabular-nums">Nenhum dado disponível</h4>
+                        <h4 className="text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">Nenhum dado disponível</h4>
                         <p className="text-xs text-slate-500 mt-1">Configure sua reserva após entrar.</p>
                       </div>
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">

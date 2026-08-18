@@ -72,11 +72,13 @@ export function PjOverview({
 
   if (!hasData) {
     return (
-      <div className="min-h-[420px] flex flex-col items-center justify-center gap-4 text-center text-slate-300">
-        <FileText className="w-10 h-10 text-slate-600" />
-        <h1 className="text-xl font-black text-white">Dashboard PJ</h1>
-        <p className="text-sm text-slate-400">Nenhum dado disponível</p>
-        <button onClick={onAddTransaction} className="px-4 py-2 rounded-xl bg-cyan-600 text-white text-xs font-bold">Cadastrar primeira movimentação</button>
+      <div className="min-h-[420px] flex flex-col items-center justify-center gap-4 text-center text-slate-300 bg-slate-900/60 p-12 rounded-2xl border border-dashed border-white/10">
+        <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400">
+          <FileText className="w-6 h-6" />
+        </div>
+        <h1 className="text-xl font-bold text-white">Painel Executivo da Empresa</h1>
+        <p className="text-sm text-slate-300 max-w-md">Nenhuma movimentação ou conta registrada para esta organização ainda. Comece emitindo uma fatura ou cadastrando sua primeira movimentação.</p>
+        <button onClick={onAddTransaction} className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-xs">Cadastrar primeira movimentação</button>
       </div>
     );
   }
@@ -84,37 +86,157 @@ export function PjOverview({
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-        <div><span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 rounded">Dashboard PJ</span><h1 className="text-2xl font-black tracking-tight mt-1">Painel Executivo da Empresa</h1></div>
-        <button onClick={onOpenBillingModal} className="flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs"><FileText className="w-4 h-4" /><span>Emitir fatura</span></button>
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-white">Painel Executivo da Empresa</h1>
+          <p className="text-xs text-slate-300 mt-0.5">Visão consolidada de caixa, faturamento e cartões corporativos.</p>
+        </div>
+        <button onClick={onOpenBillingModal} className="flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"><FileText className="w-4 h-4" /><span>Emitir fatura</span></button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Receitas" value={totals.receipts} isPrivacyMode={isPrivacyMode} isPJ subtitle="Registros Supabase" />
-        <MetricCard title="Despesas" value={totals.expenses} isPrivacyMode={isPrivacyMode} isPJ subtitle="Registros Supabase" />
-        <MetricCard title="Saldo" value={totals.balance} isPrivacyMode={isPrivacyMode} isPJ subtitle="Receitas menos despesas" />
-        <MetricCard title="Margem" value={totals.receipts > 0 ? Math.round((totals.balance / totals.receipts) * 100) : 0} isPrivacyMode={isPrivacyMode} isPJ prefix="" subtitle="Calculada sobre receitas" />
+        <MetricCard title="Receitas" value={totals.receipts} isPrivacyMode={isPrivacyMode} isPJ subtitle="Faturamento registrado" />
+        <MetricCard title="Despesas" value={totals.expenses} isPrivacyMode={isPrivacyMode} isPJ subtitle="Saídas operacionais" />
+        <MetricCard title="Saldo de Caixa" value={totals.balance} isPrivacyMode={isPrivacyMode} isPJ subtitle="Resultado do período" />
+        <MetricCard title="Margem Operacional" value={totals.receipts > 0 ? Math.round((totals.balance / totals.receipts) * 100) : 0} isPrivacyMode={isPrivacyMode} isPJ prefix="" subtitle="Calculada sobre receitas" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-5 space-y-6">
-          {categories.length ? <DonutChartCard title="Despesas por categoria" subtitle="Agregado no Supabase" spent={totals.expenses} target={totals.expenses} categories={categories} isPJ isPrivacyMode={isPrivacyMode} /> : <DataUnavailable title="Despesas por categoria" />}
-          <div className="bg-[#172033] p-6 rounded-2xl border border-white/5 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-sm">Cartões corporativos</h3><button onClick={onAddCard} className="p-2 rounded-lg bg-cyan-600 text-white"><Plus className="w-4 h-4" /></button></div>
-            {activeCard ? <div className="space-y-3"><VisualPaymentCard cardName={activeCard.name} cardNumberMasked={`•••• •••• •••• ${activeCard.lastFourDigits || '—'}`} balance={activeCard.currentInvoice} dueDate={activeCard.dueDay ? String(activeCard.dueDay) : '—'} brand={activeCard.brand} isPJ /><div className="flex justify-between text-xs text-slate-400"><span>Limite disponível</span><strong className="text-white">{money(availableLimit)}</strong></div><div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-cyan-500 rounded-full" style={{ width: `${usedPercentage}%` }} /></div><button onClick={() => onNavigateTab?.('cards')} className="text-xs font-bold text-cyan-400">Ver cartões cadastrados</button></div> : <DataUnavailable title="Cartões corporativos" action={onAddCard} actionLabel="Adicionar cartão" />}
+          {categories.length ? (
+            <DonutChartCard
+              title="Despesas por categoria"
+              subtitle="Agregado no Supabase"
+              spent={totals.expenses}
+              target={totals.expenses}
+              categories={categories}
+              isPJ
+              isPrivacyMode={isPrivacyMode}
+            />
+          ) : (
+            <DataUnavailable title="Despesas por categoria" />
+          )}
+
+          <div className="bg-slate-900/90 p-6 rounded-2xl border border-white/10 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-sm text-white">Cartões corporativos</h3>
+              <button
+                onClick={onAddCard}
+                className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            {activeCard ? (
+              <div className="space-y-3">
+                <VisualPaymentCard
+                  cardName={activeCard.name}
+                  cardNumberMasked={`•••• •••• •••• ${activeCard.lastFourDigits || '—'}`}
+                  balance={activeCard.currentInvoice}
+                  dueDate={activeCard.dueDay ? String(activeCard.dueDay) : '—'}
+                  brand={activeCard.brand}
+                  isPJ
+                />
+                <div className="flex justify-between text-xs text-slate-300">
+                  <span>Limite disponível</span>
+                  <strong className="text-white font-mono">{money(availableLimit)}</strong>
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-cyan-500 rounded-full"
+                    style={{ width: `${usedPercentage}%` }}
+                  />
+                </div>
+                <button
+                  onClick={() => onNavigateTab?.('cards')}
+                  className="text-xs font-bold text-cyan-400 hover:text-cyan-300"
+                >
+                  Ver cartões cadastrados
+                </button>
+              </div>
+            ) : (
+              <DataUnavailable title="Cartões corporativos" action={onAddCard} actionLabel="Adicionar cartão" />
+            )}
           </div>
         </div>
 
         <div className="lg:col-span-7 space-y-6">
-          {cashFlow.length ? <div className="bg-[#172033] p-6 rounded-2xl border border-white/5 space-y-4"><h3 className="font-bold text-sm">Fluxo de caixa</h3>{cashFlow.slice(-6).map((item) => <div key={item.period} className="space-y-2"><div className="flex justify-between text-xs text-slate-400"><span>{item.period}</span><PrivacyText value={reais(item.balance_cents)} isPrivacyMode={isPrivacyMode} /></div><div className="grid grid-cols-2 gap-2"><div className="h-2 bg-emerald-500/70 rounded" style={{ width: `${maxCashFlow ? Math.max(2, (item.receipts_cents / maxCashFlow) * 100) : 0}%` }} /><div className="h-2 bg-rose-500/70 rounded" style={{ width: `${maxCashFlow ? Math.max(2, (item.expenses_cents / maxCashFlow) * 100) : 0}%` }} /></div></div>)}</div> : <DataUnavailable title="Fluxo de caixa" />}
-          <div className="bg-[#172033] p-6 rounded-2xl border border-white/5"><h3 className="font-bold text-sm mb-4">Pró-labore registrado</h3><PrivacyText value={totals.prolabore} isPrivacyMode={isPrivacyMode} /></div>
+          {cashFlow.length ? (
+            <div className="bg-slate-900/90 p-6 rounded-2xl border border-white/10 space-y-4">
+              <h3 className="font-bold text-sm text-white">Fluxo de caixa</h3>
+              {cashFlow.slice(-6).map((item) => (
+                <div key={item.period} className="space-y-2">
+                  <div className="flex justify-between text-xs text-slate-300">
+                    <span>{item.period}</span>
+                    <PrivacyText value={reais(item.balance_cents)} isPrivacyMode={isPrivacyMode} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div
+                      className="h-2 bg-emerald-500/80 rounded"
+                      style={{
+                        width: `${maxCashFlow ? Math.max(2, (item.receipts_cents / maxCashFlow) * 100) : 0}%`,
+                      }}
+                    />
+                    <div
+                      className="h-2 bg-rose-500/80 rounded"
+                      style={{
+                        width: `${maxCashFlow ? Math.max(2, (item.expenses_cents / maxCashFlow) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <DataUnavailable title="Fluxo de caixa" />
+          )}
+
+          <div className="bg-slate-900/90 p-6 rounded-2xl border border-white/10">
+            <h3 className="font-bold text-sm mb-4 text-white">Pró-labore registrado</h3>
+            <PrivacyText value={totals.prolabore} isPrivacyMode={isPrivacyMode} />
+          </div>
         </div>
       </div>
 
-      <div className="bg-[#172033] p-6 rounded-2xl border border-white/5 space-y-4"><div className="flex justify-between items-center"><h3 className="font-bold text-sm">Movimentações recentes</h3><button onClick={() => onNavigateTab?.('cashflow')} className="text-xs text-cyan-400 font-bold">Ver todas</button></div>{pjTxs.length ? pjTxs.slice(0, 6).map((tx) => <ActivityRow key={tx.id} title={tx.title} subtitle={`${tx.date} • ${tx.category}`} amount={tx.amount} isIncome={tx.type === 'income'} isPJ isPrivacyMode={isPrivacyMode} />) : <p className="text-sm text-slate-400">Nenhum dado disponível</p>}</div>
+      <div className="bg-slate-900/90 p-6 rounded-2xl border border-white/10 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-sm text-white">Movimentações recentes</h3>
+          <button onClick={() => onNavigateTab?.('cashflow')} className="text-xs text-cyan-400 hover:text-cyan-300 font-bold">
+            Ver todas
+          </button>
+        </div>
+        {pjTxs.length ? (
+          pjTxs.slice(0, 6).map((tx) => (
+            <ActivityRow
+              key={tx.id}
+              title={tx.title}
+              subtitle={`${tx.date} • ${tx.category}`}
+              amount={tx.amount}
+              isIncome={tx.type === 'income'}
+              isPJ
+              isPrivacyMode={isPrivacyMode}
+            />
+          ))
+        ) : (
+          <p className="text-sm text-slate-300">Nenhum dado disponível</p>
+        )}
+      </div>
     </div>
   );
 }
 
 function DataUnavailable({ title, action, actionLabel }: { title: string; action?: () => void; actionLabel?: string }) {
-  return <div className="bg-[#172033] p-8 rounded-2xl border border-dashed border-white/10 text-center space-y-3"><h3 className="font-bold text-sm">{title}</h3><p className="text-xs text-slate-400">Nenhum dado disponível</p>{action && <button onClick={action} className="px-3 py-2 rounded-xl bg-cyan-600 text-white text-xs font-bold">{actionLabel || 'Cadastrar'}</button>}</div>;
+  return (
+    <div className="bg-slate-900/80 p-8 rounded-2xl border border-dashed border-white/10 text-center space-y-3">
+      <h3 className="font-bold text-sm text-white">{title}</h3>
+      <p className="text-xs text-slate-300">Nenhum registro encontrado no momento.</p>
+      {action && (
+        <button
+          onClick={action}
+          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-xs"
+        >
+          {actionLabel || 'Cadastrar'}
+        </button>
+      )}
+    </div>
+  );
 }

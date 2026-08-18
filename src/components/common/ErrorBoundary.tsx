@@ -96,7 +96,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
       // Global App-level boundary fallback (full page recovery)
       return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 selection:bg-cyan-500/30">
+        <div
+          className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6"
+        >
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
             
             <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto shadow-inner shadow-rose-500/10">
