@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Transaction, Account, CreditCard } from '../types';
+import { Transaction, Account, CreditCard, TransactionAnalytics, TransactionQueryFilters } from '../types';
 import { MetricCard } from './aura/AuraCards';
-import { Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreHorizontal, FileText, Trash2, Edit2, Copy, RefreshCw, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
@@ -10,6 +10,49 @@ interface Props {
   creditCards: CreditCard[];
   isPrivacyMode?: boolean;
   onAddTransaction: () => void;
+  analytics?: TransactionAnalytics;
+  pageNumber?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  onNextPage?: () => void;
+  onPreviousPage?: () => void;
+  onQueryChange?: (filters: TransactionQueryFilters) => void;
+}
+
+const PAGE_SIZE = 50;
+
+function toDateKey(value: string): string | null {
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`;
+
+  const brazilianDate = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (brazilianDate) return `${brazilianDate[3]}-${brazilianDate[2]}-${brazilianDate[1]}`;
+
+  return null;
+}
+
+function localDateKey(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getPeriodBounds(period: string): { start: string; end: string } {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const end = new Date(start);
+
+  if (period === 'hoje') return { start: localDateKey(start), end: localDateKey(end) };
+  if (period === '7d') start.setDate(start.getDate() - 6);
+  if (period === '30d') start.setDate(start.getDate() - 29);
+  if (period === 'este_mes') start.setDate(1);
+  if (period === 'mes_anterior') {
+    start.setMonth(start.getMonth() - 1, 1);
+    end.setDate(0);
+  }
+
+  return { start: localDateKey(start), end: localDateKey(end) };
 }
 
 export function PfTransactions({
@@ -18,24 +61,59 @@ export function PfTransactions({
   creditCards,
   isPrivacyMode = false,
   onAddTransaction,
+  analytics,
+  pageNumber = 1,
+  hasNextPage = false,
+  hasPreviousPage = false,
+  onNextPage,
+  onPreviousPage,
+  onQueryChange,
 }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('todos');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('este_mes');
   const [selectedDetailTx, setSelectedDetailTx] = useState<Transaction | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const isServerPaginated = Boolean(onQueryChange);
   const pfTxs = transactions.filter(t => t.context === 'PF');
+  const selectedPeriodBounds = getPeriodBounds(selectedPeriod);
+
+  const emitQuery = (next: Partial<TransactionQueryFilters> = {}) => {
+    if (!onQueryChange) return;
+    const end = new Date(`${(next.endDateExclusive ? next.endDateExclusive : selectedPeriodBounds.end)}T00:00:00`);
+    if (!next.endDateExclusive) end.setDate(end.getDate() + 1);
+    onQueryChange({
+      search: next.search ?? searchTerm,
+      type: next.type !== undefined ? next.type : (selectedType === 'todos' ? null : selectedType as TransactionQueryFilters['type']),
+      startDate: next.startDate ?? selectedPeriodBounds.start,
+      endDateExclusive: localDateKey(end),
+      pageSize: PAGE_SIZE,
+    });
+  };
 
   const filteredTxs = pfTxs.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || t.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'todos' || t.type === selectedType;
-    return matchesSearch && matchesType;
+    const dateKey = toDateKey(t.date);
+    const matchesPeriod = dateKey !== null && dateKey >= selectedPeriodBounds.start && dateKey <= selectedPeriodBounds.end;
+    return matchesSearch && matchesType && matchesPeriod;
   });
 
-  const totalIncome = filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpenses = filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const pageCount = isServerPaginated ? undefined : Math.max(1, Math.ceil(filteredTxs.length / PAGE_SIZE));
+  const safePage = isServerPaginated ? pageNumber : Math.min(currentPage, pageCount || 1);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const visibleTxs = isServerPaginated ? pfTxs : filteredTxs.slice(pageStart, pageStart + PAGE_SIZE);
+
+  const totalIncome = isServerPaginated
+    ? Number(analytics?.total_receipts_cents || 0) / 100
+    : filteredTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = isServerPaginated
+    ? Number(analytics?.total_expenses_cents || 0) / 100
+    : filteredTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
   const netPeriodBalance = totalIncome - totalExpenses;
+  const filteredCount = isServerPaginated ? Number(analytics?.transaction_count || 0) : filteredTxs.length;
 
   const handleDeleteWithToast = (title: string) => {
     setToastMessage(`Movimentação "${title}" removida.`);
@@ -46,22 +124,19 @@ export function PfTransactions({
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Extrato Operacional PF
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
-            Movimentações
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
+            Minhas Movimentações
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
             Acompanhe todas as entradas, saídas e transferências da sua vida financeira.
           </p>
         </div>
 
         <button
           onClick={onAddTransaction}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Movimentação</span>
@@ -69,11 +144,11 @@ export function PfTransactions({
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas e Pró-labore" trend="up" trendValue="+12%" />
-        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e faturas" trend="down" trendValue="-3%" />
-        <MetricCard title="Saldo do Período" value={netPeriodBalance} isPrivacyMode={isPrivacyMode} subtitle="Resultado líquido" trend="up" trendValue="+8%" />
-        <MetricCard title="Total Registros" value={filteredTxs.length} prefix="" subtitle="Transações filtradas" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Entradas do Período" value={totalIncome} isPrivacyMode={isPrivacyMode} subtitle="Receitas e Pró-labore" />
+        <MetricCard title="Saídas do Período" value={totalExpenses} isPrivacyMode={isPrivacyMode} subtitle="Despesas e faturas" />
+        <MetricCard title="Saldo do Período" value={netPeriodBalance} isPrivacyMode={isPrivacyMode} subtitle="Resultado líquido" />
+        <MetricCard title="Total Registros" value={filteredCount} prefix="" subtitle="Transações filtradas" />
       </div>
 
       {/* Filter Bar & Search */}
@@ -85,7 +160,11 @@ export function PfTransactions({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+              emitQuery({ search: e.target.value });
+            }}
             placeholder="Buscar por descrição ou categoria..."
             className="w-full pl-9 pr-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
           />
@@ -95,7 +174,14 @@ export function PfTransactions({
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
+            onChange={(e) => {
+              setSelectedPeriod(e.target.value);
+              setCurrentPage(1);
+              const bounds = getPeriodBounds(e.target.value);
+              const end = new Date(`${bounds.end}T00:00:00`);
+              end.setDate(end.getDate() + 1);
+              emitQuery({ startDate: bounds.start, endDateExclusive: localDateKey(end) });
+            }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
             <option value="este_mes">Este Mês</option>
@@ -107,7 +193,11 @@ export function PfTransactions({
 
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setCurrentPage(1);
+              emitQuery({ type: e.target.value === 'todos' ? null : e.target.value as TransactionQueryFilters['type'] });
+            }}
             className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white"
           >
             <option value="todos">Todos os Tipos</option>
@@ -134,7 +224,7 @@ export function PfTransactions({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredTxs.map(tx => (
+              {visibleTxs.map(tx => (
                 <tr
                   key={tx.id}
                   onClick={() => setSelectedDetailTx(tx)}
@@ -173,6 +263,38 @@ export function PfTransactions({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className={'flex flex-col gap-3 border-t border-slate-200/80 bg-slate-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'}>
+          <p className={'text-xs font-semibold text-slate-500'} aria-live={'polite'}>
+            {filteredCount === 0
+              ? 'Nenhum registro no período.'
+              : `${pageStart + 1}–${isServerPaginated ? pageStart + visibleTxs.length : Math.min(pageStart + PAGE_SIZE, filteredTxs.length)} de ${filteredCount} registros`}
+          </p>
+          <div className={'flex items-center gap-2'}>
+            <button
+              type={'button'}
+              onClick={() => isServerPaginated ? onPreviousPage?.() : setCurrentPage(Math.max(1, safePage - 1))}
+              disabled={isServerPaginated ? !hasPreviousPage : safePage === 1}
+              className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
+              aria-label={'Página anterior'}
+            >
+              <ChevronLeft className={'h-4 w-4'} />
+              Anterior
+            </button>
+            <span className={'min-w-20 text-center text-xs font-bold text-slate-600'}>
+              {isServerPaginated ? safePage : `${safePage} de ${pageCount}`}
+            </span>
+            <button
+              type={'button'}
+              onClick={() => isServerPaginated ? onNextPage?.() : setCurrentPage(Math.min(pageCount || safePage, safePage + 1))}
+              disabled={isServerPaginated ? !hasNextPage : safePage === pageCount}
+              className={'inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40'}
+              aria-label={'Próxima página'}
+            >
+              Próxima
+              <ChevronRight className={'h-4 w-4'} />
+            </button>
+          </div>
         </div>
       </div>
 

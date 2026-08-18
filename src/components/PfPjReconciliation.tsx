@@ -41,20 +41,12 @@ export function PfPjReconciliation({ transactions, onReimburseSocio, isPrivacyMo
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded ${
-              isPJ ? 'bg-slate-800 text-white' : 'bg-indigo-50 text-indigo-900 border border-indigo-200'
-            }`}>
-              Motor Híbrido PF ↔ PJ
-            </span>
-            <HelpTooltip term="Conciliação Cruzada" explanation="O motor de conciliação separa juridicamente PF e PJ, mas detecta automaticamente quando o sócio paga uma despesa da empresa ou usa a conta PJ para uso pessoal, permitindo o acerto em 1 clique." />
-          </div>
-          <h1 className={`text-2xl font-black tracking-tight mt-1.5 ${isPJ ? 'text-white' : 'text-slate-950'}`}>
+          <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${isPJ ? 'text-white' : 'text-slate-950'}`}>
             Central de Conciliações Cruzadas
           </h1>
-          <p className={`text-xs mt-0.5 ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-xs sm:text-sm mt-0.5 ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
             Gestão de reembolsos, acertos de aportes, pró-labore e distribuição de lucros sem confusão patrimonial.
           </p>
         </div>
@@ -62,7 +54,7 @@ export function PfPjReconciliation({ transactions, onReimburseSocio, isPrivacyMo
         {paidByPfPendingTotal > 0 && (
           <button
             onClick={onReimburseSocio}
-            className="flex items-center space-x-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 text-xs"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 text-xs"
           >
             <ArrowRightLeft className="w-4 h-4" />
             <span>Reembolsar R$ {paidByPfPendingTotal.toLocaleString('pt-BR')} em 1-Clique</span>
@@ -71,7 +63,7 @@ export function PfPjReconciliation({ transactions, onReimburseSocio, isPrivacyMo
       </div>
 
       {/* Top KPIs Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           title="Pago pela PF para Empresa"
           value={paidByPfPendingTotal}
@@ -90,7 +82,7 @@ export function PfPjReconciliation({ transactions, onReimburseSocio, isPrivacyMo
 
         <MetricCard
           title="Pró-labore Cruzado Mês"
-          value={prolaboreTotal || 8500}
+          value={prolaboreTotal}
           isPrivacyMode={isPrivacyMode}
           subtitle="Vínculo PF ↔ PJ confirmado"
           isPJ={isPJ}

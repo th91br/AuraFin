@@ -79,7 +79,7 @@ export class LegacyImportService {
     let alreadyImported = false;
     try {
       const { data } = await (supabase.from('legacy_import_runs') as any)
-        .select('*')
+        .select('id')
         .eq('user_id', userId)
         .eq('source_fingerprint', fingerprint)
         .eq('status', 'completed')
@@ -154,14 +154,14 @@ export class LegacyImportService {
           id: detId,
           user_id: userId,
           name: card.name,
-          institution: card.institution || 'Outros',
-          brand: card.brand || 'Mastercard',
-          last_four_digits: card.lastFourDigits || '4554',
-          limit_total_cents: Math.round((card.limitTotal || 0) * 100),
-          limit_used_cents: Math.round((card.limitUsed || 0) * 100),
-          current_invoice_cents: Math.round((card.currentInvoice || 0) * 100),
-          closing_day: card.closingDay || 15,
-          due_day: card.dueDay || 25,
+          institution: card.institution || '',
+          brand: card.brand || '',
+          last_four_digits: card.lastFourDigits || '',
+          limit_total_cents: Math.round((card.limitTotal ?? 0) * 100),
+          limit_used_cents: Math.round((card.limitUsed ?? 0) * 100),
+          current_invoice_cents: Math.round((card.currentInvoice ?? 0) * 100),
+          closing_day: card.closingDay,
+          due_day: card.dueDay,
           is_primary: !!card.isPrimary,
           status: 'active',
         });
@@ -175,8 +175,8 @@ export class LegacyImportService {
           id: detId,
           user_id: userId,
           title: g.title,
-          target_amount_cents: Math.round((g.targetAmount || 1000) * 100),
-          current_amount_cents: Math.round((g.currentAmount || 0) * 100),
+          target_amount_cents: Math.round((g.targetAmount ?? 0) * 100),
+          current_amount_cents: Math.round((g.currentAmount ?? 0) * 100),
           target_date: g.targetDate || new Date().toISOString().split('T')[0],
           category: g.category || 'outros',
           status: 'em_andamento',
@@ -192,9 +192,9 @@ export class LegacyImportService {
           user_id: userId,
           title: d.title,
           creditor: d.creditor || 'Outros',
-          total_amount_cents: Math.round((d.totalAmount || 1000) * 100),
-          remaining_amount_cents: Math.round((d.remainingAmount || 1000) * 100),
-          interest_rate_monthly: d.interestRate || 0,
+          total_amount_cents: Math.round((d.totalAmount ?? 0) * 100),
+          remaining_amount_cents: Math.round((d.remainingAmount ?? 0) * 100),
+          interest_rate_monthly: d.interestRate ?? 0,
           due_date: d.dueDate || new Date().toISOString().split('T')[0],
           status: 'em_dia',
         });

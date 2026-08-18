@@ -45,7 +45,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`relative flex flex-col h-screen sticky top-0 transition-all duration-200 z-30 select-none border-r bg-white text-slate-900 border-slate-200/60 ${
+      className={`relative flex flex-col h-screen sticky top-0 transition-all duration-200 z-30 select-none border-r bg-white text-slate-900 border-slate-200/80 ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
@@ -54,7 +54,7 @@ export function Sidebar({
         isCollapsed ? 'justify-center' : 'justify-start space-x-3'
       }`}>
         <div 
-          className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-base shrink-0 bg-slate-950 text-white shadow-xs"
+          className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-base shrink-0 bg-slate-950 text-white shadow-xs"
           title="AuraFin"
         >
           A
@@ -62,7 +62,7 @@ export function Sidebar({
 
         {!isCollapsed && (
           <div className="truncate">
-            <span className="font-black text-base tracking-tight text-slate-950">AuraFin</span>
+            <span className="font-extrabold text-base tracking-tight text-slate-950">AuraFin</span>
             <p className="text-[11px] font-medium text-slate-400 -mt-0.5 truncate">
               {isPJ ? 'Pessoa Jurídica' : 'Pessoa Física'}
             </p>
@@ -83,7 +83,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('overview')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'overview'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -96,7 +96,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('transactions')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'transactions'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -109,7 +109,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('planning')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'planning'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -122,7 +122,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('wealth')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'wealth'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -135,7 +135,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('tax_planning')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'tax_planning'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -148,7 +148,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPfTab('reports')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pfTab === 'reports'
                   ? 'bg-slate-100 text-slate-950 font-semibold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -170,7 +170,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('overview')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'overview'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -183,7 +183,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('cashflow')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'cashflow'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -196,7 +196,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('receivables_payables')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'receivables_payables'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -209,7 +209,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('management')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'management'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -222,7 +222,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('collections')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'collections'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -234,7 +234,7 @@ export function Sidebar({
                 {!isCollapsed && <span className="truncate">Cobranças</span>}
               </div>
               {!isCollapsed && defaultersCount > 0 && (
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-200 tabular-nums">
                   {defaultersCount}
                 </span>
               )}
@@ -242,7 +242,7 @@ export function Sidebar({
 
             <button
               onClick={() => setPjTab('accounting')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'accounting'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -254,13 +254,13 @@ export function Sidebar({
                 {!isCollapsed && <span className="truncate">Contador</span>}
               </div>
               {!isCollapsed && pendingReimbursementAmount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-pulse" />
               )}
             </button>
 
             <button
               onClick={() => setPjTab('reports')}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`tactile-button w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3'} py-2 rounded-xl text-xs font-medium transition-all ${
                 pjTab === 'reports'
                   ? 'bg-slate-950 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
@@ -279,7 +279,7 @@ export function Sidebar({
         {!isPJ ? (
           <button
             onClick={onOpenTransactionModal}
-            className={`w-full flex items-center justify-center space-x-2 py-2 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-lg transition-all text-xs shadow-xs ${
+            className={`tactile-button w-full flex items-center justify-center space-x-2 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all text-xs shadow-xs ${
               isCollapsed ? 'px-0' : 'px-3'
             }`}
             title="Novo Lançamento PF"
@@ -290,7 +290,7 @@ export function Sidebar({
         ) : (
           <button
             onClick={onOpenBillingModal}
-            className={`w-full flex items-center justify-center space-x-2 py-2 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-lg transition-all text-xs shadow-xs ${
+            className={`tactile-button w-full flex items-center justify-center space-x-2 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all text-xs shadow-xs ${
               isCollapsed ? 'px-0' : 'px-4'
             }`}
             title="Emitir Fatura PJ"
@@ -303,3 +303,4 @@ export function Sidebar({
     </aside>
   );
 }
+

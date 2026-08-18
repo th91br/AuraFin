@@ -96,6 +96,58 @@ export interface Transaction {
   reimbursed?: boolean;
 }
 
+export interface TransactionPageCursor {
+  transaction_date: string;
+  id: string;
+}
+
+export interface TransactionPage<T extends Transaction = Transaction> {
+  rows: T[];
+  hasMore: boolean;
+  nextCursor: TransactionPageCursor | null;
+  pageSize: number;
+}
+
+export interface TransactionQueryFilters {
+  pageSize?: number;
+  cursor?: TransactionPageCursor | null;
+  search?: string;
+  type?: TransactionType | null;
+  category?: string | null;
+  startDate?: string | null;
+  endDateExclusive?: string | null;
+}
+
+export interface TransactionCategoryAggregate {
+  category: string;
+  receipts_cents: number;
+  expenses_cents: number;
+  balance_cents: number;
+}
+
+export interface TransactionCashFlowAggregate {
+  period: string;
+  receipts_cents: number;
+  expenses_cents: number;
+  balance_cents: number;
+}
+
+export interface TransactionAnalytics {
+  transaction_count: number;
+  total_receipts_cents: number;
+  total_expenses_cents: number;
+  total_transfers_cents: number;
+  balance_cents: number;
+  by_category: TransactionCategoryAggregate[];
+  cash_flow: TransactionCashFlowAggregate[];
+  tax_relevant_cents?: number;
+  prolabore_cents?: number;
+  operating_expenses_cents?: number;
+  personal_expenses_in_pj_cents?: number;
+  paid_by_pf_cents?: number;
+  tax_cents?: number;
+}
+
 export interface Account {
   id: string;
   name: string;
@@ -234,4 +286,17 @@ export interface CalendarEvent {
 export interface FAQItem {
   question: string;
   answer: string;
+}
+
+export interface InvestmentItem {
+  id: string;
+  name: string;
+  assetType: string;
+  institution: string;
+  quantity?: number;
+  averagePrice?: number;
+  currentPrice?: number;
+  totalValue: number;
+  investedValue?: number;
+  yieldPct?: string;
 }

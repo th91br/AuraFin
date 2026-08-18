@@ -1,103 +1,96 @@
-import { useState } from 'react';
+import { BusinessInvoice } from '../services/repositories/supabase/SupabaseBusinessDataRepository';
 import { MetricCard } from './aura/AuraCards';
-import { Plus, Receipt, DollarSign, Calendar, FileText, CheckCircle2 } from 'lucide-react';
-import { PrivacyText } from './ui/PrivacyText';
+import { Plus, Receipt } from 'lucide-react';
 
 interface Props {
+  invoices?: BusinessInvoice[];
   isPrivacyMode?: boolean;
   onAddBilling?: () => void;
 }
 
-export function PjBillingView({ isPrivacyMode = false, onAddBilling }: Props) {
-  const invoices = [
-    { id: 'inv1', client: 'TechCorp Brasil', description: 'Desenvolvimento Software Mês 08', amount: 15000, issueDate: '2026-08-01', dueDate: '2026-08-15', method: 'Pix / Boleto', status: 'em_aberto' },
-    { id: 'inv2', client: 'Grupo Varejo Sul', description: 'Consultoria de Tecnologia Mês 08', amount: 12000, issueDate: '2026-08-01', dueDate: '2026-08-05', method: 'Transferência', status: 'vencida' },
-    { id: 'inv3', client: 'Startup Innovate', description: 'Licenciamento Plataforma SaaS', amount: 4500, issueDate: '2026-08-02', dueDate: '2026-08-25', method: 'Pix', status: 'paga' },
-  ];
+const money = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const totalBilled = invoices.reduce((acc, i) => acc + i.amount, 0);
-  const totalPaid = invoices.filter(i => i.status === 'paga').reduce((acc, i) => acc + i.amount, 0);
-  const totalOpen = invoices.filter(i => i.status === 'em_aberto').reduce((acc, i) => acc + i.amount, 0);
-  const totalOverdue = invoices.filter(i => i.status === 'vencida').reduce((acc, i) => acc + i.amount, 0);
+export function PjBillingView({ invoices = [], isPrivacyMode = false, onAddBilling }: Props) {
+  const totalBilled = invoices.reduce((sum, row) => sum + row.amount, 0);
+  const totalPaid = invoices
+    .filter((row) => ['paid', 'paga'].includes(row.status))
+    .reduce((sum, row) => sum + row.amount, 0);
+  const totalOpen = invoices
+    .filter((row) => ['open', 'em_aberto', 'pending'].includes(row.status))
+    .reduce((sum, row) => sum + row.amount, 0);
+  const totalOverdue = invoices
+    .filter((row) => ['overdue', 'vencida'].includes(row.status))
+    .reduce((sum, row) => sum + row.amount, 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 rounded">
-            Cobranças & Emissões Gerenciais
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-white mt-1">
-            Faturamento Empresarial
-          </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Organize cobranças, faturas e recebimentos da empresa.
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">Faturamento Empresarial</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">Emissão e acompanhamento de faturas, notas de serviço e boletos.</p>
+        </div>
+        {onAddBilling && (
+          <button
+            onClick={onAddBilling}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Emitir Nova Fatura</span>
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Total Faturado" value={totalBilled} isPrivacyMode={isPrivacyMode} subtitle="Volume emitido" />
+        <MetricCard title="Recebido" value={totalPaid} isPrivacyMode={isPrivacyMode} subtitle="Status liquidado" />
+        <MetricCard title="Em Aberto" value={totalOpen} isPrivacyMode={isPrivacyMode} subtitle="Status pendente" />
+        <MetricCard title="Vencido" value={totalOverdue} isPrivacyMode={isPrivacyMode} subtitle="Títulos em atraso" />
+      </div>
+
+      {invoices.length === 0 ? (
+        <div className="p-16 text-center bg-slate-900/80 rounded-2xl border border-dashed border-white/10 text-slate-300">
+          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 mx-auto mb-3">
+            <Receipt className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-sm text-white">Nenhuma fatura registrada</h3>
+          <p className="text-xs text-slate-300 max-w-sm mx-auto mt-1">
+            Gere faturas para seus clientes para acompanhar vencimentos e previsões de entrada.
           </p>
         </div>
-
-        <button
-          onClick={onAddBilling}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Faturamento</span>
-        </button>
-      </div>
-
-      {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Faturado no Período" value={totalBilled} isPrivacyMode={isPrivacyMode} subtitle="Total emitido em cobranças" trend="up" trendValue="+15%" />
-        <MetricCard title="Recebido no Caixa" value={totalPaid} isPrivacyMode={isPrivacyMode} subtitle="Liquidação efetuada" />
-        <MetricCard title="Em Aberto" value={totalOpen} isPrivacyMode={isPrivacyMode} subtitle="Vencimento a ocorrer" />
-        <MetricCard title="Vencido Inadimplente" value={totalOverdue} isPrivacyMode={isPrivacyMode} subtitle="Cobrança necessária" trend="down" trendValue="-3%" />
-      </div>
-
-      {/* Tabela de Faturas Gerenciais */}
-      <div className="bg-[#0F172A] rounded-2xl border border-white/5 overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-white/5 flex justify-between items-center">
-          <h3 className="font-bold text-sm text-white">Lista de Faturas Gerenciais</h3>
-          <span className="text-xs text-slate-400 font-semibold">Gera recebíveis vinculados automaticamente</span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-medium border-collapse">
-            <thead>
-              <tr className="bg-slate-900 border-b border-white/5 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-4">Cliente</th>
-                <th className="py-3 px-4">Descrição</th>
-                <th className="py-3 px-4">Emissão</th>
-                <th className="py-3 px-4">Vencimento</th>
-                <th className="py-3 px-4">Método</th>
-                <th className="py-3 px-4 text-right">Valor</th>
-                <th className="py-3 px-4 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
-              {invoices.map(inv => (
-                <tr key={inv.id} className="hover:bg-slate-800/50 transition-colors">
-                  <td className="py-3.5 px-4 font-sans font-bold text-white">{inv.client}</td>
-                  <td className="py-3.5 px-4 font-sans text-slate-400">{inv.description}</td>
-                  <td className="py-3.5 px-4 text-slate-400">{inv.issueDate}</td>
-                  <td className="py-3.5 px-4 text-slate-400">{inv.dueDate}</td>
-                  <td className="py-3.5 px-4 font-sans text-slate-400">{inv.method}</td>
-                  <td className="py-3.5 px-4 text-right font-bold text-white">R$ {inv.amount.toLocaleString('pt-BR')}</td>
-                  <td className="py-3.5 px-4 text-center font-sans">
-                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded ${
-                      inv.status === 'paga' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
-                      inv.status === 'vencida' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-amber-950 text-amber-300 border border-amber-800'
-                    }`}>
-                      {inv.status}
-                    </span>
-                  </td>
+      ) : (
+        <div className="bg-slate-900/90 rounded-2xl border border-white/10 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-slate-950 text-slate-300 uppercase text-[10px] tracking-wider border-b border-white/10">
+                  <th className="py-3 px-4">Número</th>
+                  <th className="py-3 px-4">Cliente</th>
+                  <th className="py-3 px-4">Emissão</th>
+                  <th className="py-3 px-4">Vencimento</th>
+                  <th className="py-3 px-4 text-right">Valor</th>
+                  <th className="py-3 px-4">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {invoices.map((row) => (
+                  <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3 px-4 font-mono text-white font-bold">{row.invoiceNumber}</td>
+                    <td className="py-3 px-4 font-bold text-white">{row.client}</td>
+                    <td className="py-3 px-4 text-slate-300">{row.issueDate}</td>
+                    <td className="py-3 px-4 text-slate-300">{row.dueDate}</td>
+                    <td className="py-3 px-4 text-right font-mono text-white">{money(row.amount)}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px]">
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-
+      )}
     </div>
   );
 }

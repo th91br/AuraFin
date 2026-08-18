@@ -6,14 +6,14 @@ interface BillingModalProps {
   isOpen?: boolean;
   event?: CalendarEvent;
   onClose: () => void;
-  onSave?: (data: { client: string; amount: number; description: string; dueDate: string }) => void;
+  onSave?: (data: { client: string; amount: number; description: string; dueDate: string }) => boolean | void;
 }
 
 export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
-  const [client, setClient] = useState(event?.client || 'Fintech Brasil Ltda');
-  const [amount, setAmount] = useState(event?.value || 18500);
-  const [description, setDescription] = useState(event?.title || 'Faturamento Servico TI');
+  const [client, setClient] = useState(event?.client || '');
+  const [amount, setAmount] = useState<number | ''>(event?.value || '');
+  const [description, setDescription] = useState(event?.title || '');
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
@@ -27,8 +27,13 @@ export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingM
   if (isOpen === false) return null;
 
   const handleGenerate = () => {
+    if (!client.trim() || !description.trim() || amount === '' || amount <= 0 || !dueDate) {
+      alert('Informe cliente, descrição, valor maior que zero e vencimento.');
+      return;
+    }
     if (onSave) {
-      onSave({ client, amount, description, dueDate });
+      const saved = onSave({ client, amount: Number(amount), description, dueDate });
+      if (saved === false) return;
     }
     setStep(2);
   };
@@ -59,6 +64,7 @@ export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingM
                     value={client}
                     onChange={(e) => setClient(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                    required
                   />
                 </div>
 
@@ -69,6 +75,7 @@ export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingM
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                    required
                   />
                 </div>
 
@@ -80,6 +87,8 @@ export function BillingModal({ isOpen = true, event, onClose, onSave }: BillingM
                       value={amount}
                       onChange={(e) => setAmount(Number(e.target.value))}
                       className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white outline-none"
+                      min="0.01"
+                      required
                     />
                   </div>
 

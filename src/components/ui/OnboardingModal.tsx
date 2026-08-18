@@ -173,7 +173,7 @@ export function OnboardingModal({ isOpen, onFinish }: OnboardingModalProps) {
             <div>
               <h2 className="text-2xl font-black text-white tracking-tight">Tudo pronto para começar!</h2>
               <p className="text-slate-400 text-xs mt-1">
-                Sua sessão foi inicializada em ambiente 100% Local-First e seguro.
+                Sua sessão foi inicializada com dados protegidos do Supabase e isolamento por usuário/organização.
               </p>
             </div>
 

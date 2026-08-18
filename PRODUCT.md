@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-React 19 + TypeScript + Vite + Tailwind CSS v4 + Motion + Lucide Icons + LocalStorage persistence engine.
+React 19 + TypeScript + Vite + Tailwind CSS v4 + Motion + Lucide Icons + Supabase persistence engine.
 
 ## Users
 
@@ -34,7 +34,7 @@ Uso diário por sócios e gestores via web/mobile:
 - **Reconciliação e Trilha de Auditoria**: Lançamentos marcados como "Uso Pessoal na PJ" ou "Despesa da PJ paga via PF" criam transações espelhadas e viabilizam o reembolso ao sócio em 1 clique.
 - **Ecossistema PF**: Gestão de patrimônio (imóveis, veículos com cotação FIPE simulada, renda fixa, ações), simulação da reserva de emergência e cálculo de deduções fiscais para IRPF.
 - **Ecossistema PJ**: Cálculo em tempo real do Ponto de Equilíbrio, DRE e rentabilidade por cliente/projeto, radar de inadimplentes com ação de cobrança, faturamento integrado e exportação de pacote fiscal JSON/OFX.
-- **Privacidade Local-First**: Persistência no navegador via LocalStorage com opção de restauração de dados de demonstração e exportação.
+- **Privacidade e isolamento**: Dados financeiros persistidos no Supabase com RLS, isolamento PF/PJ e modo demo local somente para desenvolvimento explícito.
 
 ## Brand Commitments
 

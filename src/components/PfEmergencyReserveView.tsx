@@ -1,56 +1,129 @@
 import { useState } from 'react';
 import { MetricCard } from './aura/AuraCards';
-import { HelpTooltip } from './ui/HelpTooltip';
-import { ShieldCheck, Plus, Sparkles, CheckCircle2, Clock } from 'lucide-react';
+import { Account, Transaction } from '../types';
+import { ShieldCheck, Plus, Sparkles, CheckCircle2, Clock, Edit2, Loader2 } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
+  accounts?: Account[];
+  transactions?: Transaction[];
+  reserveAmount?: number;
+  monthlyExpenseSetting?: number;
+  targetMonthsSetting?: number;
   isPrivacyMode?: boolean;
+  onSaveSettings?: (targetMonths: number, monthlyExpense: number, currentAmount: number) => Promise<void>;
   onAddDeposit?: () => void;
 }
 
-export function PfEmergencyReserveView({ isPrivacyMode = false, onAddDeposit }: Props) {
-  const [monthsTarget, setMonthsTarget] = useState<6 | 9 | 12>(6);
-  const [monthlyLivingCost, setMonthlyLivingCost] = useState(4500);
-  const [currentReserve, setCurrentReserve] = useState(28500);
+export function PfEmergencyReserveView({
+  accounts = [],
+  transactions = [],
+  reserveAmount,
+  monthlyExpenseSetting,
+  targetMonthsSetting = 6,
+  isPrivacyMode = false,
+  onSaveSettings,
+  onAddDeposit,
+}: Props) {
+  const [monthsTarget, setMonthsTarget] = useState<number>(targetMonthsSetting);
+  const [isEditingBasis, setIsEditingBasis] = useState(false);
 
-  const idealReserve = monthlyLivingCost * monthsTarget;
+  // Real liquid balance from accounts of type 'poupanca' / 'investimento' / 'corrente'
+  const pfAccounts = accounts.filter(a => a.context === 'PF');
+  const liquidAccountsBalance = pfAccounts
+    .filter(a => a.type === 'poupanca' || a.type === 'investimento' || a.type === 'corrente')
+    .reduce((acc, a) => acc + a.balance, 0);
+
+  const currentReserve = reserveAmount !== undefined && reserveAmount > 0 ? reserveAmount : liquidAccountsBalance;
+
+  // Real average monthly expenses from transactions
+  const pfExpenseTxs = transactions.filter(t => t.context === 'PF' && t.type === 'expense');
+  const hasSourceData = pfAccounts.length > 0 || pfExpenseTxs.length > 0 || (reserveAmount ?? 0) > 0 || (monthlyExpenseSetting ?? 0) > 0;
+
+  if (!hasSourceData) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded">Proteção Patrimonial &amp; Segurança</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">Reserva de Emergência</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Configure a reserva após registrar contas ou despesas reais.</p>
+          </div>
+        </div>
+        <div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+          <p className="text-slate-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
+
+  const totalSpentAll = pfExpenseTxs.reduce((acc, t) => acc + t.amount, 0);
+  const calculatedMonthlyExpense = totalSpentAll > 0 ? Math.round(totalSpentAll / Math.max(1, 1)) : 0;
+
+  const effectiveMonthlyLivingCost = monthlyExpenseSetting !== undefined && monthlyExpenseSetting > 0
+    ? monthlyExpenseSetting
+    : calculatedMonthlyExpense;
+
+  const [inputMonthlyCost, setInputMonthlyCost] = useState(effectiveMonthlyLivingCost.toString());
+  const [isSaving, setIsSaving] = useState(false);
+
+  const idealReserve = effectiveMonthlyLivingCost * monthsTarget;
   const remaining = Math.max(0, idealReserve - currentReserve);
-  const monthsCovered = (currentReserve / (monthlyLivingCost || 1)).toFixed(1);
-  const pct = Math.min(100, Math.round((currentReserve / (idealReserve || 1)) * 100));
+  const monthsCovered = effectiveMonthlyLivingCost > 0 ? (currentReserve / effectiveMonthlyLivingCost).toFixed(1) : '0.0';
+  const pct = idealReserve > 0 ? Math.min(100, Math.round((currentReserve / idealReserve) * 100)) : 0;
+
+  const handleSaveLivingCost = async () => {
+    const val = parseFloat(inputMonthlyCost);
+    if (!val || val <= 0) return;
+    setIsSaving(true);
+    try {
+      if (onSaveSettings) {
+        await onSaveSettings(monthsTarget, val, currentReserve);
+      }
+      setIsEditingBasis(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSelectMonths = async (m: number) => {
+    setMonthsTarget(m);
+    if (onSaveSettings) {
+      await onSaveSettings(m, effectiveMonthlyLivingCost, currentReserve);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded">
-            Proteção Patrimonial & Segurança
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
             Reserva de Emergência
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Saiba por quanto tempo sua reserva consegue manter seu custo de vida em caso de imprevistos.
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+            Saiba por quanto tempo sua reserva cobre seu custo de vida em caso de imprevistos.
           </p>
         </div>
 
-        <button
-          onClick={onAddDeposit}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Registrar Aporte na Reserva</span>
-        </button>
+        {onAddDeposit && (
+          <button
+            onClick={onAddDeposit}
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Registrar Aporte</span>
+          </button>
+        )}
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Reserva Atual Guardada" value={currentReserve} isPrivacyMode={isPrivacyMode} subtitle="Renda Fixa de Alta Liquidez" trend="up" trendValue="+5%" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Reserva Guardada Real" value={currentReserve} isPrivacyMode={isPrivacyMode} subtitle="Contas de alta liquidez" />
         <MetricCard title="Meta de Cobertura" value={idealReserve} isPrivacyMode={isPrivacyMode} subtitle={`Meta para ${monthsTarget} Meses`} />
-        <MetricCard title="Meses Cobertos Real" value={Number(monthsCovered)} prefix="" subtitle="Custo de vida garantido" />
-        <MetricCard title="Falta Guardar" value={remaining} isPrivacyMode={isPrivacyMode} subtitle="Para atingir 100% da meta" />
+        <MetricCard title="Meses Cobertos" value={Number(monthsCovered)} prefix="" subtitle="Tranquilidade financeira" />
+        <MetricCard title="Falta Guardar" value={remaining} isPrivacyMode={isPrivacyMode} subtitle="Para 100% da proteção" />
       </div>
 
       {/* Main Radial Progress Coverage Card */}
@@ -67,16 +140,59 @@ export function PfEmergencyReserveView({ isPrivacyMode = false, onAddDeposit }: 
               {monthsCovered} Meses <span className="text-sm font-sans font-normal text-slate-500">de tranquilidade garantida</span>
             </p>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Com base no seu custo de vida mensal estimado em <strong className="font-mono">R$ {monthlyLivingCost.toLocaleString('pt-BR')}</strong>, sua reserva atual cobre completamente <strong className="font-mono">{monthsCovered} meses</strong> de despesas sem necessidade de novas receitas.
-            </p>
+            <div className="text-xs text-slate-600 leading-relaxed space-y-1">
+              <p>
+                Custo de vida mensal base: <strong className="font-mono font-bold text-slate-900">R$ {effectiveMonthlyLivingCost.toLocaleString('pt-BR')}</strong>
+                {!isEditingBasis && (
+                  <button
+                    onClick={() => setIsEditingBasis(true)}
+                    className="ml-2 text-indigo-600 font-bold hover:underline inline-flex items-center space-x-0.5"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>Ajustar custo base</span>
+                  </button>
+                )}
+              </p>
+
+              {isEditingBasis && (
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="number"
+                    value={inputMonthlyCost}
+                    onChange={(e) => setInputMonthlyCost(e.target.value)}
+                    className="w-32 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-slate-900"
+                  />
+                  <button
+                    onClick={handleSaveLivingCost}
+                    disabled={isSaving}
+                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs"
+                  >
+                    {isSaving ? 'Salvando...' : 'Salvar'}
+                  </button>
+                  <button
+                    onClick={() => setIsEditingBasis(false)}
+                    className="px-2 py-1 text-slate-500 hover:text-slate-800 text-xs"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Target Months Selector */}
             <div className="flex items-center space-x-2 pt-2">
-              <span className="text-xs font-bold text-slate-500">Selecione o Alvo:</span>
-              <button onClick={() => setMonthsTarget(6)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${monthsTarget === 6 ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700'}`}>6 Meses</button>
-              <button onClick={() => setMonthsTarget(9)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${monthsTarget === 9 ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700'}`}>9 Meses</button>
-              <button onClick={() => setMonthsTarget(12)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${monthsTarget === 12 ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700'}`}>12 Meses</button>
+              <span className="text-xs font-bold text-slate-500">Meta Desejada:</span>
+              {[3, 6, 9, 12, 18].map(m => (
+                <button
+                  key={m}
+                  onClick={() => handleSelectMonths(m)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    monthsTarget === m ? 'bg-slate-950 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {m} Meses
+                </button>
+              ))}
             </div>
           </div>
 
@@ -95,24 +211,24 @@ export function PfEmergencyReserveView({ isPrivacyMode = false, onAddDeposit }: 
         </div>
       </div>
 
-      {/* Cenários Comparativos */}
+      {/* Cenários Comparativos Calculados */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`p-5 rounded-2xl border space-y-2 ${monthsTarget === 6 ? 'bg-emerald-50/60 border-emerald-300' : 'bg-white border-slate-200/80'}`}>
-          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 6 Meses</span>
-          <p className="text-2xl font-black font-mono text-slate-950">R$ {(monthlyLivingCost * 6).toLocaleString('pt-BR')}</p>
-          <span className="text-[11px] text-emerald-800 font-semibold block">Segurança recomendada padrão</span>
+        <div className={`p-5 rounded-2xl border space-y-2 transition-all ${monthsTarget === 6 ? 'bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/20' : 'bg-white border-slate-200/80'}`}>
+          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 6 Meses (Padrão)</span>
+          <p className="text-2xl font-black font-mono text-slate-950">R$ {(effectiveMonthlyLivingCost * 6).toLocaleString('pt-BR')}</p>
+          <span className="text-[11px] text-emerald-800 font-semibold block">Segurança recomendada básica</span>
         </div>
 
-        <div className={`p-5 rounded-2xl border space-y-2 ${monthsTarget === 9 ? 'bg-emerald-50/60 border-emerald-300' : 'bg-white border-slate-200/80'}`}>
-          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 9 Meses</span>
-          <p className="text-2xl font-black font-mono text-slate-950">R$ {(monthlyLivingCost * 9).toLocaleString('pt-BR')}</p>
-          <span className="text-[11px] text-slate-500 font-semibold block">Proteção estendida</span>
+        <div className={`p-5 rounded-2xl border space-y-2 transition-all ${monthsTarget === 9 ? 'bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/20' : 'bg-white border-slate-200/80'}`}>
+          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 9 Meses (Protegido)</span>
+          <p className="text-2xl font-black font-mono text-slate-950">R$ {(effectiveMonthlyLivingCost * 9).toLocaleString('pt-BR')}</p>
+          <span className="text-[11px] text-slate-500 font-semibold block">Proteção estendida para autônomos</span>
         </div>
 
-        <div className={`p-5 rounded-2xl border space-y-2 ${monthsTarget === 12 ? 'bg-emerald-50/60 border-emerald-300' : 'bg-white border-slate-200/80'}`}>
-          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 12 Meses</span>
-          <p className="text-2xl font-black font-mono text-slate-950">R$ {(monthlyLivingCost * 12).toLocaleString('pt-BR')}</p>
-          <span className="text-[11px] text-slate-500 font-semibold block">Blindagem financeira total</span>
+        <div className={`p-5 rounded-2xl border space-y-2 transition-all ${monthsTarget === 12 ? 'bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/20' : 'bg-white border-slate-200/80'}`}>
+          <span className="text-xs font-bold text-slate-500 uppercase">Cenário 12 Meses (Blindagem)</span>
+          <p className="text-2xl font-black font-mono text-slate-950">R$ {(effectiveMonthlyLivingCost * 12).toLocaleString('pt-BR')}</p>
+          <span className="text-[11px] text-slate-500 font-semibold block">Blindagem financeira conservadora</span>
         </div>
       </div>
 

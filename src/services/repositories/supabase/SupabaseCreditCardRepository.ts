@@ -1,0 +1,109 @@
+import { supabase } from '../../../integrations/supabase/client';
+import { CreditCard } from '../../../types';
+import { AuraLogger } from '../../../lib/logger';
+
+export class SupabaseCreditCardRepository {
+  async list(userId: string): Promise<CreditCard[]> {
+    try {
+      const { data, error } = await supabase
+        .from('personal_credit_cards')
+        .select('id,name,institution,limit_total_cents,limit_used_cents,current_invoice_cents,closing_day,due_day,brand,last_four_digits,is_primary,status')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        institution: item.institution,
+        limitTotal: Number(item.limit_total_cents || 0) / 100,
+        limitUsed: Number(item.limit_used_cents || 0) / 100,
+        currentInvoice: Number(item.current_invoice_cents || 0) / 100,
+        closingDay: item.closing_day,
+        dueDay: item.due_day,
+        context: 'PF',
+        brand: item.brand,
+        lastFourDigits: item.last_four_digits,
+        isPrimary: item.is_primary,
+        status: (item.status === 'active' ? 'ativo' : item.status === 'archived' ? 'arquivado' : 'inativo') as any
+      }));
+    } catch (err: any) {
+      AuraLogger.error('[SupabaseCreditCardRepository] Erro ao listar cartões PF', { error: err.message });
+      return [];
+    }
+  }
+
+  async create(card: Partial<CreditCard>, userId: string): Promise<CreditCard | null> {
+    try {
+      const name = card.name?.trim();
+      const institution = card.institution?.trim();
+      const brand = card.brand?.trim();
+      const lastFourDigits = card.lastFourDigits?.trim();
+      const closingDay = card.closingDay;
+      const dueDay = card.dueDay;
+      const hasValidDays = typeof closingDay === 'number' && typeof dueDay === 'number' && Number.isInteger(closingDay) && Number.isInteger(dueDay) && closingDay >= 1 && closingDay <= 31 && dueDay >= 1 && dueDay <= 31;
+      if (!name || !institution || !brand || !/^\d{4}$/.test(lastFourDigits || '') || !hasValidDays) {
+        throw new Error('Dados incompletos do cartão: informe nome, instituição, bandeira, últimos quatro dígitos e datas válidas.');
+      }
+      const { data, error } = await supabase
+        .from('personal_credit_cards')
+        .insert({
+          user_id: userId,
+          name,
+          institution,
+          brand,
+          last_four_digits: lastFourDigits,
+          limit_total_cents: Math.round((card.limitTotal ?? 0) * 100),
+          limit_used_cents: Math.round((card.limitUsed ?? 0) * 100),
+          current_invoice_cents: Math.round((card.currentInvoice ?? 0) * 100),
+          closing_day: closingDay,
+          due_day: dueDay,
+          is_primary: !!card.isPrimary,
+          status: 'active'
+        })
+        .select('id,name,institution,limit_total_cents,limit_used_cents,current_invoice_cents,closing_day,due_day,brand,last_four_digits,is_primary,status')
+        .single();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      return {
+        id: data.id,
+        name: data.name,
+        institution: data.institution,
+        limitTotal: Number(data.limit_total_cents) / 100,
+        limitUsed: Number(data.limit_used_cents) / 100,
+        currentInvoice: Number(data.current_invoice_cents) / 100,
+        closingDay: data.closing_day,
+        dueDay: data.due_day,
+        context: 'PF',
+        brand: data.brand,
+        lastFourDigits: data.last_four_digits,
+        isPrimary: data.is_primary,
+        status: (data.status === 'active' ? 'ativo' : data.status === 'archived' ? 'arquivado' : 'inativo') as any
+      };
+    } catch (err: any) {
+      AuraLogger.error('[SupabaseCreditCardRepository] Erro ao criar cartão PF', { error: err.message });
+      throw err;
+    }
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('personal_credit_cards')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+    } catch (err: any) {
+      AuraLogger.error('[SupabaseCreditCardRepository] Erro ao excluir cartão PF', { error: err.message });
+      throw err;
+    }
+  }
+}
+
+export const supabaseCreditCardRepo = new SupabaseCreditCardRepository();

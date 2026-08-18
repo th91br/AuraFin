@@ -444,7 +444,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: 'Meus dados financeiros ficam salvos na nuvem?',
-    answer: 'Não. O AuraFin utiliza uma arquitetura 100% Local-First. Toda a persistência é criptografada e armazenada diretamente no seu próprio navegador através de um repositório local. Você tem total controle dos seus dados e pode exportar seu pacote fiscal a qualquer momento.'
+    answer: 'Os dados financeiros autenticados são lidos do Supabase com RLS e isolamento por usuário e organização. O modo demo local é exclusivo para desenvolvimento e não representa dados reais.'
   },
   {
     question: 'Como o AuraFin ajuda no IRPF e no fechamento da Contabilidade?',

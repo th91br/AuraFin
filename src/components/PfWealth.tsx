@@ -1,80 +1,88 @@
 import { useState } from 'react';
-import { Asset, Transaction } from '../types';
+import { Asset, Transaction, Account, Debt, CreditCard } from '../types';
 import { MetricCard } from './aura/AuraCards';
-import { HelpTooltip } from './ui/HelpTooltip';
-import { Plus, Landmark, Home, Car, TrendingUp, ShieldAlert, Sparkles, ChevronRight } from 'lucide-react';
+import { Plus, Landmark, Home, Car, TrendingUp, ShieldAlert, Sparkles, Trash2 } from 'lucide-react';
 import { PrivacyText } from './ui/PrivacyText';
 
 interface Props {
   assets?: Asset[];
+  accounts?: Account[];
+  debts?: Debt[];
+  creditCards?: CreditCard[];
   transactions?: Transaction[];
   isPrivacyMode?: boolean;
   onAddAsset?: () => void;
+  onDeleteAsset?: (id: string) => void;
 }
 
 export function PfWealth({
   assets = [],
+  accounts = [],
+  debts = [],
+  creditCards = [],
   transactions = [],
   isPrivacyMode = false,
   onAddAsset,
+  onDeleteAsset,
 }: Props) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('todos');
+  const pfAccounts = accounts.filter(a => a.context === 'PF');
+  const pfCards = creditCards.filter(c => c.context === 'PF');
 
-  const defaultAssets: Asset[] = [
-    { id: 'a1', name: 'Apartamento Jardins SP', category: 'imovel', value: 380000, notes: 'Avaliação imobiliária 2026' },
-    { id: 'a2', name: 'Jeep Compass Longitude', category: 'veiculo', value: 65000, notes: 'Tabela FIPE recente' },
-    { id: 'a3', name: 'Carteira de Renda Fixa & Tesouro', category: 'renda_fixa', value: 45000, notes: 'LCI/CDB Liquidez Diária' },
-    { id: 'a4', name: 'Ações & ETFs (B3)', category: 'acoes', value: 25000, notes: 'Investimentos em Bolsa' },
-  ];
+  const assetsPhysicalValue = assets.reduce((acc, a) => acc + (a.value || 0), 0);
+  const liquidAccountsValue = pfAccounts.reduce((acc, a) => acc + (a.balance || 0), 0);
+  const totalAssetsValue = assetsPhysicalValue + liquidAccountsValue;
 
-  const displayAssets = assets.length > 0 ? assets : defaultAssets;
+  const totalDebtsValue = debts.reduce((acc, d) => acc + (d.totalBalance || 0), 0);
+  const totalCardsInvoices = pfCards.reduce((acc, c) => acc + (c.limitUsed || 0), 0);
+  const totalLiabilities = totalDebtsValue + totalCardsInvoices;
 
-  const totalAssetsValue = displayAssets.reduce((acc, a) => acc + a.value, 0);
-  const totalLiabilities = 165000; // Dívidas e financiamentos reais vinculados do Bloco 2
   const netWorth = totalAssetsValue - totalLiabilities;
-  const netWorthVariation = '+4,8%';
+
+  // Real Allocation Breakdown
+  const imoveisTotal = assets.filter(a => a.category === 'imovel').reduce((acc, a) => acc + a.value, 0);
+  const veiculosTotal = assets.filter(a => a.category === 'veiculo').reduce((acc, a) => acc + a.value, 0);
+  const investimentosTotal = assets.filter(a => a.category === 'renda_fixa' || a.category === 'acoes').reduce((acc, a) => acc + a.value, 0) + liquidAccountsValue;
+  const outrosTotal = assets.filter(a => a.category === 'outros').reduce((acc, a) => acc + a.value, 0);
+
+  const denom = totalAssetsValue > 0 ? totalAssetsValue : 1;
+  const imoveisPct = ((imoveisTotal / denom) * 100).toFixed(1);
+  const veiculosPct = ((veiculosTotal / denom) * 100).toFixed(1);
+  const investPct = ((investimentosTotal / denom) * 100).toFixed(1);
+  const outrosPct = ((outrosTotal / denom) * 100).toFixed(1);
+
+  if (assets.length === 0 && pfAccounts.length === 0 && debts.length === 0 && pfCards.length === 0) return <div className="space-y-8 animate-in fade-in duration-200"><div className="flex items-center justify-between border-b border-slate-200/60 pb-4"><div><h1 className="text-2xl font-black tracking-tight text-slate-950">Patrimônio Líquido Real</h1><p className="text-xs text-slate-500 mt-1">Bens e disponibilidades reais do usuário autenticado.</p></div>{onAddAsset && <button onClick={onAddAsset} className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 text-white font-bold rounded-xl text-xs"><Plus className="w-4 h-4" />Adicionar ativo</button>}</div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><Landmark className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 bg-indigo-50 text-indigo-900 border border-indigo-200 rounded">
-            Balanço Patrimonial Pessoal
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
-            Patrimônio Líquido
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
+            Patrimônio Líquido Real
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Veja tudo o que você possui, o que ainda deve e como seu patrimônio evolui ao longo do tempo.
+          <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+            Balanço consolidado: seus bens e disponibilidades descontados os passivos totais.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => alert('Formulário de novo passivo')}
-            className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs border border-slate-200"
-          >
-            + Adicionar Passivo
-          </button>
-
+        {onAddAsset && (
           <button
             onClick={onAddAsset}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition-all text-xs shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Adicionar Ativo</span>
           </button>
-        </div>
+        )}
       </div>
 
       {/* Top KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens, imóveis e carteiras" trend="up" trendValue="+6%" />
-        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Financiamentos e empréstimos" trend="down" trendValue="-2%" />
-        <MetricCard title="Patrimônio Líquido" value={netWorth} isPrivacyMode={isPrivacyMode} subtitle="Posição real (Ativos - Passivos)" trend="up" trendValue={netWorthVariation} />
-        <MetricCard title="Total de Bens" value={displayAssets.length} prefix="" subtitle="Ativos cadastrados" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <MetricCard title="Patrimônio Líquido" value={netWorth} isPrivacyMode={isPrivacyMode} subtitle="Ativos menos Passivos" />
+        <MetricCard title="Ativos Totais" value={totalAssetsValue} isPrivacyMode={isPrivacyMode} subtitle="Bens e saldos líquidos" />
+        <MetricCard title="Passivos Totais" value={totalLiabilities} isPrivacyMode={isPrivacyMode} subtitle="Dívidas e faturas abertas" />
+        <MetricCard title="Índice de Liquidez" value={totalLiabilities > 0 ? Number(((liquidAccountsValue / totalLiabilities) * 100).toFixed(1)) : 100} prefix="" subtitle={totalLiabilities > 0 ? 'Liquidez sobre passivos' : 'Sem passivos registrados'} />
       </div>
 
       {/* Main Grid: Allocation & Asset List */}
@@ -90,7 +98,7 @@ export function PfWealth({
                 <Home className="w-4 h-4 text-indigo-600" />
                 <span className="font-bold text-slate-800">Imóveis & Terrenos</span>
               </span>
-              <span className="font-mono font-bold text-slate-950">73.8%</span>
+              <span className="font-mono font-bold text-slate-950">{imoveisPct}% (R$ {imoveisTotal.toLocaleString('pt-BR')})</span>
             </div>
 
             <div className="flex justify-between items-center text-xs">
@@ -98,50 +106,95 @@ export function PfWealth({
                 <Car className="w-4 h-4 text-amber-600" />
                 <span className="font-bold text-slate-800">Veículos</span>
               </span>
-              <span className="font-mono font-bold text-slate-950">12.6%</span>
+              <span className="font-mono font-bold text-slate-950">{veiculosPct}% (R$ {veiculosTotal.toLocaleString('pt-BR')})</span>
             </div>
 
             <div className="flex justify-between items-center text-xs">
               <span className="flex items-center space-x-2">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                <span className="font-bold text-slate-800">Investimentos & Renda Fixa</span>
+                <span className="font-bold text-slate-800">Investimentos & Disponibilidades</span>
               </span>
-              <span className="font-mono font-bold text-slate-950">13.6%</span>
+              <span className="font-mono font-bold text-slate-950">{investPct}% (R$ {investimentosTotal.toLocaleString('pt-BR')})</span>
             </div>
+
+            {outrosTotal > 0 && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="flex items-center space-x-2">
+                  <Landmark className="w-4 h-4 text-slate-600" />
+                  <span className="font-bold text-slate-800">Outros Bens</span>
+                </span>
+                <span className="font-mono font-bold text-slate-950">{outrosPct}% (R$ {outrosTotal.toLocaleString('pt-BR')})</span>
+              </div>
+            )}
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-1">
-            <span className="font-bold text-slate-900 block">Insight Patrimonial</span>
-            <p className="text-[11px] text-slate-500">73.8% do seu patrimônio total está alocado em bens imobiliários de baixa liquidez.</p>
+            <span className="font-bold text-slate-900 block">Composição Patrimonial</span>
+            <p className="text-[11px] text-slate-500">
+              {totalAssetsValue > 0
+                ? `${investPct}% do seu patrimônio está em investimentos/liquidez e ${imoveisPct}% em imóveis.`
+                : 'Cadastre seus ativos para visualizar a composição percentual.'}
+            </p>
           </div>
         </div>
 
         {/* Assets List */}
         <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="font-bold text-sm text-slate-950">Lista de Ativos Registrados</h3>
-            <span className="text-xs font-semibold text-slate-400">Prevenção de dupla contagem ativa</span>
+            <h3 className="font-bold text-sm text-slate-950">Bens & Ativos Cadastrados</h3>
+            <span className="text-xs font-semibold text-slate-400">Isolamento RLS ativo</span>
           </div>
 
-          <div className="space-y-3">
-            {displayAssets.map(asset => (
-              <div key={asset.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-xs text-slate-900">{asset.name}</h4>
-                  <p className="text-[10px] text-slate-500 capitalize">{asset.category} • {asset.notes}</p>
-                </div>
+          {assets.length > 0 ? (
+            <div className="space-y-3">
+              {assets.map(asset => (
+                <div key={asset.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-xs text-slate-900">{asset.name}</h4>
+                    <p className="text-[10px] text-slate-500 capitalize">{asset.category} {asset.notes ? `• ${asset.notes}` : ''}</p>
+                  </div>
 
-                <div className="text-right">
-                  <PrivacyText
-                    value={asset.value}
-                    isPrivacyMode={isPrivacyMode}
-                    className="font-mono font-bold text-sm text-slate-950 block"
-                  />
-                  <span className="text-[10px] text-emerald-700 font-semibold">Valor Atualizado</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <PrivacyText
+                        value={asset.value}
+                        isPrivacyMode={isPrivacyMode}
+                        className="font-mono font-bold text-sm text-slate-950 block"
+                      />
+                      <span className="text-[10px] text-emerald-700 font-semibold">Valor Registrado</span>
+                    </div>
+
+                    {onDeleteAsset && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Deseja remover o bem "${asset.name}"?`)) {
+                            onDeleteAsset(asset.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-all"
+                        title="Excluir Ativo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <p className="text-xs font-semibold text-slate-700">Nenhum bem físico cadastrado</p>
+              <p className="text-[11px] text-slate-500">Cadastre seus imóveis, terrenos ou veículos para compor seu balanço patrimonial.</p>
+              {onAddAsset && (
+                <button
+                  onClick={onAddAsset}
+                  className="mt-2 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-lg text-xs"
+                >
+                  + Cadastrar Bem / Ativo
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
       </div>

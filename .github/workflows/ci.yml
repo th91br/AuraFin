@@ -1,0 +1,71 @@
+name: CI — Pull Request Validation Gate
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Code Quality, Security & Migration Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Deterministic Dependency Installation
+        run: npm ci
+
+      - name: Security Vulnerability Audit
+        run: npm audit --audit-level=high
+
+      - name: Deployment Contract Tests
+        run: npm run test:deployment
+
+      - name: Production Application Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: sb_publishable_ci_build_validation_only_00000000
+          VITE_APP_ENV: development
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Local Supabase & Run Database Tests
+        run: |
+          supabase start
+          supabase test db
+
+      - name: Validate Supabase SQL Migrations
+        run: |
+          echo "=== Auditing PostgreSQL Migrations ==="
+          MIGRATION_COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
+          echo "Total migrations found: $MIGRATION_COUNT"
+          if [ "$MIGRATION_COUNT" -eq 0 ]; then
+            echo "ERROR: No migrations found in supabase/migrations/"
+            exit 1
+          fi
+          
+          # Check for destructive commands
+          for file in supabase/migrations/*.sql; do
+            echo "Checking $file..."
+            if grep -iE "drop\s+table\s+if\s+exists\s+public\.(profiles|personal_accounts|business_accounts|personal_transactions|business_transactions)" "$file" > /dev/null; then
+              echo "WARNING: Core table drop detected in $file. Ensure this is intentional and backward-compatible."
+            fi
+          done
+          echo "=== All migrations validated successfully ==="

@@ -4,6 +4,18 @@ build/
 dist/
 coverage/
 
+# Backups & Data Dumps (Security & Privacy)
+.backup/
+backups/
+storage-backup/
+*.dump
+*.sql.gz
+manifest.json
+
+# Supabase CLI Local Scratch
+supabase/.temp/
+supabase/.branches/
+
 # Logs & Environment
 *.log
 .env*
@@ -17,3 +29,5 @@ Thumbs.db
 .opencode/
 .vscode/
 .idea/
+
+.vercel

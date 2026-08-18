@@ -27,7 +27,7 @@ export function ProjectModal({ isOpen = true, onClose, onSave }: Props) {
         client: client.trim(),
         revenue: parsedRevenue,
         cost: isNaN(parsedCost) ? 0 : parsedCost,
-        deadline: deadline.trim() || '2026-12-31',
+        deadline: deadline.trim(),
       });
       onClose();
     }
@@ -100,9 +100,9 @@ export function ProjectModal({ isOpen = true, onClose, onSave }: Props) {
             />
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={!name.trim() || !client.trim() || isNaN(parsedRevenue)}
+            <button
+              onClick={handleSubmit}
+            disabled={!name.trim() || !client.trim() || isNaN(parsedRevenue) || !deadline}
             className="w-full mt-4 py-4 bg-slate-100 hover:bg-white text-slate-950 font-bold rounded-xl transition-all shadow-md active:scale-95 text-xs disabled:opacity-50"
           >
             Cadastrar Projeto

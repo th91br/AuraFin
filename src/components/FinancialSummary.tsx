@@ -15,15 +15,14 @@ export function FinancialSummary({ mode, transactions, assets = [], onAdd, onAdd
   const isPJ = mode === 'PJ';
   const filteredTxs = transactions.filter(t => t.context === mode);
   
-  const baseBalance = isPJ ? 35000 : 7052.45;
   const currentBalance = filteredTxs.reduce((acc, t) => {
-    return acc + (t.type === 'income' ? t.amount : -t.amount);
-  }, baseBalance);
+    return acc + (t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0);
+  }, 0);
 
   const projectedIncome = filteredTxs
     .filter(t => t.type === 'income')
     .reduce((acc, t) => acc + t.amount, 0);
-  const baseIncoming = isPJ ? (projectedIncome > 0 ? projectedIncome : 18500) : 4500;
+  const baseIncoming = projectedIncome;
   
   const totalAssets = assets.reduce((acc, asset) => acc + asset.value, 0);
 
@@ -67,9 +66,13 @@ export function FinancialSummary({ mode, transactions, assets = [], onAdd, onAdd
           isPJ ? 'border-slate-800 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900 shadow-sm'
         }`}>
           <div className="flex justify-between items-start mb-6">
-            <div className={`p-3 rounded-xl ${
-              isPJ ? 'bg-slate-800 text-slate-200 border border-slate-700' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-            }`}>
+            <div
+              className={`p-3 rounded-xl ${
+                isPJ
+                  ? 'bg-slate-800 text-slate-200 border border-slate-700'
+                  : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
+              }`}
+            >
               <Wallet className="w-6 h-6" />
             </div>
           </div>

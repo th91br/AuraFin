@@ -28,23 +28,23 @@ export function MetricCard({
     : subtitle;
 
   return (
-    <div className={`p-5 rounded-2xl transition-all duration-200 border ${
+    <div className={`p-5 rounded-2xl transition-all duration-200 border glow-card ${
       isPJ 
-        ? 'bg-[#172033] border-white/5 text-white shadow-sm' 
-        : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
+        ? 'bg-[#0f172a]/90 border-white/[0.08] text-white shadow-sm' 
+        : 'bg-white border-slate-200/90 text-slate-900 shadow-xs'
     }`}>
       <div className="flex items-center justify-between">
-        <span className={`text-xs font-semibold uppercase tracking-wider ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
+        <span className={`text-[11px] font-bold uppercase tracking-wider ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
           {title}
         </span>
         {trend && (
-          <span className={`flex items-center space-x-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+          <span className={`flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
             trend === 'up' 
               ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' 
               : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
           }`}>
             {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            <span>{trendValue}</span>
+            <span className="tabular-nums">{trendValue}</span>
           </span>
         )}
       </div>
@@ -52,11 +52,11 @@ export function MetricCard({
       <div className="mt-2.5">
         {prefix === '' ? (
           isPrivacyMode ? (
-            <span className={`text-2xl font-black tracking-tight font-mono ${isPJ ? 'text-white' : 'text-slate-950'}`}>
+            <span className={`text-2xl font-black tracking-tight font-mono-numbers ${isPJ ? 'text-white' : 'text-slate-950'}`}>
               •••••• %
             </span>
           ) : (
-            <span className={`text-2xl font-black tracking-tight font-mono ${isPJ ? 'text-white' : 'text-slate-950'}`}>
+            <span className={`text-2xl font-black tracking-tight font-mono-numbers ${isPJ ? 'text-white' : 'text-slate-950'}`}>
               {value}%
             </span>
           )
@@ -65,7 +65,7 @@ export function MetricCard({
             value={value}
             isPrivacyMode={isPrivacyMode}
             prefix={prefix}
-            className={`text-2xl font-black tracking-tight font-mono ${
+            className={`text-2xl font-black tracking-tight font-mono-numbers ${
               isPJ ? 'text-white' : 'text-slate-950'
             }`}
           />
@@ -95,8 +95,8 @@ export function DonutChartCard({ title, subtitle, spent, target, categories, isP
   const percentage = Math.min(100, Math.round((spent / (target || 1)) * 100));
 
   return (
-    <div className={`p-6 rounded-2xl border flex flex-col justify-between ${
-      isPJ ? 'bg-[#172033] border-white/5 text-white' : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
+    <div className={`p-6 rounded-2xl border flex flex-col justify-between glow-card ${
+      isPJ ? 'bg-[#0f172a]/90 border-white/[0.08] text-white' : 'bg-white border-slate-200/90 text-slate-900 shadow-xs'
     }`}>
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -129,7 +129,7 @@ export function DonutChartCard({ title, subtitle, spent, target, categories, isP
           </svg>
           <div className="absolute text-center space-y-0.5">
             <span className={`text-[10px] font-bold uppercase tracking-wider block ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>Gasto</span>
-            <span className="text-lg font-black font-mono tracking-tight block">
+            <span className="text-lg font-black font-mono-numbers tracking-tight block">
               <PrivacyText value={spent} isPrivacyMode={isPrivacyMode} />
             </span>
             <span className={`text-[10px] font-semibold block ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -146,7 +146,7 @@ export function DonutChartCard({ title, subtitle, spent, target, categories, isP
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                 <span className={`font-medium ${isPJ ? 'text-slate-300' : 'text-slate-700'}`}>{cat.label}</span>
               </div>
-              <span className="font-mono font-bold">
+              <span className="font-mono-numbers font-bold">
                 <PrivacyText value={cat.amount} isPrivacyMode={isPrivacyMode} />
               </span>
             </div>
@@ -170,14 +170,14 @@ export function GoalCard({ title, current, target, daysLeft, isPJ = false, isPri
   const percentage = Math.min(100, Math.round((current / (target || 1)) * 100));
 
   return (
-    <div className={`p-4 rounded-xl border flex items-center space-x-3 ${
-      isPJ ? 'bg-[#1E293B] border-white/5 text-white' : 'bg-slate-50 border-slate-200/80 text-slate-900'
+    <div className={`p-4 rounded-xl border flex items-center space-x-3 glow-card ${
+      isPJ ? 'bg-[#0f172a]/90 border-white/[0.08] text-white' : 'bg-slate-50 border-slate-200/80 text-slate-900'
     }`}>
       {/* Mini Donut */}
       <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
           <path
-            className={isPJ ? 'text-slate-700' : 'text-slate-200'}
+            className={isPJ ? 'text-slate-800' : 'text-slate-200'}
             strokeWidth="3.5"
             stroke="currentColor"
             fill="none"
@@ -193,12 +193,12 @@ export function GoalCard({ title, current, target, daysLeft, isPJ = false, isPri
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
         </svg>
-        <span className="absolute text-[10px] font-black font-mono">{percentage}%</span>
+        <span className="absolute text-[10px] font-black font-mono-numbers tabular-nums">{percentage}%</span>
       </div>
 
       <div className="truncate flex-1">
         <h4 className="font-bold text-xs truncate">{title}</h4>
-        <p className={`text-[11px] font-mono font-semibold ${isPJ ? 'text-emerald-400' : 'text-emerald-700'}`}>
+        <p className={`text-[11px] font-mono-numbers font-semibold ${isPJ ? 'text-emerald-400' : 'text-emerald-700'}`}>
           <PrivacyText value={current} isPrivacyMode={isPrivacyMode} /> <span className={`font-normal ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>de <PrivacyText value={target} isPrivacyMode={isPrivacyMode} /></span>
         </p>
         <span className={`text-[9px] block mt-0.5 ${isPJ ? 'text-slate-400' : 'text-slate-500'}`}>{daysLeft} dias restantes</span>
@@ -212,28 +212,29 @@ interface VisualPaymentCardProps {
   cardNumberMasked: string;
   balance: number;
   dueDate: string;
+  brand?: string;
   isPJ?: boolean;
   isPrivacyMode?: boolean;
 }
 
-export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, isPJ = false, isPrivacyMode = false }: VisualPaymentCardProps) {
+export function VisualPaymentCard({ cardName, cardNumberMasked, balance, dueDate, brand, isPJ = false, isPrivacyMode = false }: VisualPaymentCardProps) {
   return (
-    <div className="p-5 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-md space-y-4 relative overflow-hidden">
+    <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-white/[0.12] text-white shadow-xl space-y-4 relative overflow-hidden glow-card">
       <div className="flex justify-between items-center">
-        <span className="text-xs font-bold uppercase tracking-wider">{cardName}</span>
-        <span className="text-xs font-black tracking-widest uppercase">VISA</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-300">{cardName}</span>
+        <span className="text-xs font-black tracking-widest uppercase text-indigo-300">{brand || 'Bandeira não informada'}</span>
       </div>
 
       <div className="py-2">
-        <p className="font-mono text-sm tracking-widest text-sky-100">{cardNumberMasked}</p>
-        <div className="text-2xl font-black font-mono tracking-tight mt-1">
+        <p className="font-mono-numbers text-xs tracking-widest text-indigo-200/80">{cardNumberMasked}</p>
+        <div className="text-2xl font-black font-mono-numbers tracking-tight mt-1">
           <PrivacyText value={balance} isPrivacyMode={isPrivacyMode} />
         </div>
       </div>
 
-      <div className="flex justify-between items-center text-[10px] font-mono text-sky-100 pt-1 border-t border-white/20">
+      <div className="flex justify-between items-center text-[10px] font-mono-numbers text-slate-400 pt-1 border-t border-white/[0.08]">
         <span>VENCIMENTO: {dueDate}</span>
-        <span>AURAFIN CARD</span>
+        <span className="font-bold text-slate-300">{isPJ ? 'CARTÃO PJ' : 'CARTÃO PF'}</span>
       </div>
     </div>
   );
@@ -252,7 +253,7 @@ interface ActivityRowProps {
 export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = false, isPrivacyMode = false }: ActivityRowProps) {
   return (
     <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-      isPJ ? 'bg-[#1E293B] border-white/5 text-white hover:bg-slate-800' : 'bg-slate-50 border-slate-200/80 text-slate-900 hover:bg-slate-100/80'
+      isPJ ? 'bg-[#0f172a]/80 border-white/[0.06] text-white hover:bg-slate-900' : 'bg-slate-50 border-slate-200/80 text-slate-900 hover:bg-slate-100/80'
     }`}>
       <div className="flex items-center space-x-3 truncate mr-2">
         <span className={`w-2 h-2 rounded-full shrink-0 ${isIncome ? 'bg-emerald-500' : 'bg-slate-400'}`} />
@@ -262,7 +263,7 @@ export function ActivityRow({ title, subtitle, amount, isIncome = false, isPJ = 
         </div>
       </div>
 
-      <span className={`font-mono font-bold shrink-0 ${isIncome ? 'text-emerald-500' : isPJ ? 'text-slate-200' : 'text-slate-900'}`}>
+      <span className={`font-mono-numbers font-bold shrink-0 tabular-nums ${isIncome ? 'text-emerald-500' : isPJ ? 'text-slate-200' : 'text-slate-900'}`}>
         <PrivacyText value={amount} isPrivacyMode={isPrivacyMode} prefix={isIncome ? '+ R$' : '- R$'} />
       </span>
     </div>

@@ -11,7 +11,7 @@ export class SupabasePersonalAccountRepository implements IPersonalAccountReposi
 
   async list(userId: string): Promise<Account[]> {
     const { data, error } = await this.table()
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .eq('user_id', userId)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -24,7 +24,7 @@ export class SupabasePersonalAccountRepository implements IPersonalAccountReposi
     const insertPayload = mapPersonalAccountDomainToInsert(account, userId);
     const { data, error } = await this.table()
       .insert(insertPayload)
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao criar conta bancária PF no Supabase.');
@@ -37,7 +37,7 @@ export class SupabasePersonalAccountRepository implements IPersonalAccountReposi
       .update(insertPayload)
       .eq('id', account.id)
       .eq('user_id', userId)
-      .select('*')
+      .select('id,name,institution,type,balance_cents')
       .single();
 
     if (error) throw normalizeSupabaseError(error, 'Erro ao atualizar conta bancária PF no Supabase.');

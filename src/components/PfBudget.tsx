@@ -16,6 +16,8 @@ export function PfBudget({ transactions, budgetItems, onAddTransaction }: Props)
   const remainingBudget = totalAllocated - totalSpent;
   const overallPercentage = Math.min(100, Math.round((totalSpent / (totalAllocated || 1)) * 100));
 
+  if (budgetItems.length === 0 && pfTxs.length === 0) return <div className="space-y-8 animate-in fade-in duration-300"><div className="flex items-center justify-between"><div><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Orçamento &amp; Controle de Teto</h1><p className="text-slate-500 mt-1 text-base">Dados reais do usuário autenticado.</p></div><button onClick={onAddTransaction} className="flex items-center space-x-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-sm"><Plus className="w-4 h-4" />Registrar despesa</button></div><div className="p-16 text-center bg-white rounded-2xl border border-dashed border-slate-300"><PieChart className="w-10 h-10 text-slate-400 mx-auto mb-3" /><p className="text-slate-500">Nenhum dado disponível</p></div></div>;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -48,7 +50,7 @@ export function PfBudget({ transactions, budgetItems, onAddTransaction }: Props)
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Realizado / Executado</p>
-          <h3 className="text-3xl font-extrabold text-indigo-900 mt-2">
+          <h3 className="text-3xl font-extrabold text-slate-900 mt-2">
             R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </h3>
           <div className="flex items-center space-x-2 mt-2">

@@ -4,9 +4,11 @@ import { AlertCircle, MessageSquare, CheckCircle2, Copy, X } from 'lucide-react'
 
 interface Props {
   defaulters: Defaulter[];
+  organizationName?: string;
+  organizationPixKey?: string;
 }
 
-export function PjDefaulters({ defaulters }: Props) {
+export function PjDefaulters({ defaulters, organizationName, organizationPixKey }: Props) {
   const [selectedDefaulter, setSelectedDefaulter] = useState<Defaulter | null>(null);
   const [copiedMessage, setCopiedMessage] = useState(false);
 
@@ -18,16 +20,18 @@ export function PjDefaulters({ defaulters }: Props) {
   };
 
   const getCollectionText = (def: Defaulter) => {
+    const paymentInstruction = organizationPixKey
+      ? `Segue nossa chave Pix para regularização: ${organizationPixKey}`
+      : 'Solicitamos o envio do comprovante ou o contato com o financeiro para receber os dados de pagamento.';
     return `Olá, equipe da ${def.client}! Tudo bem?
 
 Constatamos em nosso sistema que a fatura referente ao contrato prestado, com vencimento em ${def.dueDate} (valor de R$ ${def.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), está pendente de identificação de pagamento.
 
-Segue nossa chave Pix CNPJ para regularização ou nos envie o comprovante de transferência:
-Chave Pix CNPJ: 12.345.678/0001-90 (AuraFin Tecnologia e Serviços Ltda)
+${paymentInstruction}
 
 Ficamos à disposição para qualquer dúvida!
 Atenciosamente,
-Financeiro AuraFin`;
+Financeiro${organizationName ? ` ${organizationName}` : ''}`;
   };
 
   const handleCopyText = (text: string) => {
@@ -72,7 +76,7 @@ Financeiro AuraFin`;
         <h2 className="text-xl font-bold text-white">Clientes com Pagamento Pendente</h2>
 
         <div className="space-y-4">
-          {defaulters.map((def) => (
+          {defaulters.length === 0 ? <div className="py-12 text-center text-slate-400">Nenhum dado disponível</div> : defaulters.map((def) => (
             <div key={def.id} className="p-6 bg-slate-950 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-700 transition-colors">
               <div className="space-y-1">
                 <div className="flex items-center space-x-3">

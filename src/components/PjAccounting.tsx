@@ -1,149 +1,98 @@
-import { Transaction } from '../types';
-import { RefreshCcw, FileCheck2, CheckCircle2, ShieldCheck, Download } from 'lucide-react';
+import { Transaction, TransactionAnalytics } from '../types';
+import { RefreshCcw, Download, Landmark } from 'lucide-react';
 
 interface Props {
-  transactions: Transaction[];
+  transactions?: Transaction[];
+  analytics?: TransactionAnalytics;
+  onExportJson?: () => Promise<unknown>;
   onReimburse: () => void;
 }
 
-export function PjAccounting({ transactions, onReimburse }: Props) {
-  const pjTxs = transactions.filter(t => t.context === 'PJ');
-  
-  const pendingReimbursements = pjTxs.filter(t => t.isPaidByPF && !t.reimbursed);
-  const totalReimbursement = pendingReimbursements.reduce((acc, t) => acc + t.amount, 0);
+export function PjAccounting({
+  transactions = [],
+  analytics,
+  onExportJson,
+  onReimburse,
+}: Props) {
+  const rows = transactions.filter((row) => row.context === 'PJ');
+  const pending = rows.filter((row) => row.isPaidByPF && !row.reimbursed);
+  const reimbursement =
+    Number(analytics?.paid_by_pf_cents || 0) / 100 || pending.reduce((sum, row) => sum + row.amount, 0);
+  const personal = rows.filter((row) => row.isPersonalExpenseInPJ);
 
-  const personalExpenses = pjTxs.filter(t => t.isPersonalExpenseInPJ);
-
-  const currentRevenue = pjTxs
-    .filter(t => t.type === 'income')
-    .reduce((acc, t) => acc + t.amount, 0) || 18500;
-
-  const handleExportTaxPackage = () => {
-    const taxPackage = {
-      empresa: "AuraFin Tecnologia e Serviços Ltda",
-      cnpj: "12.345.678/0001-90",
-      mesReferencia: "Julho/2026",
-      dataGeracao: new Date().toISOString(),
-      resumo: {
-        totalReceitas: currentRevenue,
-        totalDespesasOperacionais: pjTxs.filter(t => t.type === 'expense' && !t.isPersonalExpenseInPJ).reduce((acc, t) => acc + t.amount, 0),
-        ajustesLucroPessoal: personalExpenses.reduce((acc, t) => acc + t.amount, 0),
-        aportesReembolsadosSocio: pjTxs.filter(t => t.reimbursed).reduce((acc, t) => acc + t.amount, 0),
-        statusConciliacao: "CONCILIADO_E_AUDITADO"
-      },
-      transacoes: pjTxs
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(taxPackage, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "aurafin_pacote_contabil_julho_2026.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+  const exportPackage = async () => {
+    const data = await onExportJson?.();
+    if (data == null) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'aurafin-pacote-contabil.json';
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">
-          Central do Contador & Reconciliação
-        </h1>
-        <p className="text-slate-400 mt-1 text-base">
-          Fechamento mensal automatizado, auditoria de retiradas e exportação do pacote fiscal.
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-200 text-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-white">Central Contábil</h1>
+          <p className="text-xs text-slate-300 mt-1">Conciliação de retiradas, reembolsos de sócios e exportação de pacote fiscal.</p>
+        </div>
+        <button
+          onClick={() => void exportPackage()}
+          className="flex items-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+        >
+          <Download className="w-4 h-4" />
+          <span>Exportar Pacote JSON</span>
+        </button>
       </div>
 
-      {/* Reimbursement Alert Card */}
-      {totalReimbursement > 0 ? (
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between shadow-sm gap-6">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
-              <RefreshCcw className="w-7 h-7" />
-            </div>
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Pendência de Reembolso ao Sócio</span>
-              <h3 className="text-xl font-bold text-white mt-0.5">Você usou dinheiro pessoal para pagar contas da empresa.</h3>
-              <p className="text-sm text-slate-400 mt-1">
-                {pendingReimbursements.length} despesa(s) registrada(s) via cartão/conta PF.
-              </p>
-            </div>
+      {reimbursement > 0 && (
+        <div className="p-5 bg-slate-900 border border-amber-500/30 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-xs text-slate-300 block">Reembolso pendente ao sócio</span>
+            <strong className="text-amber-400 font-mono text-base font-bold">
+              {reimbursement.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </strong>
           </div>
-          <div className="flex items-center space-x-4 w-full md:w-auto font-mono tabular-nums">
-            <span className="text-3xl font-extrabold text-white">
-              R$ {totalReimbursement.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-            <button
-              onClick={onReimburse}
-              className="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl transition-all shadow-sm active:scale-95 whitespace-nowrap font-sans uppercase tracking-wider"
-            >
-              Reembolsar Sócio em 1 Clique
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-center space-x-4 text-slate-200">
-          <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
-          <div className="text-sm">
-            <span className="font-bold text-white">Todos os aportes do sócio foram regularizados!</span> Não há despesas pessoais pendentes de reembolso nesta empresa.
-          </div>
+          <button
+            onClick={onReimburse}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+          >
+            <RefreshCcw className="w-4 h-4" />
+            <span>Processar Reembolso</span>
+          </button>
         </div>
       )}
 
-      {/* Fiscal Package Export Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-slate-800 border border-slate-700 text-white rounded-xl">
-              <FileCheck2 className="w-5 h-5 text-sky-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Auditoria de Despesas de Uso Pessoal</h2>
-              <p className="text-xs text-slate-400">Lançamentos na PJ categorizados como Pró-labore/Lucro</p>
-            </div>
+      {rows.length === 0 ? (
+        <div className="p-16 text-center bg-slate-900/80 rounded-2xl border border-dashed border-white/10 text-slate-300">
+          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 mx-auto mb-3">
+            <Landmark className="w-6 h-6" />
           </div>
-
-          <div className="space-y-3 font-mono tabular-nums">
-            {personalExpenses.map((tx) => (
-              <div key={tx.id} className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center">
-                <div>
-                  <h4 className="font-bold text-white text-sm font-sans">{tx.title}</h4>
-                  <p className="text-xs text-rose-400 font-semibold font-sans mt-0.5">Ajustado como Antecipação de Lucro / Pró-labore</p>
+          <h3 className="font-bold text-sm text-white">Nenhum lançamento contábil</h3>
+          <p className="text-xs text-slate-300 max-w-sm mx-auto mt-1">Lançamentos na PJ serão refletidos automaticamente na central contábil.</p>
+        </div>
+      ) : (
+        <div className="p-6 bg-slate-900/90 rounded-2xl border border-white/10 space-y-4">
+          <h2 className="font-bold text-white text-base">Uso Pessoal Pago na PJ (Ajuste de Pró-labore)</h2>
+          {personal.length === 0 ? (
+            <p className="text-xs text-slate-400">Nenhum lançamento marcado como despesa pessoal na conta da empresa.</p>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {personal.map((row) => (
+                <div key={row.id} className="py-2.5 flex justify-between items-center text-sm">
+                  <span className="text-slate-200">{row.title}</span>
+                  <strong className="text-rose-400 font-mono">
+                    {row.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </strong>
                 </div>
-                <span className="font-extrabold text-white text-base">
-                  R$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-            ))}
-
-            {personalExpenses.length === 0 && (
-              <p className="text-sm text-slate-500 italic font-sans">Nenhum uso pessoal identificado no caixa corporativo este mês.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Download Box */}
-        <div className="lg:col-span-5 bg-slate-900 text-white p-8 rounded-2xl border border-slate-800 shadow-md flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Pacote Pró-Contabilidade</span>
+              ))}
             </div>
-            <h2 className="text-2xl font-extrabold text-white tracking-tight mt-2">Exportação do Mês Vigente</h2>
-            <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-              Gere o arquivo JSON estruturado com todos os comprovantes, DRE simplificado e notas para o seu contador.
-            </p>
-          </div>
-
-          <button
-            onClick={handleExportTaxPackage}
-            className="w-full flex items-center justify-center space-x-2 py-4 bg-slate-100 hover:bg-white text-slate-950 font-extrabold rounded-xl transition-all shadow-sm active:scale-95 text-xs uppercase tracking-wider"
-          >
-            <Download className="w-4 h-4" />
-            <span>Exportar Pacote Fiscal (.JSON)</span>
-          </button>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
