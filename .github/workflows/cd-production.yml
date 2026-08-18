@@ -1,8 +1,6 @@
 name: CD — Production Database Release Gate
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 concurrency:
@@ -36,8 +34,8 @@ jobs:
           npm run test:deployment
           npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_PRODUCTION }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_PRODUCTION }}
+          VITE_SUPABASE_URL: https://ci-validation.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_validation_only_00000000
           VITE_APP_ENV: production
 
       - name: Setup Supabase CLI
@@ -45,8 +43,23 @@ jobs:
         with:
           version: latest
 
+      - name: Verify Production Database Credentials
+        shell: bash
+        run: |
+          missing=0
+          for variable in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_ID_PRODUCTION SUPABASE_DB_PASSWORD; do
+            if [ -z "${!variable}" ]; then
+              echo "::error::Required production credential is not configured: $variable"
+              missing=1
+            fi
+          done
+          exit "$missing"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID_PRODUCTION: ${{ secrets.SUPABASE_PROJECT_ID_PRODUCTION }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PRODUCTION }}
+
       - name: Apply Migrations to Production Supabase
-        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_ID_PRODUCTION != ''
         run: |
           echo "Connecting to Supabase Production..."
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PRODUCTION }}
@@ -58,4 +71,4 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PRODUCTION }}
 
       - name: Production Release Gate Status
-        run: echo "Production database release gate finished. Frontend hosting is handled separately by Vercel."
+        run: echo "Production database migrations completed. Frontend hosting is handled separately by Vercel."

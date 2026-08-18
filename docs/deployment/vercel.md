@@ -2,7 +2,7 @@
 
 The repository is configured as a static Vite SPA. Vercel builds with Node.js 22, runs the full TypeScript and environment gate, emits `dist/`, preserves deep links through the SPA rewrite, and applies the security headers declared in `vercel.json`.
 
-No Vercel deployment is performed by the GitHub workflows in this repository. The `cd-*` workflows are database release gates. Connect the repository through the Vercel Git integration (recommended) or run an intentional CLI deployment after completing this checklist.
+No Vercel deployment is performed by the GitHub workflows in this repository. The `cd-*` workflows are database release gates. Production database releases are intentionally manual and fail closed when any required GitHub Environment secret is missing. Connect the repository through the Vercel Git integration (recommended) or run an intentional CLI deployment after completing this checklist.
 
 ## Required project settings
 
