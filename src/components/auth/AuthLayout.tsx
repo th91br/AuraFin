@@ -18,6 +18,11 @@ export function AuthLayout({ initialMode = 'login' }: Props) {
   const { isPasswordRecoveryMode } = useAuth();
   const [mode, setMode] = useState<AuthViewMode>(initialMode);
   const [pendingEmail, setPendingEmail] = useState('');
+  const environmentLabel = import.meta.env.VITE_APP_ENV === 'production'
+    ? 'PROD'
+    : import.meta.env.VITE_APP_ENV === 'staging'
+      ? 'STAGING'
+      : 'DEV';
 
   useEffect(() => {
     if (isPasswordRecoveryMode) {
@@ -37,7 +42,7 @@ export function AuthLayout({ initialMode = 'login' }: Props) {
           <div className="flex items-baseline space-x-1.5">
             <span className="font-extrabold tracking-tight text-base text-white">AuraFin</span>
             <span className="text-[10px] font-mono tracking-widest text-cyan-400 font-bold uppercase px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800/60">
-              PROD
+              {environmentLabel}
             </span>
           </div>
         </div>
