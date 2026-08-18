@@ -18,9 +18,10 @@ export function AuthLayout({ initialMode = 'login' }: Props) {
   const { isPasswordRecoveryMode } = useAuth();
   const [mode, setMode] = useState<AuthViewMode>(initialMode);
   const [pendingEmail, setPendingEmail] = useState('');
-  const environmentLabel = import.meta.env.VITE_APP_ENV === 'production'
+  const appEnvironment = import.meta.env.VITE_APP_ENV?.trim();
+  const environmentLabel = appEnvironment === 'production'
     ? 'PROD'
-    : import.meta.env.VITE_APP_ENV === 'staging'
+    : appEnvironment === 'staging'
       ? 'STAGING'
       : 'DEV';
 
