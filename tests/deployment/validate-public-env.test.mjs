@@ -26,10 +26,22 @@ test('accepts a hardened Vercel production environment', () => {
     VERCEL_ENV: 'production',
     VITE_APP_ENV: 'production',
     VITE_SUPABASE_URL: 'https://project-ref.supabase.co',
-    VITE_SUPABASE_ANON_KEY: publishableKey,
+    VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
   });
 
   assert.equal(result.appEnvironment, 'production');
+  assert.equal(result.keyVariable, 'VITE_SUPABASE_PUBLISHABLE_KEY');
+});
+
+test('prefers the modern publishable variable while retaining legacy compatibility', () => {
+  const result = validatePublicBuildEnvironment({
+    VITE_SUPABASE_URL: 'https://project-ref.supabase.co',
+    VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+    VITE_SUPABASE_ANON_KEY: legacyJwt('anon'),
+  });
+
+  assert.equal(result.keyType, 'publishable');
+  assert.equal(result.keyVariable, 'VITE_SUPABASE_PUBLISHABLE_KEY');
 });
 
 test('accepts a legacy anon JWT', () => {
@@ -98,6 +110,36 @@ test('rejects secret and service-role keys', () => {
       /secret\/service-role|anon role/,
     );
   }
+});
+
+test('rejects an unsafe secondary key even when the preferred key is safe', () => {
+  assert.throws(
+    () =>
+      validatePublicBuildEnvironment({
+        VITE_SUPABASE_URL: 'https://project-ref.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+        VITE_SUPABASE_ANON_KEY: 'sb_secret_sensitive',
+      }),
+    /secret\/service-role/,
+  );
+});
+
+test('requires at least one supported public-key variable', () => {
+  assert.throws(
+    () => validatePublicBuildEnvironment({ VITE_SUPABASE_URL: 'https://project-ref.supabase.co' }),
+    /VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY is required/,
+  );
+});
+
+test('rejects a placeholder publishable key', () => {
+  assert.throws(
+    () =>
+      validatePublicBuildEnvironment({
+        VITE_SUPABASE_URL: 'https://project-ref.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_your-public-key-here',
+      }),
+    /placeholder value/,
+  );
 });
 
 test('requires staging semantics for Vercel previews', () => {

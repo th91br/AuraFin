@@ -22,10 +22,10 @@ function requireSupabaseUrl(value: string | undefined): string {
   return normalized;
 }
 
-function requireSupabasePublicKey(value: string | undefined): string {
+function requireSupabasePublicKey(value: string | undefined, variableName: string): string {
   const key = value?.trim();
   if (!key) {
-    throw new Error('[Supabase config] VITE_SUPABASE_ANON_KEY is required.');
+    throw new Error(`[Supabase config] ${variableName} is required.`);
   }
 
   if (key.startsWith('sb_secret_') || key.startsWith('sb_service_role_')) {
@@ -49,16 +49,35 @@ function requireSupabasePublicKey(value: string | undefined): string {
       throw new Error('[Supabase config] A legacy browser key must use the anon role.');
     }
   } else if (!key.startsWith('sb_publishable_')) {
-    throw new Error('[Supabase config] VITE_SUPABASE_ANON_KEY must be a publishable or legacy anon key.');
+    throw new Error(`[Supabase config] ${variableName} must be a publishable or legacy anon key.`);
   }
 
   return key;
 }
 
-const supabaseUrl = requireSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
-const supabaseAnonKey = requireSupabasePublicKey(import.meta.env.VITE_SUPABASE_ANON_KEY);
+function selectSupabasePublicKey(): string {
+  const candidates = [
+    ['VITE_SUPABASE_PUBLISHABLE_KEY', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY],
+    ['VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY],
+  ] as const;
+  const configured = candidates.filter(([, value]) => Boolean(value?.trim()));
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  if (configured.length === 0) {
+    throw new Error(
+      '[Supabase config] VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY is required.',
+    );
+  }
+
+  // Validate every configured browser key so an unsafe secondary variable can
+  // never be silently bundled just because the preferred variable is valid.
+  const validated = configured.map(([name, value]) => requireSupabasePublicKey(value, name));
+  return validated[0];
+}
+
+const supabaseUrl = requireSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
+const supabasePublicKey = selectSupabasePublicKey();
+
+export const supabase = createClient<Database>(supabaseUrl, supabasePublicKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

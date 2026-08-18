@@ -5,17 +5,17 @@ function fail(message) {
   throw new Error(`[build-env] ${message}`);
 }
 
-function decodeLegacyRole(key) {
+function decodeLegacyRole(key, variableName) {
   const parts = key.split('.');
   if (parts.length !== 3) {
-    fail('VITE_SUPABASE_ANON_KEY is not a valid legacy JWT.');
+    fail(`${variableName} is not a valid legacy JWT.`);
   }
 
   try {
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
     return payload.role;
   } catch {
-    fail('VITE_SUPABASE_ANON_KEY is not a valid legacy JWT.');
+    fail(`${variableName} is not a valid legacy JWT.`);
   }
 }
 
@@ -52,13 +52,13 @@ function validateSupabaseUrl(rawValue, isVercelDeployment) {
   return { hostname: parsed.hostname };
 }
 
-function validateSupabasePublicKey(rawValue) {
+function validateSupabasePublicKey(rawValue, variableName) {
   const key = rawValue?.trim();
   if (!key) {
-    fail('VITE_SUPABASE_ANON_KEY is required. Configure a publishable or legacy anon key.');
+    fail(`${variableName} is required. Configure a publishable or legacy anon key.`);
   }
-  if (/your-anon-key|placeholder/i.test(key)) {
-    fail('VITE_SUPABASE_ANON_KEY still contains a placeholder value.');
+  if (/your-(?:anon|public|publishable)-key|placeholder/i.test(key)) {
+    fail(`${variableName} still contains a placeholder value.`);
   }
   if (key.startsWith('sb_secret_') || key.startsWith('sb_service_role_')) {
     fail('A secret/service-role key must never be embedded in the browser bundle.');
@@ -66,19 +66,40 @@ function validateSupabasePublicKey(rawValue) {
 
   if (key.startsWith('sb_publishable_')) {
     if (key.length < 24) {
-      fail('VITE_SUPABASE_ANON_KEY is not a valid publishable key.');
+      fail(`${variableName} is not a valid publishable key.`);
     }
     return 'publishable';
   }
 
   if (key.startsWith('eyJ')) {
-    if (decodeLegacyRole(key) !== 'anon') {
+    if (decodeLegacyRole(key, variableName) !== 'anon') {
       fail('A legacy browser key must contain the anon role.');
     }
     return 'legacy-anon';
   }
 
-  fail('VITE_SUPABASE_ANON_KEY must be a publishable or legacy anon key.');
+  fail(`${variableName} must be a publishable or legacy anon key.`);
+}
+
+function selectSupabasePublicKey(env) {
+  const candidates = [
+    ['VITE_SUPABASE_PUBLISHABLE_KEY', env.VITE_SUPABASE_PUBLISHABLE_KEY],
+    ['VITE_SUPABASE_ANON_KEY', env.VITE_SUPABASE_ANON_KEY],
+  ];
+  const configured = candidates.filter(([, value]) => Boolean(value?.trim()));
+
+  if (configured.length === 0) {
+    fail(
+      'VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY is required. Configure a browser-safe public key.',
+    );
+  }
+
+  const validated = configured.map(([variableName, value]) => ({
+    keyType: validateSupabasePublicKey(value, variableName),
+    variableName,
+  }));
+
+  return validated[0];
 }
 
 function expectedAppEnvironment(env) {
@@ -98,7 +119,7 @@ export function validatePublicBuildEnvironment(env) {
   const isVercelDeployment = env.VERCEL === '1' || Boolean(env.VERCEL_ENV || env.VERCEL_TARGET_ENV);
   const appEnvironment = env.VITE_APP_ENV?.trim();
   const { hostname } = validateSupabaseUrl(env.VITE_SUPABASE_URL, isVercelDeployment);
-  const keyType = validateSupabasePublicKey(env.VITE_SUPABASE_ANON_KEY);
+  const { keyType, variableName: keyVariable } = selectSupabasePublicKey(env);
 
   if (appEnvironment && !APP_ENVIRONMENTS.has(appEnvironment)) {
     fail('VITE_APP_ENV must be development, staging, or production.');
@@ -118,5 +139,5 @@ export function validatePublicBuildEnvironment(env) {
     }
   }
 
-  return { appEnvironment: appEnvironment || 'development', hostname, keyType };
+  return { appEnvironment: appEnvironment || 'development', hostname, keyType, keyVariable };
 }

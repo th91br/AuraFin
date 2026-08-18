@@ -25,7 +25,7 @@ if (fs.existsSync(path.join(rootDir, '.env.local'))) {
 }
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabasePublicKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 async function main() {
   console.log('================================================================');
@@ -33,15 +33,15 @@ async function main() {
   console.log('================================================================');
   console.log(`Timestamp:  ${new Date().toISOString()}`);
 
-  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project')) {
-    console.log('\n[STATUS] NEEDS CONFIGURATION: VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não configuradas no ambiente local/CI.');
+  if (!supabaseUrl || !supabasePublicKey || supabaseUrl.includes('your-project')) {
+    console.log('\n[STATUS] NEEDS CONFIGURATION: VITE_SUPABASE_URL e uma chave pública do Supabase não estão configuradas no ambiente local/CI.');
     console.log('Para executar contra o Staging/Production, configure as variáveis em .env ou no ambiente.\n');
     console.log('================================================================\n');
     process.exit(0);
   }
 
   console.log(`Target URL: ${supabaseUrl}\n`);
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabase = createClient(supabaseUrl, supabasePublicKey);
   let allHealthy = true;
 
   // 1. Auth Service Ping

@@ -22,13 +22,16 @@ Configure every variable in Vercel Project Settings → Environment Variables. A
 | Variable | Production | Preview / staging | Notes |
 | --- | --- | --- | --- |
 | `VITE_SUPABASE_URL` | Production project URL | Separate staging/preview project URL | HTTPS `*.supabase.co`; never localhost |
-| `VITE_SUPABASE_ANON_KEY` | Production publishable or legacy anon key | Matching staging/preview public key | Never use a secret/service-role key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Production publishable key | Matching staging/preview publishable key | Preferred; never use a secret/service-role key |
+| `VITE_SUPABASE_ANON_KEY` | Optional legacy anon JWT | Matching legacy staging/preview anon JWT | Compatibility fallback; omit when the publishable variable is configured |
 | `VITE_APP_ENV` | `production` | `staging` | The build rejects a production label in Preview |
 | `VITE_RELEASE_SHA` | Optional release identifier | Optional release identifier | Used only for log correlation |
 | `VITE_ERROR_TRACKING_ENABLED` | `false` until a tracker is wired | `false` | Optional |
 | `VITE_ERROR_TRACKING_DSN` | Empty unless configured | Empty unless configured | Optional |
 
 Keep `VITE_ENABLE_DEMO_MODE` and `VITE_ENABLE_LEGACY_IMPORT` unset or `false`. The Vercel build gate rejects either flag when enabled.
+
+If both public-key variables are configured, the application prefers `VITE_SUPABASE_PUBLISHABLE_KEY` and validates both. An unsafe value in either variable fails the build so it cannot be silently embedded in the browser bundle.
 
 Do not point generic pull-request previews at the production Supabase project. Use a branch-scoped Preview environment or disable previews that cannot have isolated data and schema.
 
